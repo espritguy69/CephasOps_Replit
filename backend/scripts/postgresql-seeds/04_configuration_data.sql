@@ -54,36 +54,42 @@ BEGIN
         RETURN;
     END IF;
 
-    INSERT INTO "GuardConditionDefinitions" (
-        "Id", "CompanyId", "Key", "Name", "Description", "EntityType", 
-        "ValidatorType", "ValidatorConfigJson", "IsActive", "DisplayOrder", "CreatedAt", "UpdatedAt", "IsDeleted"
-    ) VALUES
-        (gen_random_uuid(), v_company_id, 'photosRequired', 'Photos Required', 'Checks if photos are uploaded for the order', 'Order', 'PhotosRequiredValidator', '{"checkFlag":true,"checkFiles":true}', true, 1, NOW(), NOW(), false),
-        (gen_random_uuid(), v_company_id, 'docketUploaded', 'Docket Uploaded', 'Checks if docket is uploaded for the order', 'Order', 'DocketUploadedValidator', '{"checkFlag":true,"checkDockets":true}', true, 2, NOW(), NOW(), false),
-        (gen_random_uuid(), v_company_id, 'splitterAssigned', 'Splitter Assigned', 'Checks if splitter port is assigned to the order', 'Order', 'SplitterAssignedValidator', NULL, true, 3, NOW(), NOW(), false),
-        (gen_random_uuid(), v_company_id, 'serialNumbersValidated', 'Serial Numbers Validated', 'Checks if serial numbers are validated for the order', 'Order', 'SerialsValidatedValidator', NULL, true, 4, NOW(), NOW(), false),
-        (gen_random_uuid(), v_company_id, 'materialsSpecified', 'Materials Specified', 'Checks if materials are specified for the order', 'Order', 'MaterialsSpecifiedValidator', NULL, true, 5, NOW(), NOW(), false),
-        (gen_random_uuid(), v_company_id, 'siaAssigned', 'SI Assigned', 'Checks if Service Installer (SI) is assigned to the order', 'Order', 'SiAssignedValidator', NULL, true, 6, NOW(), NOW(), false),
-        (gen_random_uuid(), v_company_id, 'appointmentDateSet', 'Appointment Date Set', 'Checks if appointment date is set for the order', 'Order', 'AppointmentDateSetValidator', NULL, true, 7, NOW(), NOW(), false),
-        (gen_random_uuid(), v_company_id, 'buildingSelected', 'Building Selected', 'Checks if building is selected for the order', 'Order', 'BuildingSelectedValidator', NULL, true, 8, NOW(), NOW(), false),
-        (gen_random_uuid(), v_company_id, 'customerContactProvided', 'Customer Contact Provided', 'Checks if customer contact (phone or email) is provided for the order', 'Order', 'CustomerContactProvidedValidator', NULL, true, 9, NOW(), NOW(), false),
-        (gen_random_uuid(), v_company_id, 'noBlockersActive', 'No Active Blockers', 'Checks if there are no active blockers for the order', 'Order', 'NoActiveBlockersValidator', NULL, true, 10, NOW(), NOW(), false)
-    ON CONFLICT ("CompanyId", "Key", "EntityType") WHERE "IsDeleted" = false DO NOTHING;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'GuardConditionDefinitions') THEN
+        INSERT INTO "GuardConditionDefinitions" (
+            "Id", "CompanyId", "Key", "Name", "Description", "EntityType", 
+            "ValidatorType", "ValidatorConfigJson", "IsActive", "DisplayOrder", "CreatedAt", "UpdatedAt", "IsDeleted"
+        ) VALUES
+            (gen_random_uuid(), v_company_id, 'photosRequired', 'Photos Required', 'Checks if photos are uploaded for the order', 'Order', 'PhotosRequiredValidator', '{"checkFlag":true,"checkFiles":true}', true, 1, NOW(), NOW(), false),
+            (gen_random_uuid(), v_company_id, 'docketUploaded', 'Docket Uploaded', 'Checks if docket is uploaded for the order', 'Order', 'DocketUploadedValidator', '{"checkFlag":true,"checkDockets":true}', true, 2, NOW(), NOW(), false),
+            (gen_random_uuid(), v_company_id, 'splitterAssigned', 'Splitter Assigned', 'Checks if splitter port is assigned to the order', 'Order', 'SplitterAssignedValidator', NULL, true, 3, NOW(), NOW(), false),
+            (gen_random_uuid(), v_company_id, 'serialNumbersValidated', 'Serial Numbers Validated', 'Checks if serial numbers are validated for the order', 'Order', 'SerialsValidatedValidator', NULL, true, 4, NOW(), NOW(), false),
+            (gen_random_uuid(), v_company_id, 'materialsSpecified', 'Materials Specified', 'Checks if materials are specified for the order', 'Order', 'MaterialsSpecifiedValidator', NULL, true, 5, NOW(), NOW(), false),
+            (gen_random_uuid(), v_company_id, 'siaAssigned', 'SI Assigned', 'Checks if Service Installer (SI) is assigned to the order', 'Order', 'SiAssignedValidator', NULL, true, 6, NOW(), NOW(), false),
+            (gen_random_uuid(), v_company_id, 'appointmentDateSet', 'Appointment Date Set', 'Checks if appointment date is set for the order', 'Order', 'AppointmentDateSetValidator', NULL, true, 7, NOW(), NOW(), false),
+            (gen_random_uuid(), v_company_id, 'buildingSelected', 'Building Selected', 'Checks if building is selected for the order', 'Order', 'BuildingSelectedValidator', NULL, true, 8, NOW(), NOW(), false),
+            (gen_random_uuid(), v_company_id, 'customerContactProvided', 'Customer Contact Provided', 'Checks if customer contact (phone or email) is provided for the order', 'Order', 'CustomerContactProvidedValidator', NULL, true, 9, NOW(), NOW(), false),
+            (gen_random_uuid(), v_company_id, 'noBlockersActive', 'No Active Blockers', 'Checks if there are no active blockers for the order', 'Order', 'NoActiveBlockersValidator', NULL, true, 10, NOW(), NOW(), false)
+        ON CONFLICT ("CompanyId", "Key", "EntityType") WHERE "IsDeleted" = false DO NOTHING;
+        RAISE NOTICE 'Seeded GuardConditionDefinitions (10 records)';
+    ELSE
+        RAISE NOTICE 'Table GuardConditionDefinitions does not exist, skipping.';
+    END IF;
 
-    RAISE NOTICE 'Seeded GuardConditionDefinitions (10 records)';
-
-    INSERT INTO "SideEffectDefinitions" (
-        "Id", "CompanyId", "Key", "Name", "Description", "EntityType", 
-        "ExecutorType", "ExecutorConfigJson", "IsActive", "DisplayOrder", "CreatedAt", "UpdatedAt", "IsDeleted"
-    ) VALUES
-        (gen_random_uuid(), v_company_id, 'notify', 'Send Notification', 'Sends a notification to relevant users when workflow transition occurs', 'Order', 'NotifySideEffectExecutor', '{"template":"OrderStatusChange"}', true, 1, NOW(), NOW(), false),
-        (gen_random_uuid(), v_company_id, 'createStockMovement', 'Create Stock Movement', 'Creates stock movement records when workflow transition occurs', 'Order', 'CreateStockMovementSideEffectExecutor', NULL, true, 2, NOW(), NOW(), false),
-        (gen_random_uuid(), v_company_id, 'createOrderStatusLog', 'Create Order Status Log', 'Creates an order status log entry when workflow transition occurs', 'Order', 'CreateOrderStatusLogSideEffectExecutor', NULL, true, 3, NOW(), NOW(), false),
-        (gen_random_uuid(), v_company_id, 'updateOrderFlags', 'Update Order Flags', 'Updates order flags (DocketUploaded, PhotosUploaded, etc.) when workflow transition occurs', 'Order', 'UpdateOrderFlagsSideEffectExecutor', NULL, true, 4, NOW(), NOW(), false),
-        (gen_random_uuid(), v_company_id, 'triggerInvoiceEligibility', 'Trigger Invoice Eligibility', 'Checks and updates invoice eligibility flag when workflow transition occurs', 'Order', 'TriggerInvoiceEligibilitySideEffectExecutor', '{"requireDocket":true,"requirePhotos":true,"requireSerials":true}', true, 5, NOW(), NOW(), false)
-    ON CONFLICT ("CompanyId", "Key", "EntityType") WHERE "IsDeleted" = false DO NOTHING;
-
-    RAISE NOTICE 'Seeded SideEffectDefinitions (5 records)';
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'SideEffectDefinitions') THEN
+        INSERT INTO "SideEffectDefinitions" (
+            "Id", "CompanyId", "Key", "Name", "Description", "EntityType", 
+            "ExecutorType", "ExecutorConfigJson", "IsActive", "DisplayOrder", "CreatedAt", "UpdatedAt", "IsDeleted"
+        ) VALUES
+            (gen_random_uuid(), v_company_id, 'notify', 'Send Notification', 'Sends a notification to relevant users when workflow transition occurs', 'Order', 'NotifySideEffectExecutor', '{"template":"OrderStatusChange"}', true, 1, NOW(), NOW(), false),
+            (gen_random_uuid(), v_company_id, 'createStockMovement', 'Create Stock Movement', 'Creates stock movement records when workflow transition occurs', 'Order', 'CreateStockMovementSideEffectExecutor', NULL, true, 2, NOW(), NOW(), false),
+            (gen_random_uuid(), v_company_id, 'createOrderStatusLog', 'Create Order Status Log', 'Creates an order status log entry when workflow transition occurs', 'Order', 'CreateOrderStatusLogSideEffectExecutor', NULL, true, 3, NOW(), NOW(), false),
+            (gen_random_uuid(), v_company_id, 'updateOrderFlags', 'Update Order Flags', 'Updates order flags (DocketUploaded, PhotosUploaded, etc.) when workflow transition occurs', 'Order', 'UpdateOrderFlagsSideEffectExecutor', NULL, true, 4, NOW(), NOW(), false),
+            (gen_random_uuid(), v_company_id, 'triggerInvoiceEligibility', 'Trigger Invoice Eligibility', 'Checks and updates invoice eligibility flag when workflow transition occurs', 'Order', 'TriggerInvoiceEligibilitySideEffectExecutor', '{"requireDocket":true,"requirePhotos":true,"requireSerials":true}', true, 5, NOW(), NOW(), false)
+        ON CONFLICT ("CompanyId", "Key", "EntityType") WHERE "IsDeleted" = false DO NOTHING;
+        RAISE NOTICE 'Seeded SideEffectDefinitions (5 records)';
+    ELSE
+        RAISE NOTICE 'Table SideEffectDefinitions does not exist, skipping.';
+    END IF;
 END $$;
 
 -- ============================================
