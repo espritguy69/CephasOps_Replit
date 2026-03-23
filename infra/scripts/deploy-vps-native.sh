@@ -162,7 +162,7 @@ case "${1:-help}" in
 ASPNETCORE_ENVIRONMENT=Production
 ASPNETCORE_URLS=http://127.0.0.1:8080
 
-ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=cephasops;Username=cephasops_app;Password=CHANGE_ME;SslMode=Disable
+ConnectionStrings__DefaultConnection="Host=localhost;Port=5432;Database=cephasops;Username=cephasops_app;Password=CHANGE_ME;SslMode=Disable"
 
 Jwt__Key=CHANGE_ME_TO_A_SECURE_64_CHAR_KEY_FOR_PRODUCTION_USE_ONLY_1234
 Jwt__Issuer=CephasOps
@@ -422,6 +422,16 @@ EOF
     echo "Press Ctrl+C to stop."
     echo ""
     load_env
+    if [ -z "${ConnectionStrings__DefaultConnection:-}" ]; then
+      echo "ERROR: ConnectionStrings__DefaultConnection is empty after loading $ENV_FILE"
+      echo "  Make sure the value is quoted in $ENV_FILE, e.g.:"
+      echo '  ConnectionStrings__DefaultConnection="Host=localhost;Port=5432;..."'
+      exit 1
+    fi
+    echo "  Environment: ${ASPNETCORE_ENVIRONMENT:-not set}"
+    echo "  DB Host: $(echo "$ConnectionStrings__DefaultConnection" | grep -oP 'Host=\K[^;]+')"
+    echo "  DB User: $(echo "$ConnectionStrings__DefaultConnection" | grep -oP 'Username=\K[^;]+')"
+    echo ""
     cd "$PUBLISH_DIR"
     dotnet CephasOps.Api.dll
     ;;
