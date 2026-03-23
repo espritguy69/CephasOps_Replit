@@ -43,21 +43,24 @@ BEGIN
     -- ============================================
     -- 2. OrderCategories (formerly InstallationTypes)
     -- ============================================
-    INSERT INTO "OrderCategories" (
-        "Id", "CompanyId", "DepartmentId", "Name", "Code", "Description", 
-        "DisplayOrder", "IsActive", "CreatedAt", "UpdatedAt"
-    )
-    SELECT gen_random_uuid(), v_company_id, v_gpon_department_id, v.name, v.code, v.description, v.display_order, true, NOW(), NOW()
-    FROM (VALUES
-        ('TIME-FTTH', 'TIME-FTTH', 'Fibre to the Home', 1),
-        ('TIME-FTTR', 'TIME-FTTR', 'Fibre to the Room', 2),
-        ('TIME-FTTC', 'TIME-FTTC', 'Fibre to the Charge', 3)
-    ) AS v(name, code, description, display_order)
-    WHERE NOT EXISTS (
-        SELECT 1 FROM "OrderCategories" oc WHERE oc."Code" = v.code
-    );
-    
-    RAISE NOTICE 'Seeded OrderCategories (3 records: TIME-FTTH, TIME-FTTR, TIME-FTTC)';
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'OrderCategories') THEN
+        INSERT INTO "OrderCategories" (
+            "Id", "CompanyId", "DepartmentId", "Name", "Code", "Description", 
+            "DisplayOrder", "IsActive", "CreatedAt", "UpdatedAt"
+        )
+        SELECT gen_random_uuid(), v_company_id, v_gpon_department_id, v.name, v.code, v.description, v.display_order, true, NOW(), NOW()
+        FROM (VALUES
+            ('TIME-FTTH', 'TIME-FTTH', 'Fibre to the Home', 1),
+            ('TIME-FTTR', 'TIME-FTTR', 'Fibre to the Room', 2),
+            ('TIME-FTTC', 'TIME-FTTC', 'Fibre to the Charge', 3)
+        ) AS v(name, code, description, display_order)
+        WHERE NOT EXISTS (
+            SELECT 1 FROM "OrderCategories" oc WHERE oc."Code" = v.code
+        );
+        RAISE NOTICE 'Seeded OrderCategories (3 records: TIME-FTTH, TIME-FTTR, TIME-FTTC)';
+    ELSE
+        RAISE NOTICE 'Skipping OrderCategories (table does not exist)';
+    END IF;
     
     -- ============================================
     -- 3. BuildingTypes
@@ -125,7 +128,11 @@ DECLARE
     v_splitter_types_count INT;
 BEGIN
     SELECT COUNT(*) INTO v_order_types_count FROM "OrderTypes";
-    SELECT COUNT(*) INTO v_order_categories_count FROM "OrderCategories";
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'OrderCategories') THEN
+        SELECT COUNT(*) INTO v_order_categories_count FROM "OrderCategories";
+    ELSE
+        v_order_categories_count := 0;
+    END IF;
     SELECT COUNT(*) INTO v_building_types_count FROM "BuildingTypes";
     SELECT COUNT(*) INTO v_splitter_types_count FROM "SplitterTypes";
     

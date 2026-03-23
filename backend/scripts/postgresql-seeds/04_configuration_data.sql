@@ -8,9 +8,16 @@
 DO $$
 DECLARE
     v_company_id UUID;
+    v_admin_user_id UUID;
 BEGIN
     -- Get company ID
     SELECT "Id" INTO v_company_id FROM "Companies" ORDER BY "CreatedAt" LIMIT 1;
+    
+    -- Get admin user ID for CreatedByUserId
+    SELECT "Id" INTO v_admin_user_id FROM "Users" WHERE "Email" = 'simon@cephas.com.my' LIMIT 1;
+    IF v_admin_user_id IS NULL THEN
+        v_admin_user_id := '00000000-0000-0000-0000-000000000000'::uuid;
+    END IF;
     
     IF v_company_id IS NULL THEN
         RAISE WARNING 'No company found. Some configuration data requires company ID.';
@@ -21,9 +28,9 @@ BEGIN
     -- ============================================
     INSERT INTO "ParserTemplates" (
         "Id", "CompanyId", "Name", "Code", "Description", "PartnerPattern", 
-        "SubjectPattern", "OrderTypeCode", "Priority", "IsActive", "AutoApprove", "CreatedAt"
+        "SubjectPattern", "OrderTypeCode", "Priority", "IsActive", "AutoApprove", "CreatedByUserId", "CreatedAt"
     )
-    SELECT gen_random_uuid(), NULL, v.name, v.code, v.description, v.partner_pattern, v.subject_pattern, v.order_type_code, v.priority, true, false, NOW()
+    SELECT gen_random_uuid(), NULL, v.name, v.code, v.description, v.partner_pattern, v.subject_pattern, v.order_type_code, v.priority, true, false, v_admin_user_id, NOW()
     FROM (VALUES
         ('TIME Activation', 'TIME_ACTIVATION', 'Parses TIME FTTH/HSBB activation work orders', '*@time.com.my', '*Activation*', 'ACTIVATION', 100),
         ('TIME Modification (Indoor)', 'TIME_MOD_INDOOR', 'Parses TIME indoor modification work orders', '*@time.com.my', '*Modification*Indoor*', 'MODIFICATION_INDOOR', 95),
