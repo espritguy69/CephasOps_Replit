@@ -82,8 +82,7 @@ Log.Logger = new LoggerConfiguration()
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load appsettings.Development.json when present so connection string works even if ASPNETCORE_ENVIRONMENT is not set
-builder.Configuration.AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: false);
+builder.Configuration.AddEnvironmentVariables();
 
 // Use Serilog for logging
 builder.Host.UseSerilog();
