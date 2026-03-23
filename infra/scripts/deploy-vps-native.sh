@@ -12,7 +12,7 @@ SI_DIST="$DEPLOY_DIR/si-dist"
 API_PORT=8080
 DOMAIN="${CEPHASOPS_DOMAIN:-}"
 
-echo "=== CephasOps VPS Native Deployment (No Docker) ==="
+echo "=== CephasOps VPS Native Deployment (Debian 13 — No Docker) ==="
 echo ""
 
 load_env() {
@@ -26,26 +26,47 @@ load_env() {
 case "${1:-help}" in
 
   install)
-    echo "--- PHASE 1: Installing System Packages ---"
+    echo "--- PHASE 1: Installing System Packages (Debian 13) ---"
     sudo apt-get update
-    sudo apt-get install -y git curl wget nginx certbot python3-certbot-nginx
+    sudo apt-get install -y git curl wget gnupg apt-transport-https ca-certificates \
+      nginx certbot python3-certbot-nginx \
+      libicu72 libssl3 zlib1g
 
     echo ""
     echo "--- Installing .NET 10 SDK ---"
     if ! command -v dotnet &>/dev/null; then
-      wget https://packages.microsoft.com/config/debian/13/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb
-      sudo dpkg -i /tmp/packages-microsoft-prod.deb
-      rm /tmp/packages-microsoft-prod.deb
-      sudo apt-get update
-      sudo apt-get install -y dotnet-sdk-10.0
-    else
-      echo ".NET already installed: $(dotnet --version)"
+      if [ -f /tmp/packages-microsoft-prod.deb ]; then
+        rm /tmp/packages-microsoft-prod.deb
+      fi
+      wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O /tmp/packages-microsoft-prod.deb 2>/dev/null || true
+      if [ -f /tmp/packages-microsoft-prod.deb ] && [ -s /tmp/packages-microsoft-prod.deb ]; then
+        sudo dpkg -i /tmp/packages-microsoft-prod.deb
+        rm /tmp/packages-microsoft-prod.deb
+        sudo apt-get update
+        sudo apt-get install -y dotnet-sdk-10.0 2>/dev/null || {
+          echo ""
+          echo "apt package not available for .NET 10 — using install script..."
+          curl -sSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
+          chmod +x /tmp/dotnet-install.sh
+          sudo /tmp/dotnet-install.sh --channel 10.0 --install-dir /usr/share/dotnet
+          sudo ln -sf /usr/share/dotnet/dotnet /usr/bin/dotnet
+          rm /tmp/dotnet-install.sh
+        }
+      else
+        echo "Microsoft package repo not available for Debian 13 — using install script..."
+        curl -sSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
+        chmod +x /tmp/dotnet-install.sh
+        sudo /tmp/dotnet-install.sh --channel 10.0 --install-dir /usr/share/dotnet
+        sudo ln -sf /usr/share/dotnet/dotnet /usr/bin/dotnet
+        rm /tmp/dotnet-install.sh
+      fi
     fi
+    echo ".NET version: $(dotnet --version 2>/dev/null || echo 'NOT FOUND — check install')"
 
     echo ""
-    echo "--- Installing Node.js 20 ---"
+    echo "--- Installing Node.js 22 ---"
     if ! command -v node &>/dev/null; then
-      curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+      curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
       sudo apt-get install -y nodejs
     else
       echo "Node.js already installed: $(node --version)"
@@ -64,6 +85,15 @@ case "${1:-help}" in
     echo "--- Creating directories ---"
     sudo mkdir -p "$DEPLOY_DIR" "$PUBLISH_DIR" "$LOGS_DIR" "$FRONTEND_DIST" "$SI_DIST"
     sudo chown -R "$USER":"$USER" "$DEPLOY_DIR"
+
+    echo ""
+    echo "--- Verifying installations ---"
+    echo "  .NET:       $(dotnet --version 2>/dev/null || echo 'MISSING')"
+    echo "  Node.js:    $(node --version 2>/dev/null || echo 'MISSING')"
+    echo "  npm:        $(npm --version 2>/dev/null || echo 'MISSING')"
+    echo "  PostgreSQL: $(psql --version 2>/dev/null || echo 'MISSING')"
+    echo "  NGINX:      $(nginx -v 2>&1 || echo 'MISSING')"
+    echo "  Certbot:    $(certbot --version 2>/dev/null || echo 'MISSING')"
 
     echo ""
     echo "PHASE 1 COMPLETE. Next steps:"
@@ -93,7 +123,9 @@ case "${1:-help}" in
 
     echo ""
     echo "Database 'cephasops' ready. User: cephasops_app"
-    echo "Connection string: Host=localhost;Database=cephasops;Username=cephasops_app;Password=YOUR_PASSWORD"
+    echo ""
+    echo "Use this connection string in your .env file:"
+    echo "  ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=cephasops;Username=cephasops_app;Password=$DB_PASSWORD;SslMode=Disable"
     ;;
 
   setup)
@@ -130,7 +162,7 @@ case "${1:-help}" in
 ASPNETCORE_ENVIRONMENT=Production
 ASPNETCORE_URLS=http://127.0.0.1:8080
 
-ConnectionStrings__DefaultConnection=Host=localhost;Database=cephasops;Username=cephasops_app;Password=CHANGE_ME
+ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=cephasops;Username=cephasops_app;Password=CHANGE_ME;SslMode=Disable
 
 Jwt__Key=CHANGE_ME_TO_A_SECURE_64_CHAR_KEY_FOR_PRODUCTION_USE_ONLY_1234
 Jwt__Issuer=CephasOps
@@ -155,6 +187,7 @@ WhatsAppCloudApi__BusinessAccountId=
 Scheduler__PollIntervalSeconds=15
 Scheduler__MaxJobsPerPoll=10
 ENVEOF
+      sudo chmod 600 "$ENV_FILE"
       echo ""
       echo "IMPORTANT: Edit $ENV_FILE with your production values!"
       echo "  nano $ENV_FILE"
@@ -239,7 +272,6 @@ ENVEOF
 
     echo "  ✓ Published to $PUBLISH_DIR"
     echo ""
-    echo "Files:"
     ls -la "$PUBLISH_DIR"/CephasOps.Api.dll 2>/dev/null && echo "  ✓ API DLL present" || echo "  ✗ API DLL missing!"
     ;;
 
@@ -267,13 +299,8 @@ ENVEOF
   setup-service)
     echo "--- PHASE 5b: Creating systemd service ---"
 
-    ENV_LINES=""
-    if [ -f "$ENV_FILE" ]; then
-      while IFS= read -r line; do
-        [[ -z "$line" || "$line" == \#* ]] && continue
-        ENV_LINES="${ENV_LINES}Environment=${line}\n"
-      done < "$ENV_FILE"
-    fi
+    sudo mkdir -p "$LOGS_DIR"
+    sudo chown -R www-data:www-data "$PUBLISH_DIR" "$LOGS_DIR"
 
     sudo tee /etc/systemd/system/cephasops-api.service > /dev/null << EOF
 [Unit]
@@ -281,7 +308,7 @@ Description=CephasOps API
 After=network.target postgresql.service
 
 [Service]
-Type=notify
+Type=simple
 WorkingDirectory=$PUBLISH_DIR
 ExecStart=/usr/bin/dotnet $PUBLISH_DIR/CephasOps.Api.dll
 Restart=always
@@ -298,12 +325,12 @@ StandardError=append:$LOGS_DIR/api-stderr.log
 WantedBy=multi-user.target
 EOF
 
-    sudo chown -R www-data:www-data "$PUBLISH_DIR" "$LOGS_DIR"
     sudo systemctl daemon-reload
     sudo systemctl enable cephasops-api
-    echo "  ✓ Service created and enabled"
+    echo "  ✓ Service created and enabled (Type=simple)"
     echo "  Start with: sudo systemctl start cephasops-api"
-    echo "  Logs: journalctl -u cephasops-api -f"
+    echo "  Logs:       sudo tail -f $LOGS_DIR/api-stderr.log"
+    echo "  Journal:    journalctl -u cephasops-api -f"
     ;;
 
   setup-nginx)
@@ -389,6 +416,16 @@ EOF
     echo "  Auto-renewal is handled by certbot timer"
     ;;
 
+  test)
+    echo "--- Manual Test: Run API in foreground ---"
+    echo "This runs the API directly so you can see all errors."
+    echo "Press Ctrl+C to stop."
+    echo ""
+    load_env
+    cd "$PUBLISH_DIR"
+    dotnet CephasOps.Api.dll
+    ;;
+
   deploy)
     echo "--- FULL DEPLOY ---"
     echo ""
@@ -425,7 +462,7 @@ EOF
     echo "=== DEPLOY COMPLETE ==="
     echo "Commit: $COMMIT"
     echo "API: http://127.0.0.1:$API_PORT"
-    echo "Logs: journalctl -u cephasops-api -f"
+    echo "Logs: sudo tail -f $LOGS_DIR/api-stderr.log"
     ;;
 
   status)
@@ -438,6 +475,9 @@ EOF
     echo "--- PostgreSQL Status ---"
     sudo systemctl status postgresql --no-pager 2>/dev/null || echo "PostgreSQL not running"
     echo ""
+    echo "--- API Port Check ---"
+    ss -tlnp | grep ":$API_PORT" || echo "Nothing listening on port $API_PORT"
+    echo ""
     if [ -d "$APP_DIR/.git" ]; then
       echo "--- Deployed Version ---"
       cd "$APP_DIR" && git log --oneline -1
@@ -446,7 +486,11 @@ EOF
 
   logs)
     echo "--- API Logs (last 50 lines) ---"
-    journalctl -u cephasops-api --no-pager -n 50
+    if [ -f "$LOGS_DIR/api-stderr.log" ]; then
+      tail -50 "$LOGS_DIR/api-stderr.log"
+    else
+      journalctl -u cephasops-api --no-pager -n 50
+    fi
     ;;
 
   restart)
@@ -466,13 +510,13 @@ EOF
     echo "Usage: $0 <command>"
     echo ""
     echo "INITIAL SETUP (run in order):"
-    echo "  install         Install .NET 10, Node.js, PostgreSQL, NGINX"
+    echo "  install         Install .NET 10, Node.js 22, PostgreSQL, NGINX (Debian 13)"
     echo "  setup-db        Create database and user"
     echo "  setup           Clone repo + create env file"
     echo "  migrate         Run schema migrations + seed data"
     echo "  build-backend   Build and publish .NET API"
     echo "  build-frontend  Build admin portal + SI app"
-    echo "  setup-service   Create systemd service"
+    echo "  setup-service   Create systemd service (Type=simple)"
     echo "  setup-nginx     Configure NGINX reverse proxy"
     echo "  setup-ssl       Install Let's Encrypt HTTPS certificate"
     echo ""
@@ -480,8 +524,9 @@ EOF
     echo "  deploy          Pull + migrate + build + restart (full update)"
     echo "  restart         Restart API service"
     echo "  stop            Stop API service"
-    echo "  status          Show all service statuses"
+    echo "  status          Show all service statuses + port check"
     echo "  logs            Show recent API logs"
+    echo "  test            Run API in foreground (see errors directly)"
     echo ""
     echo "ENVIRONMENT:"
     echo "  Set CEPHASOPS_DOMAIN=your-domain.com before running setup-nginx/setup-ssl"
