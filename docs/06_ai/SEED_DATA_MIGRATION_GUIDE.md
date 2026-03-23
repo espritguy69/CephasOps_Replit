@@ -169,7 +169,7 @@ export PGPASSWORD=J@saw007
 
 **Option 2: Connection String**
 ```bash
-export DATABASE_URL="Host=localhost;Port=5432;Database=cephasops;Username=postgres;Password=J@saw007"
+export DATABASE_URL="Host=localhost;Port=5432;Database=cephasops;Username=cephasops_app;Password=YOUR_PASSWORD"
 ```
 
 ### 5.3 Execute Scripts in Order
