@@ -161,15 +161,20 @@ END $$;
 DO $$
 DECLARE
     v_parser_templates_count INT;
-    v_guard_conditions_count INT;
-    v_side_effects_count INT;
+    v_guard_conditions_count INT := 0;
+    v_side_effects_count INT := 0;
     v_global_settings_count INT;
 BEGIN
     SELECT COUNT(*) INTO v_parser_templates_count FROM "ParserTemplates";
-    SELECT COUNT(*) INTO v_guard_conditions_count FROM "GuardConditionDefinitions";
-    SELECT COUNT(*) INTO v_side_effects_count FROM "SideEffectDefinitions";
     SELECT COUNT(*) INTO v_global_settings_count FROM "GlobalSettings";
-    
+
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'GuardConditionDefinitions') THEN
+        SELECT COUNT(*) INTO v_guard_conditions_count FROM "GuardConditionDefinitions";
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'SideEffectDefinitions') THEN
+        SELECT COUNT(*) INTO v_side_effects_count FROM "SideEffectDefinitions";
+    END IF;
+
     RAISE NOTICE '========================================';
     RAISE NOTICE 'Configuration Data Seeding Complete';
     RAISE NOTICE '========================================';
