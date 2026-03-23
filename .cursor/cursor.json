@@ -1,0 +1,16 @@
+{
+  "$schema": "https://www.cursor.com/schemas/v1/cursor.schema.json",
+  "rules": [
+    "cursor/CURSOR_ONBOARDING_PROMPT.md",
+    "cursor/ONBOARDING_SI.md",
+    "cursor/SI_STRATEGY.md",
+    "cursor/BACKEND FEATURE DELTA PROMPT.md",
+    "cursor/FRONTEND FEATURE DELTA PROMPT.md",
+    "cursor/FULL STACK DELTA PROMPT.md",
+    "cursor/CHECK_BACKEND_COMPLETION.md",
+    "cursor/DOCS_GOVERNANCE_RULESET.md",
+    "cursor/FRONTEND_COMBINED_RULESET.md",
+    "cursor/FRONTEND_UI_COMPACT_RULESET.md",
+    "cursor/SETTINGS_UI_RULESET.md"
+  ]
+}

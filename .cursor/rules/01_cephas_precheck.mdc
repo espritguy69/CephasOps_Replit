@@ -1,0 +1,31 @@
+---
+description: CephasOps architecture review before coding
+alwaysApply: true
+---
+
+Before writing or modifying code, perform an architecture safety review.
+
+Return:
+
+1. Feature summary
+2. Tenant ownership (tenant or platform)
+3. Required TenantScopeExecutor method
+4. Guards affected
+5. Potential risks
+
+Do not write code until the review is complete.
+
+Key platform rules:
+
+Tenant-owned work → RunWithTenantScopeAsync(companyId)
+
+Platform-wide work → RunWithPlatformBypassAsync()
+
+Nullable-company path → RunWithTenantScopeOrBypassAsync() ONLY when justified.
+
+Never weaken:
+
+TenantSafetyGuard  
+SiWorkflowGuard  
+FinancialIsolationGuard  
+EventStoreConsistencyGuard

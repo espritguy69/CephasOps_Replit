@@ -1,0 +1,48 @@
+Code,Description,CategoryName,UnitOfMeasure,UnitCost,IsSerialised,MinStockLevel,ReorderPoint,IsActive
+CAE-000-0820,Huawei HG8145X6 - Dual-band WiFi 6 ONT,ONT / Router,Unit,0,True,,,True
+CAE-000-0780,Huawei HG8145V5 - Dual-band ONT,ONT / Router,Unit,0,True,,,True
+CAE-000-0830,Huawei HN8245X6s-8N-30 (2GB) - Enhanced ONT with 2GB,ONT / Router,Unit,0,True,,,True
+CAE-000-0840,Huawei HG8245X6-8N-30 (1GB) - ONT (1GB),ONT / Router,Unit,0,True,,,True
+CAE-000-0851,Huawei K153 - Router/ONT,Router / ONT,Unit,0,True,,,True
+CAE-000-0860,Huawei HG8145B7N - FTTH ONT,ONT,Unit,0,True,,,True
+CAE-000-0770,Huawei WA8021V5 - WiFi 5 Access Point,Router / AP,Unit,0,True,,,True
+CAE-000-0760,TP-Link HC420 - Wireless Router,Router,Unit,0,True,,,True
+CAE-000-0750,TP-Link EC440 - Dual-band Router,Router,Unit,0,True,,,True
+CAE-000-0320,TP-Link Archer C1200 - Home WiFi Router,Router,Unit,0,True,,,True
+CAE-000-0550,TP-Link EC230-G1 - Mesh Router,Router / Mesh,Unit,0,True,,,True
+CAE-000-0290,D-Link 850L - Broadband Router,Router,Unit,0,True,,,True
+CAE-000-0350,D-Link DIR-882 - High-performance Router,Router,Unit,0,True,,,True
+CAE-000-0900,ZyXEL EX3300-T0 - WiFi Router,Router,Unit,0,True,,,True
+CAE-000-0850,Huawei V163 - Customer Premise Router,Router,Unit,0,True,,,True
+CAE-CEL-0010,Skyworth RN685 (Celcom) - Celcom HSBA Router,Router,Unit,0,True,,,True
+CAE-000-1000,Skyworth RN685 (Digi) - Digi HSBA Router,Router,Unit,0,True,,,True
+CAE-CEL-1001,TP-Link EX510 (Digi) - Digi HSBA Router,Router,Unit,0,True,,,True
+CAE-CEL-0020,TP-Link EX510 (Celcom) - Celcom HSBA Router,Router,Unit,0,True,,,True
+CAE-UME-0010,D-Link DIR-X1860Z (Umobile) - WiFi 6 Router,Router,Unit,0,True,,,True
+CAE-CDI-1001,TP-Link EX510 (CelcomDigi) - CelcomDigi HSBA Router,Router,Unit,0,True,,,True
+CAE-CDI-1002,TP-Link EX820 (CelcomDigi) - WiFi 6 Router,Router,Unit,0,True,,,True
+PON-AHW-0350,Huawei HG8240H5 - Optical Network Unit,ONU,Unit,0,True,,,True
+PON-AHW-0353,Huawei HG8140H5 - Optical Network Unit,ONU,Unit,0,True,,,True
+CAE-000-0210,Motorola C1001LA - Cordless Phone (Black),Phone,Unit,0,True,,,True
+ACS-IAD-0050,Yeastar IAD 4 ports - 4-Port Integrated Access Device,IAD,Unit,0,True,,,True
+ACS-IAD-0070,D-Link IAD 4 Ports - 4-Port IAD,IAD,Unit,0,True,,,True
+IAD DLINK,DVG-5004S - VoIP IAD,IAD,Unit,0,True,,,True
+ACS-IAD-0020,IAD 8 Ports - 8-Port Integrated Access Device,IAD,Unit,0,True,,,True
+ACS-IAD-0080,Synway IAD 4 Ports - Synway IAD (4 Ports),IAD,Unit,0,True,,,True
+OFA-000-1000,SC/UPC Fast Connector - FAST Connector – Litech (Blue),Connector,Unit,0,False,,,True
+OFA-000-1010,SC/APC Fast Connector - FAST Connector – Litech (Green APC),Connector,Unit,0,False,,,True
+OFA-PTC-0540,SC-SC SM Simplex 3m - Fiber Patchcord (3m),Patchcord,Piece,0,False,,,True
+OFA-PTC-0070,SC/APC-SC SM Simplex 6m - Fiber Patchcord (6m),Patchcord,Piece,0,False,,,True
+OFA-PTC-0830,SC/UPC-SC/UPC 10m - Fiber Patchcord (10m),Patchcord,Piece,0,False,,,True
+OFA-PTC-0840,SC/UPC-SC/UPC 15m - Fiber Patchcord (15m),Patchcord,Piece,0,False,,,True
+OFA-PTC-0820,SC/UPC Patchcord 6m - Fiber Patchcord (6m),Patchcord,Piece,0,False,,,True
+OFC-002-SMDC,Drop Cable SM 2 Core - Fiber Drop Cable,Drop Cable,Meter,0,False,,,True
+OFC-DRC-0080,SC/APC Drop Cable 80m - Outdoor Drop Cable 80m,Drop Cable,Unit,0,False,,,True
+OFC-DRC-0100,SC/APC Drop Cable 100m - Outdoor Drop Cable 100m,Drop Cable,Unit,0,False,,,True
+OFC-DRC-P080,Drop Cable 80m (RDF Pole) - RDF Pole Outdoor Drop Cable,Drop Cable,Unit,0,False,,,True
+FTB-001-001,Fiber Termination Box - Outdoor FTB (2 Core),Accessories,Unit,0,False,,,True
+CAE-000-0852,Huawei ATB - Access Termination Box,Accessories,Unit,0,False,,,True
+CAE-000-0853,Huawei Transparent Fibre 50m - Clear Indoor Fiber Cable,Fiber Cable,Meter,0,False,,,True
+CAE-000-0854,Huawei FDU - Fiber Distribution Unit,Distribution,Unit,0,False,,,True
+CAE-000-0855,Huawei FMC - Fiber Management Cabinet,Distribution,Unit,0,False,,,True
+

@@ -1,0 +1,171 @@
+{
+  "department": {
+    "name": "GPON",
+    "code": "GPON",
+    "description": "GPON Service Installers Department",
+    "isActive": true
+  },
+  "serviceInstallers": [
+    {
+      "name": "K. MARIAPPAN A/L KUPPATHAN",
+      "employeeId": "KM Siva",
+      "phone": "+60 17-676 7625",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "SARAVANAN A/L I. CHINNIAH",
+      "employeeId": "Solo",
+      "phone": "+60 16-392 3026",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "MUNIANDY A/L SOORINARAYANAN",
+      "employeeId": "Mani",
+      "phone": "+60 16-319 8867",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "YELLESHUA JEEVAN A/L AROKKIASAMY",
+      "employeeId": "Jeevan",
+      "phone": "+60 16-453 2305",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "RAVEEN NAIR A/L K RAHMAN",
+      "employeeId": "Raveen",
+      "phone": "+60 11-1081 8049",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "SIVANESVARAAN A/L S YANESAGAR",
+      "employeeId": "Sivanes",
+      "phone": "+60 12-331 5104",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "SASIKUMAR A/L SEENIE",
+      "employeeId": "Sasi",
+      "phone": "+60 17-677 4982",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "SIVA A/L THANGIAH",
+      "employeeId": "TM Siva",
+      "phone": "+60 16-742 3600",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "KLAVINN RAJ A/L AROKKIASAMY",
+      "employeeId": "Klavinn",
+      "phone": "+60 12-291 6386",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "CHANDRASEKARAN VEERIAH",
+      "employeeId": "Rajen",
+      "phone": "+60 16-491 1325",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "SYLVESTER ELGIVA A/L SIMON",
+      "employeeId": "Elgie",
+      "phone": "+60 17-233 9040",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "ABDUL RAZAK BIN HAJA MAIDEEN",
+      "employeeId": "RAZAK",
+      "phone": "+60 14-368 1500",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "NORAFIZ HAFIZUL BIN ABDULLAH",
+      "employeeId": "Afiz",
+      "phone": "+60 17-943 7241",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "MOHD TAKYIN BIN CHE ALI",
+      "employeeId": "Takyin",
+      "phone": "+60 13-515 5900",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "EDWIN DASS A/L YESU DAS",
+      "employeeId": "Edwin",
+      "phone": "+60 11-1081 9064",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "SATHISVARAN A/L S P GURUNATHAN",
+      "employeeId": "Sathis",
+      "phone": "+60 10-273 6386",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "MUHAMMAD AMMAR BIN MOHD GHAZI",
+      "employeeId": "AMMAR",
+      "phone": "+60 11-7228 8644",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "MOHAMMAD ALIYASMAAN",
+      "employeeId": "AMAN",
+      "phone": "+60 17-494 7242",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "SHAMALAN A/L JOSEPH",
+      "employeeId": "Sham",
+      "phone": "+60 11-2840 3172",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    },
+    {
+      "name": "MUHAMAD QAIRUL HAIKAL BIN ABDULLAH",
+      "employeeId": "HAIKAL",
+      "phone": "+60 11-1690 3721",
+      "siLevel": "Senior",
+      "isSubcontractor": false,
+      "isActive": true
+    }
+  ]
+}
+

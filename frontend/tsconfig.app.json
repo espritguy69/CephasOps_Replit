@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    
+    // Modern JS – fixes Map, Set, Promise, includes, etc.
+    "target": "ES2020",
+    "lib": ["DOM", "DOM.Iterable", "ES2020"],
+
+    // For Vite / modern bundlers
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+
+    // TSX support (even if files are .tsx, TS still needs this flag)
+    "jsx": "react-jsx",
+
+    // So `import React from 'react'` and other default imports work
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    // Path aliases (must match vite.config.ts)
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
+    // Reasonable defaults
+    "strict": false,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+
+    // For Vite: import.meta.env
+    "types": ["vite/client"]
+  },
+  "include": ["src"]
+}

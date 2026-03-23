@@ -1,0 +1,72 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- NU1510: System.Text.Encoding.CodePages is required for ExcelDataReader to handle various encodings -->
+    <NoWarn>$(NoWarn);NU1510</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Application layer references Domain only -->
+    <ProjectReference Include="..\CephasOps.Domain\CephasOps.Domain.csproj" />
+    <!-- Application also references Infrastructure for ApplicationDbContext -->
+    <!-- Note: In strict Clean Architecture, ApplicationDbContext would be behind an interface, -->
+    <!-- but for pragmatism, Application can reference Infrastructure here -->
+    <ProjectReference Include="..\CephasOps.Infrastructure\CephasOps.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Packages needed for Application services (interfaces, DTOs, etc.) -->
+    <PackageReference Include="Handlebars.Net" Version="2.1.6" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Abstractions" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.3" />
+    <PackageReference Include="QuestPDF" Version="2025.7.4" />
+    <PackageReference Include="Syncfusion.DocIO.Net.Core" Version="31.1.17" />
+    <PackageReference Include="Syncfusion.DocIORenderer.Net.Core" Version="31.1.17" />
+    <PackageReference Include="Syncfusion.Pdf.Net.Core" Version="31.1.17" />
+    <PackageReference Include="Syncfusion.XlsIO.Net.Core" Version="31.1.17" />
+    <PackageReference Include="Syncfusion.XlsIORenderer.Net.Core" Version="31.1.17" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.2.1" />
+    
+    <!-- Override vulnerable transitive dependencies -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+
+    <!-- Email connectivity (POP3/IMAP/SMTP) -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
+    <PackageReference Include="MailKit" Version="4.15.1" />
+    <PackageReference Include="MimeKit" Version="4.15.1" />
+
+    <!-- CSV Import/Export -->
+    <PackageReference Include="CsvHelper" Version="33.0.1" />
+
+    <!-- Excel parsing -->
+    <!-- ExcelDataReader added back as fallback for corrupted files that Syncfusion cannot handle -->
+    <PackageReference Include="ExcelDataReader" Version="3.6.0" />
+    <PackageReference Include="ExcelDataReader.DataSet" Version="3.6.0" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+    
+    <!-- PDF processing -->
+    <PackageReference Include="PdfPig" Version="0.1.8" />
+    <!-- PdfSharpCore removed - using Syncfusion.Pdf and SyncfusionExcelToPdfService instead -->
+    
+    <!-- Outlook MSG file parsing -->
+    <PackageReference Include="MSGReader" Version="5.5.1" />
+
+    <!-- Password hashing (modern format); legacy verification inlined for compatibility -->
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+
+    <!-- Command pipeline retry -->
+    <PackageReference Include="Polly" Version="8.5.2" />
+  </ItemGroup>
+
+</Project>
+

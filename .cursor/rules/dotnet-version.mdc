@@ -1,0 +1,14 @@
+---
+description: .NET SDK and target framework standard
+alwaysApply: true
+---
+
+# .NET Version Standard
+
+CephasOps is **strictly standardized on .NET 10.0.x and net10.0**.
+
+- **SDK:** Use `10.0.x` in workflows (`dotnet-version: '10.0.x'`), `global.json`, and any tooling.
+- **Target framework:** All backend and analyzer test projects use `<TargetFramework>net10.0</TargetFramework>`.
+- **Docs and prompts:** When referring to the stack, use ".NET 10" / "ASP.NET Core 10" / "net10.0". Do not suggest or introduce .NET 8, .NET 9, or any lower SDK/framework version unless the user explicitly asks for a documented exception.
+
+Do not downgrade the SDK or target framework in project files, workflows, or documentation.

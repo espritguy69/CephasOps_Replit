@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cephasops-api
+  labels:
+    app: cephasops-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cephasops-api
+  template:
+    metadata:
+      labels:
+        app: cephasops-api
+    spec:
+      containers:
+        - name: cephasops-api
+          image: cephasops/api:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: cephasops-backend-secrets
+            - configMapRef:
+                name: cephasops-backend-config
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30

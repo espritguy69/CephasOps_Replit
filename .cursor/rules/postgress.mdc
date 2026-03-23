@@ -1,0 +1,15 @@
+---
+alwaysApply: true
+---
+
+# PostgreSQL Connection Details
+
+**Host:** localhost  
+**Port:** 5432  
+**Database:** cephasops  
+
+Connection string must not be committed. Set via:
+- **Local default:** `backend/src/CephasOps.Api/appsettings.Development.json` → `ConnectionStrings:DefaultConnection` (used when `ASPNETCORE_ENVIRONMENT=Development`).
+- **Or** environment variable: `ConnectionStrings__DefaultConnection` = full connection string (e.g. Host=localhost;Port=5432;Database=cephasops;Username=postgres;Password=<secret>;SslMode=Disable;Include Error Detail=true).
+
+Production: use dedicated application user `cephasops_app` (non-superuser). See `backend/scripts/postgresql-seeds/00_create_cephasops_app_user.sql` for setup.

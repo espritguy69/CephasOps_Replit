@@ -1,0 +1,188 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>CephasOps.Infrastructure</name>
+    </assembly>
+    <members>
+        <member name="T:CephasOps.Infrastructure.Persistence.ApplicationDbContext">
+            <summary>
+            Application database context
+            </summary>
+        </member>
+        <member name="T:CephasOps.Infrastructure.Persistence.DatabaseSeeder">
+            <summary>
+            Database seeder for initial/default data
+            Seeds default company, SuperAdmin role, and default admin user
+            </summary>
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.DatabaseSeeder.SeedAsync">
+            <summary>
+            Seed the database with default data
+            </summary>
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.DatabaseSeeder.HashPassword(System.String)">
+            <summary>
+            Hash password using SHA256 (simple approach)
+            For production, consider using BCrypt or ASP.NET Core Identity PasswordHasher
+            </summary>
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.DatabaseSeeder.VerifyPassword(System.String,System.String)">
+            <summary>
+            Verify password hash
+            </summary>
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.DatabaseSeeder.SeedGponDepartmentAsync(System.Nullable{System.Guid})">
+            <summary>
+            Seed or find GPON department
+            </summary>
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.DatabaseSeeder.SeedDefaultOrderTypesAsync(System.Nullable{System.Guid},System.Nullable{System.Guid})">
+            <summary>
+            Seed default Order Types
+            </summary>
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.DatabaseSeeder.SeedDefaultInstallationTypesAsync(System.Nullable{System.Guid},System.Nullable{System.Guid})">
+            <summary>
+            Seed default Installation Types
+            </summary>
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.DatabaseSeeder.SeedDefaultBuildingTypesAsync(System.Nullable{System.Guid},System.Nullable{System.Guid})">
+            <summary>
+            Seed default Building Types
+            </summary>
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.DatabaseSeeder.SeedDefaultSplitterTypesAsync(System.Nullable{System.Guid},System.Nullable{System.Guid})">
+            <summary>
+            Seed default Splitter Types
+            </summary>
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.DatabaseSeeder.SeedGponServiceInstallersAsync(System.Nullable{System.Guid},System.Nullable{System.Guid})">
+            <summary>
+            Seed GPON Service Installers
+            </summary>
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.DatabaseSeeder.SeedMaterialCategoriesFromMaterialsAsync(System.Nullable{System.Guid})">
+            <summary>
+            Seed material categories from existing materials
+            Extracts unique categories from Materials table and creates MaterialCategory entries
+            </summary>
+        </member>
+        <member name="T:CephasOps.Infrastructure.Persistence.Migrations.InitialCreate">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.InitialCreate.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.InitialCreate.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.InitialCreate.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:CephasOps.Infrastructure.Persistence.Migrations.AddCompanyDocuments">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddCompanyDocuments.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddCompanyDocuments.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddCompanyDocuments.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:CephasOps.Infrastructure.Persistence.Migrations.AddDepartmentIdToPartnersBuildingsSplitters">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddDepartmentIdToPartnersBuildingsSplitters.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddDepartmentIdToPartnersBuildingsSplitters.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddDepartmentIdToPartnersBuildingsSplitters.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:CephasOps.Infrastructure.Persistence.Migrations.AddOrderTypeInstallationTypeBuildingTypeSplitterType">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddOrderTypeInstallationTypeBuildingTypeSplitterType.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddOrderTypeInstallationTypeBuildingTypeSplitterType.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddOrderTypeInstallationTypeBuildingTypeSplitterType.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:CephasOps.Infrastructure.Persistence.Migrations.AddVerticalsTable">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddVerticalsTable.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddVerticalsTable.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddVerticalsTable.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:CephasOps.Infrastructure.Persistence.Migrations.AddDepartmentIdToServiceInstaller">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddDepartmentIdToServiceInstaller.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddDepartmentIdToServiceInstaller.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddDepartmentIdToServiceInstaller.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:CephasOps.Infrastructure.Persistence.Migrations.AddDepartmentIdToMaterial_Update">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddDepartmentIdToMaterial_Update.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddDepartmentIdToMaterial_Update.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddDepartmentIdToMaterial_Update.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:CephasOps.Infrastructure.Persistence.Migrations.AddMaterialCategory">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddMaterialCategory.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddMaterialCategory.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddMaterialCategory.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:CephasOps.Infrastructure.Persistence.Migrations.AddPartnerForeignKeyToMaterial_Update">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddPartnerForeignKeyToMaterial_Update.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddPartnerForeignKeyToMaterial_Update.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddPartnerForeignKeyToMaterial_Update.BuildTargetModel(Microsoft.EntityFrameworkCore.ModelBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="T:CephasOps.Infrastructure.Persistence.Migrations.AddDepartmentIdToMaterial">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddDepartmentIdToMaterial.Up(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+        <member name="M:CephasOps.Infrastructure.Persistence.Migrations.AddDepartmentIdToMaterial.Down(Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder)">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>

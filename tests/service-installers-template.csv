@@ -1,0 +1,22 @@
+Name,Code,DepartmentName,Phone,Email,Level,IcNumber,BankName,BankAccountNumber,Address,EmergencyContact,IsActive,Type
+CHANDRASEKARAN VEERIAH,,GPON,+60 16-491 1325,-,Senior,,,,,,TRUE,In-house
+EDWIN DASS A/L YESU DAS,,GPON,+60 11-1081 9064,-,Junior,,,,,,TRUE,Subcontractor
+ISHAAN,,GPON,+60125156965,,Junior,,,,,,TRUE,In-house
+K. MARIAPPAN A/L KUPPATHAN,,GPON,+60 17-676 7625,-,Senior,,,,,,TRUE,Subcontractor
+KLAVINN RAJ A/L AROKKIASAMY,,GPON,+60 12-291 6386,-,Senior,,,,,,TRUE,Subcontractor
+MOHAMMAD ALIYASMAAN,,GPON,+60 17-494 7242,-,Junior,,,,,,TRUE,In-house
+MOHD TAKYIN BIN CHE ALI,,GPON,+60 13-515 5900,-,Senior,,,,,,TRUE,Subcontractor
+MUHAMAD QAIRUL HAIKAL BIN ABDULLAH,,GPON,+60 11-1690 3721,-,Junior,,,,,,TRUE,In-house
+MUHAMMAD AMMAR BIN MOHD GHAZI,,GPON,+60 11-7228 8644,-,Junior,,,,,,TRUE,In-house
+MUNIANDY A/L SOORINARAYANAN,,GPON,+60 16-319 8867,-,Senior,,,,,,TRUE,Subcontractor
+NORAFIZ HAFIZUL BIN ABDULLAH,,GPON,+60 17-943 7241,-,Senior,,,,,,TRUE,In-house
+RAVEEN NAIR A/L K RAHMAN,,GPON,+60 11-1081 8049,-,Senior,,,,,,TRUE,Subcontractor
+SARAVANAN A/L I. CHINNIAH,,GPON,+60 16-392 3026,-,Senior,,,,,,TRUE,Subcontractor
+SASIKUMAR A/L SEENIE,,GPON,+60 17-677 4982,-,Senior,,,,,,TRUE,Subcontractor
+SATHISVARAN A/L S P GURUNATHAN,,GPON,+60 10-273 6386,-,Senior,,,,,,TRUE,Subcontractor
+SHAMALAN A/L JOSEPH,,GPON,+60 11-2840 3172,-,Senior,,,,,,TRUE,In-house
+SIVA A/L THANGIAH,,GPON,+60 16-742 3600,-,Senior,,,,,,FALSE,In-house
+SIVANESVARAAN A/L S YANESAGAR,,GPON,+60 12-331 5104,-,Senior,,,,,,TRUE,Subcontractor
+SYLVESTER ELGIVA A/L SIMON,,GPON,+60 17-233 9040,-,Senior,,,,,,TRUE,In-house
+Test Service Installer,,GPON,+60123456789,si.test@cephas.com.my,Senior,,,,,,TRUE,In-house
+YELLESHUA JEEVAN A/L AROKKIASAMY,,GPON,+60 16-453 2305,-,Senior,,,,,,TRUE,Subcontractor

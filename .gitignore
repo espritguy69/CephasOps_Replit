@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+*.log
+logs/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+storybook-static/
+bin/
+obj/
+*.dll
+*.pdb
+*.exe
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+backend/src/CephasOps.Api/bin/
+backend/src/CephasOps.Api/uploads/

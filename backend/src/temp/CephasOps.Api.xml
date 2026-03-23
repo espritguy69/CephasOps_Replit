@@ -1,0 +1,1400 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>CephasOps.Api</name>
+    </assembly>
+    <members>
+        <member name="T:CephasOps.Api.Controllers.AdminController">
+            <summary>
+            Administrative endpoints for system maintenance and monitoring
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.AdminController.Reindex(System.Threading.CancellationToken)">
+            <summary>
+            Rebuild search indexes
+            </summary>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Success response</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.AdminController.FlushCache(System.Threading.CancellationToken)">
+            <summary>
+            Flush settings cache
+            </summary>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Success response</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.AdminController.GetHealth(System.Threading.CancellationToken)">
+            <summary>
+            Get system health status
+            </summary>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>System health information</returns>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.AuthController">
+            <summary>
+            Authentication endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.AuthController.Login(CephasOps.Application.Auth.DTOs.LoginRequestDto,System.Threading.CancellationToken)">
+            <summary>
+            Login and retrieve JWT tokens
+            </summary>
+            <param name="request">Login credentials</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>JWT tokens and user information</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.AuthController.Refresh(CephasOps.Application.Auth.DTOs.RefreshTokenRequestDto,System.Threading.CancellationToken)">
+            <summary>
+            Refresh access token using refresh token
+            </summary>
+            <param name="request">Refresh token</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>New JWT tokens</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.AuthController.GetCurrentUser(System.Threading.CancellationToken)">
+            <summary>
+            Get current user information
+            </summary>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Current user information</returns>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.BillingController">
+            <summary>
+            Billing and invoice management endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BillingController.GetInvoices(System.String,System.Nullable{System.Guid},System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.Threading.CancellationToken)">
+            <summary>
+            Get invoices with filtering
+            </summary>
+            <param name="status">Filter by status</param>
+            <param name="partnerId">Filter by partner</param>
+            <param name="fromDate">Filter from date</param>
+            <param name="toDate">Filter to date</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>List of invoices</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BillingController.GetInvoice(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get invoice by ID
+            </summary>
+            <param name="id">Invoice ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Invoice details</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BillingController.CreateInvoice(CephasOps.Application.Billing.DTOs.CreateInvoiceDto,System.Threading.CancellationToken)">
+            <summary>
+            Create a new invoice
+            </summary>
+            <param name="dto">Invoice data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Created invoice</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BillingController.UpdateInvoice(System.Guid,CephasOps.Application.Billing.DTOs.UpdateInvoiceDto,System.Threading.CancellationToken)">
+            <summary>
+            Update an existing invoice
+            </summary>
+            <param name="id">Invoice ID</param>
+            <param name="dto">Updated invoice data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Updated invoice</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BillingController.DeleteInvoice(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete an invoice
+            </summary>
+            <param name="id">Invoice ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>No content</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BillingController.GenerateInvoicePdf(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Generate invoice PDF
+            </summary>
+            <param name="id">Invoice ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>PDF file</returns>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.BillingRatecardController">
+            <summary>
+            Billing ratecard endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BillingRatecardController.GetBillingRatecards(System.Nullable{System.Guid},System.Nullable{System.Guid},System.Nullable{System.Guid},System.Nullable{System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            Get all billing ratecards for the current company
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BillingRatecardController.GetBillingRatecard(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get billing ratecard by ID
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BillingRatecardController.CreateBillingRatecard(CephasOps.Application.Billing.DTOs.CreateBillingRatecardDto,System.Threading.CancellationToken)">
+            <summary>
+            Create a new billing ratecard
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BillingRatecardController.UpdateBillingRatecard(System.Guid,CephasOps.Application.Billing.DTOs.UpdateBillingRatecardDto,System.Threading.CancellationToken)">
+            <summary>
+            Update an existing billing ratecard
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BillingRatecardController.DeleteBillingRatecard(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete a billing ratecard
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.BuildingsController">
+            <summary>
+            Buildings endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BuildingsController.GetBuildings(System.Nullable{System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            Get all buildings for the current company
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BuildingsController.GetBuilding(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get building by ID
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BuildingsController.CreateBuilding(CephasOps.Application.Buildings.DTOs.CreateBuildingDto,System.Threading.CancellationToken)">
+            <summary>
+            Create a new building
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BuildingsController.UpdateBuilding(System.Guid,CephasOps.Application.Buildings.DTOs.UpdateBuildingDto,System.Threading.CancellationToken)">
+            <summary>
+            Update an existing building
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BuildingsController.DeleteBuilding(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete a building
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.BuildingTypesController">
+            <summary>
+            BuildingType management endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BuildingTypesController.GetBuildingTypes(System.Nullable{System.Guid},System.Nullable{System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            Get building types list
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BuildingTypesController.GetBuildingType(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get building type by ID
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BuildingTypesController.CreateBuildingType(CephasOps.Application.Buildings.DTOs.CreateBuildingTypeDto,System.Threading.CancellationToken)">
+            <summary>
+            Create new building type
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BuildingTypesController.UpdateBuildingType(System.Guid,CephasOps.Application.Buildings.DTOs.UpdateBuildingTypeDto,System.Threading.CancellationToken)">
+            <summary>
+            Update building type
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.BuildingTypesController.DeleteBuildingType(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete building type
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.CompaniesController">
+            <summary>
+            Company management endpoints.
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.CompaniesController.GetCompanies(System.Nullable{System.Boolean},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get all companies with optional filters.
+            </summary>
+            <param name="isActive">Filter by active status.</param>
+            <param name="search">Case-insensitive search across name, short name, vertical.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.CompaniesController.GetCompany(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get a single company by ID.
+            </summary>
+            <param name="id">Company identifier.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.CompaniesController.CreateCompany(CephasOps.Application.Companies.DTOs.CreateCompanyDto,System.Threading.CancellationToken)">
+            <summary>
+            Create a new company.
+            </summary>
+            <param name="dto">Company data.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.CompaniesController.UpdateCompany(System.Guid,CephasOps.Application.Companies.DTOs.UpdateCompanyDto,System.Threading.CancellationToken)">
+            <summary>
+            Update an existing company.
+            </summary>
+            <param name="id">Company identifier.</param>
+            <param name="dto">Updated data.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.CompaniesController.DeleteCompany(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete a company.
+            </summary>
+            <param name="id">Company identifier.</param>
+            <param name="cancellationToken">Cancellation token.</param>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.DepartmentsController">
+            <summary>
+            Department management endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DepartmentsController.GetDepartments(System.Nullable{System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            Get departments list
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DepartmentsController.GetDepartment(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get department by ID
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DepartmentsController.CreateDepartment(CephasOps.Application.Departments.DTOs.CreateDepartmentDto,System.Threading.CancellationToken)">
+            <summary>
+            Create department
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DepartmentsController.UpdateDepartment(System.Guid,CephasOps.Application.Departments.DTOs.UpdateDepartmentDto,System.Threading.CancellationToken)">
+            <summary>
+            Update department
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DepartmentsController.DeleteDepartment(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete department
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DepartmentsController.GetMaterialAllocations(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get material allocations for a department
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DepartmentsController.CreateMaterialAllocation(System.Guid,CephasOps.Application.Departments.DTOs.CreateMaterialAllocationDto,System.Threading.CancellationToken)">
+            <summary>
+            Create material allocation
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DepartmentsController.DeleteMaterialAllocation(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete material allocation
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.DiagnosticController">
+            <summary>
+            Diagnostic endpoint to check database and seeding status
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DiagnosticController.CheckSeeding">
+            <summary>
+            Check if default admin user exists
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DiagnosticController.TriggerSeed">
+            <summary>
+            Manually trigger database seeding
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.DocumentsController">
+            <summary>
+            Document generation endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DocumentsController.GenerateInvoiceDocument(System.Guid,System.Nullable{System.Guid},System.Threading.CancellationToken)">
+            <summary>
+            Generate invoice document
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DocumentsController.GenerateJobDocket(System.Guid,System.Nullable{System.Guid},System.Threading.CancellationToken)">
+            <summary>
+            Generate job docket
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DocumentsController.GenerateRmaForm(System.Guid,System.Nullable{System.Guid},System.Threading.CancellationToken)">
+            <summary>
+            Generate RMA form
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DocumentsController.GetGeneratedDocuments(System.String,System.Nullable{System.Guid},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get generated documents
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DocumentsController.GetGeneratedDocument(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get generated document by ID
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.DocumentTemplatesController">
+            <summary>
+            Document templates management endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DocumentTemplatesController.GetDocumentTemplates(System.String,System.Nullable{System.Guid},System.Nullable{System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            Get document templates
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DocumentTemplatesController.GetDocumentTemplate(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get document template by ID
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DocumentTemplatesController.GetPlaceholderDefinitions(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get placeholder definitions for document type
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DocumentTemplatesController.CreateDocumentTemplate(CephasOps.Application.Settings.DTOs.CreateDocumentTemplateDto,System.Threading.CancellationToken)">
+            <summary>
+            Create document template
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DocumentTemplatesController.UpdateDocumentTemplate(System.Guid,CephasOps.Application.Settings.DTOs.UpdateDocumentTemplateDto,System.Threading.CancellationToken)">
+            <summary>
+            Update document template
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DocumentTemplatesController.DeleteDocumentTemplate(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete document template
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.DocumentTemplatesController.ActivateTemplate(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Activate document template
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.FilesController">
+            <summary>
+            File upload, download, and management endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.FilesController.UploadFile(Microsoft.AspNetCore.Http.IFormFile,System.String,System.Nullable{System.Guid},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Upload a file (photo, PDF, docket, etc.)
+            </summary>
+            <param name="file">The file to upload</param>
+            <param name="module">Optional module/category (e.g., "Orders", "RMA", "SIApp")</param>
+            <param name="entityId">Optional ID of the entity this file is attached to</param>
+            <param name="entityType">Optional type of entity (e.g., "Order", "RmaTicket")</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>File metadata</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.FilesController.DownloadFile(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Download a file by ID
+            </summary>
+            <param name="id">File ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>File stream</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.FilesController.GetFileMetadata(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get file metadata by ID
+            </summary>
+            <param name="id">File ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>File metadata</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.FilesController.DeleteFile(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete a file by ID (if allowed)
+            </summary>
+            <param name="id">File ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>No content</returns>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.GlobalSettingsController">
+            <summary>
+            Global settings management endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.GlobalSettingsController.GetGlobalSettings(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get all global settings
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.GlobalSettingsController.GetGlobalSetting(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get global setting by key
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.GlobalSettingsController.CreateGlobalSetting(CephasOps.Application.Settings.DTOs.CreateGlobalSettingDto,System.Threading.CancellationToken)">
+            <summary>
+            Create global setting
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.GlobalSettingsController.UpdateGlobalSetting(System.String,CephasOps.Application.Settings.DTOs.UpdateGlobalSettingDto,System.Threading.CancellationToken)">
+            <summary>
+            Update global setting
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.GlobalSettingsController.DeleteGlobalSetting(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Delete global setting
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.InstallationTypesController">
+            <summary>
+            InstallationType management endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.InstallationTypesController.GetInstallationTypes(System.Nullable{System.Guid},System.Nullable{System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            Get installation types list
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.InstallationTypesController.GetInstallationType(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get installation type by ID
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.InstallationTypesController.CreateInstallationType(CephasOps.Application.Orders.DTOs.CreateInstallationTypeDto,System.Threading.CancellationToken)">
+            <summary>
+            Create new installation type
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.InstallationTypesController.UpdateInstallationType(System.Guid,CephasOps.Application.Orders.DTOs.UpdateInstallationTypeDto,System.Threading.CancellationToken)">
+            <summary>
+            Update installation type
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.InstallationTypesController.DeleteInstallationType(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete installation type
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.InventoryController">
+            <summary>
+            Inventory management endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.InventoryController.GetMaterials(System.String,System.String,System.Nullable{System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            Get materials list
+            </summary>
+            <param name="category">Filter by category</param>
+            <param name="search">Search term</param>
+            <param name="isActive">Filter by active status</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>List of materials</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.InventoryController.GetMaterial(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get material by ID
+            </summary>
+            <param name="id">Material ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Material details</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.InventoryController.CreateMaterial(CephasOps.Application.Inventory.DTOs.CreateMaterialDto,System.Threading.CancellationToken)">
+            <summary>
+            Create a new material
+            </summary>
+            <param name="dto">Material data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Created material</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.InventoryController.UpdateMaterial(System.Guid,CephasOps.Application.Inventory.DTOs.UpdateMaterialDto,System.Threading.CancellationToken)">
+            <summary>
+            Update an existing material
+            </summary>
+            <param name="id">Material ID</param>
+            <param name="dto">Updated material data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Updated material</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.InventoryController.DeleteMaterial(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete a material
+            </summary>
+            <param name="id">Material ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>No content</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.InventoryController.GetStockBalances(System.Nullable{System.Guid},System.Nullable{System.Guid},System.Threading.CancellationToken)">
+            <summary>
+            Get stock balances
+            </summary>
+            <param name="locationId">Filter by location</param>
+            <param name="materialId">Filter by material</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>List of stock balances</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.InventoryController.GetStockMovements(System.Nullable{System.Guid},System.Nullable{System.Guid},System.String,System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.Threading.CancellationToken)">
+            <summary>
+            Get stock movements
+            </summary>
+            <param name="materialId">Filter by material</param>
+            <param name="locationId">Filter by location</param>
+            <param name="movementType">Filter by movement type</param>
+            <param name="fromDate">Filter from date</param>
+            <param name="toDate">Filter to date</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>List of stock movements</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.InventoryController.CreateStockMovement(CephasOps.Application.Inventory.DTOs.CreateStockMovementDto,System.Threading.CancellationToken)">
+            <summary>
+            Create a stock movement
+            </summary>
+            <param name="dto">Stock movement data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Created stock movement</returns>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.KpiProfilesController">
+            <summary>
+            KPI profiles management endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.KpiProfilesController.GetKpiProfiles(System.String,System.Nullable{System.Guid},System.Nullable{System.Guid},System.Nullable{System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            Get KPI profiles
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.KpiProfilesController.GetKpiProfile(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get KPI profile by ID
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.KpiProfilesController.GetEffectiveProfile(System.String,System.Nullable{System.Guid},System.Nullable{System.Guid},System.Nullable{System.DateTime},System.Threading.CancellationToken)">
+            <summary>
+            Get effective KPI profile for order context
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.KpiProfilesController.CreateKpiProfile(CephasOps.Application.Settings.DTOs.CreateKpiProfileDto,System.Threading.CancellationToken)">
+            <summary>
+            Create KPI profile
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.KpiProfilesController.UpdateKpiProfile(System.Guid,CephasOps.Application.Settings.DTOs.UpdateKpiProfileDto,System.Threading.CancellationToken)">
+            <summary>
+            Update KPI profile
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.KpiProfilesController.DeleteKpiProfile(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete KPI profile
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.KpiProfilesController.SetAsDefault(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Set KPI profile as default
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.KpiProfilesController.EvaluateOrder(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Evaluate KPI for an order
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.MaterialCategoriesController">
+            <summary>
+            Material categories management endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.MaterialCategoriesController.GetMaterialCategories(System.Nullable{System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            Get material categories list
+            </summary>
+            <param name="isActive">Filter by active status</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>List of material categories</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.MaterialCategoriesController.GetMaterialCategory(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get material category by ID
+            </summary>
+            <param name="id">Category ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Category details</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.MaterialCategoriesController.CreateMaterialCategory(CephasOps.Application.Inventory.DTOs.CreateMaterialCategoryDto,System.Threading.CancellationToken)">
+            <summary>
+            Create a new material category
+            </summary>
+            <param name="dto">Category data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Created category</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.MaterialCategoriesController.UpdateMaterialCategory(System.Guid,CephasOps.Application.Inventory.DTOs.UpdateMaterialCategoryDto,System.Threading.CancellationToken)">
+            <summary>
+            Update an existing material category
+            </summary>
+            <param name="id">Category ID</param>
+            <param name="dto">Updated category data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Updated category</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.MaterialCategoriesController.DeleteMaterialCategory(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete a material category
+            </summary>
+            <param name="id">Category ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>No content</returns>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.MaterialTemplatesController">
+            <summary>
+            Material templates management endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.MaterialTemplatesController.GetMaterialTemplates(System.String,System.Nullable{System.Guid},System.Nullable{System.Guid},System.Nullable{System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            Get material templates
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.MaterialTemplatesController.GetMaterialTemplate(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get material template by ID
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.MaterialTemplatesController.GetEffectiveTemplate(System.String,System.Nullable{System.Guid},System.Nullable{System.Guid},System.Threading.CancellationToken)">
+            <summary>
+            Get effective material template for order context
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.MaterialTemplatesController.CreateMaterialTemplate(CephasOps.Application.Settings.DTOs.CreateMaterialTemplateDto,System.Threading.CancellationToken)">
+            <summary>
+            Create material template
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.MaterialTemplatesController.UpdateMaterialTemplate(System.Guid,CephasOps.Application.Settings.DTOs.UpdateMaterialTemplateDto,System.Threading.CancellationToken)">
+            <summary>
+            Update material template
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.MaterialTemplatesController.DeleteMaterialTemplate(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete material template
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.MaterialTemplatesController.SetAsDefault(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Set material template as default
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.NotificationsController">
+            <summary>
+            Notification endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.NotificationsController.GetNotifications(System.String,System.String,System.Nullable{System.Int32},System.Threading.CancellationToken)">
+            <summary>
+            Get notifications for current user
+            </summary>
+            <param name="status">Filter by status (Unread, Read, Archived)</param>
+            <param name="type">Filter by type</param>
+            <param name="limit">Limit number of results</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>List of notifications</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.NotificationsController.GetUnreadCount(System.Threading.CancellationToken)">
+            <summary>
+            Get unread notification count for current user
+            </summary>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Unread count</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.NotificationsController.MarkAllAsRead(System.Threading.CancellationToken)">
+            <summary>
+            Mark all notifications as read for current user
+            </summary>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Success status</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.NotificationsController.GetNotification(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get notification by ID
+            </summary>
+            <param name="id">Notification ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Notification details</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.NotificationsController.MarkNotificationRead(System.Guid,CephasOps.Application.Notifications.DTOs.MarkNotificationStatusDto,System.Threading.CancellationToken)">
+            <summary>
+            Mark notification as read or unread
+            </summary>
+            <param name="id">Notification ID</param>
+            <param name="dto">Status update data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Updated notification</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.NotificationsController.ArchiveNotification(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Archive a notification
+            </summary>
+            <param name="id">Notification ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Updated notification</returns>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.OrdersController">
+            <summary>
+            Order management endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.OrdersController.GetOrders(System.String,System.Nullable{System.Guid},System.Nullable{System.Guid},System.Nullable{System.Guid},System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.Threading.CancellationToken)">
+            <summary>
+            Get orders with filtering
+            </summary>
+            <param name="status">Filter by status</param>
+            <param name="partnerId">Filter by partner</param>
+            <param name="assignedSiId">Filter by assigned SI</param>
+            <param name="buildingId">Filter by building</param>
+            <param name="fromDate">Filter from date</param>
+            <param name="toDate">Filter to date</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>List of orders</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.OrdersController.GetOrder(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get order by ID
+            </summary>
+            <param name="id">Order ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Order details</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.OrdersController.CreateOrder(CephasOps.Application.Orders.DTOs.CreateOrderDto,System.Threading.CancellationToken)">
+            <summary>
+            Create a new order
+            </summary>
+            <param name="dto">Order data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Created order</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.OrdersController.UpdateOrder(System.Guid,CephasOps.Application.Orders.DTOs.UpdateOrderDto,System.Threading.CancellationToken)">
+            <summary>
+            Update an existing order
+            </summary>
+            <param name="id">Order ID</param>
+            <param name="dto">Updated order data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Updated order</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.OrdersController.DeleteOrder(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete an order
+            </summary>
+            <param name="id">Order ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>No content</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.OrdersController.ChangeOrderStatus(System.Guid,CephasOps.Application.Orders.DTOs.ChangeOrderStatusDto,System.Threading.CancellationToken)">
+            <summary>
+            Change order status (via workflow engine)
+            </summary>
+            <param name="id">Order ID</param>
+            <param name="dto">Status change data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Updated order</returns>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.OrderTypesController">
+            <summary>
+            OrderType management endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.OrderTypesController.GetOrderTypes(System.Nullable{System.Guid},System.Nullable{System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            Get order types list
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.OrderTypesController.GetOrderType(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get order type by ID
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.OrderTypesController.CreateOrderType(CephasOps.Application.Orders.DTOs.CreateOrderTypeDto,System.Threading.CancellationToken)">
+            <summary>
+            Create new order type
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.OrderTypesController.UpdateOrderType(System.Guid,CephasOps.Application.Orders.DTOs.UpdateOrderTypeDto,System.Threading.CancellationToken)">
+            <summary>
+            Update order type
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.OrderTypesController.DeleteOrderType(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete order type
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.ParserController">
+            <summary>
+            Parser endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.ParserController.GetParseSessions(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get parse sessions
+            </summary>
+            <param name="status">Filter by status</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>List of parse sessions</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.ParserController.GetParseSession(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get parse session by ID
+            </summary>
+            <param name="id">Parse session ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Parse session details</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.ParserController.GetParsedOrderDrafts(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get parsed order drafts for a session
+            </summary>
+            <param name="sessionId">Parse session ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>List of parsed order drafts</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.ParserController.GetParsedOrderDraft(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get parsed order draft by ID
+            </summary>
+            <param name="id">Parsed order draft ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Parsed order draft details</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.ParserController.ApproveParsedOrder(System.Guid,CephasOps.Application.Parser.DTOs.ApproveParsedOrderDto,System.Threading.CancellationToken)">
+            <summary>
+            Approve a parsed order draft
+            </summary>
+            <param name="id">Parsed order draft ID</param>
+            <param name="dto">Approval data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Updated parsed order draft</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.ParserController.RejectParsedOrder(System.Guid,CephasOps.Application.Parser.DTOs.RejectParsedOrderDto,System.Threading.CancellationToken)">
+            <summary>
+            Reject a parsed order draft
+            </summary>
+            <param name="id">Parsed order draft ID</param>
+            <param name="dto">Rejection data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Updated parsed order draft</returns>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.PartnersController">
+            <summary>
+            Partners endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PartnersController.GetPartners(System.Nullable{System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            Get all partners for the current company
+            </summary>
+            <param name="isActive">Filter by active status</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>List of partners</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PartnersController.GetPartner(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get partner by ID
+            </summary>
+            <param name="id">Partner ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Partner details</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PartnersController.CreatePartner(CephasOps.Application.Companies.DTOs.CreatePartnerDto,System.Threading.CancellationToken)">
+            <summary>
+            Create a new partner
+            </summary>
+            <param name="dto">Partner data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Created partner</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PartnersController.UpdatePartner(System.Guid,CephasOps.Application.Companies.DTOs.UpdatePartnerDto,System.Threading.CancellationToken)">
+            <summary>
+            Update an existing partner
+            </summary>
+            <param name="id">Partner ID</param>
+            <param name="dto">Updated partner data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Updated partner</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PartnersController.DeletePartner(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete a partner
+            </summary>
+            <param name="id">Partner ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>No content</returns>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.PayrollController">
+            <summary>
+            Payroll management endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PayrollController.GetPayrollPeriods(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get payroll periods
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PayrollController.GetPayrollPeriod(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get payroll period by ID
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PayrollController.CreatePayrollPeriod(CephasOps.Application.Payroll.Services.CreatePayrollPeriodDto,System.Threading.CancellationToken)">
+            <summary>
+            Create payroll period
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PayrollController.GetPayrollRuns(System.Nullable{System.Guid},System.String,System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.Threading.CancellationToken)">
+            <summary>
+            Get payroll runs
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PayrollController.GetPayrollRun(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get payroll run by ID
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PayrollController.CreatePayrollRun(CephasOps.Application.Payroll.DTOs.CreatePayrollRunDto,System.Threading.CancellationToken)">
+            <summary>
+            Create payroll run
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PayrollController.FinalizePayrollRun(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Finalize payroll run
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PayrollController.MarkPayrollRunPaid(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Mark payroll run as paid
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PayrollController.GetJobEarningRecords(System.Nullable{System.Guid},System.String,System.Nullable{System.Guid},System.Threading.CancellationToken)">
+            <summary>
+            Get job earning records
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PayrollController.GetSiRatePlans(System.Nullable{System.Guid},System.Nullable{System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            Get SI rate plans
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PayrollController.GetSiRatePlan(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get SI rate plan by ID
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PayrollController.CreateSiRatePlan(CephasOps.Application.Payroll.DTOs.CreateSiRatePlanDto,System.Threading.CancellationToken)">
+            <summary>
+            Create SI rate plan
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PayrollController.UpdateSiRatePlan(System.Guid,CephasOps.Application.Payroll.DTOs.CreateSiRatePlanDto,System.Threading.CancellationToken)">
+            <summary>
+            Update SI rate plan
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.PnlController">
+            <summary>
+            P&amp;L management endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PnlController.GetPnlSummary(System.Nullable{System.Guid},System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.Threading.CancellationToken)">
+            <summary>
+            Get P&amp;L summary
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PnlController.GetPnlOrderDetails(System.Nullable{System.Guid},System.Nullable{System.Guid},System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.Threading.CancellationToken)">
+            <summary>
+            Get P&amp;L order details
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PnlController.RebuildPnl(CephasOps.Api.Controllers.RebuildPnlDto,System.Threading.CancellationToken)">
+            <summary>
+            Rebuild P&amp;L for a period
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PnlController.GetPnlPeriods(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get P&amp;L periods
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PnlController.GetOverheadEntries(System.Nullable{System.Guid},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get overhead entries
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PnlController.CreateOverheadEntry(CephasOps.Application.Pnl.DTOs.CreateOverheadEntryDto,System.Threading.CancellationToken)">
+            <summary>
+            Create overhead entry
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.PnlController.DeleteOverheadEntry(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete overhead entry
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.RebuildPnlDto">
+            <summary>
+            Rebuild P&amp;L request DTO
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.RMAController">
+            <summary>
+            RMA management endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.RMAController.GetRmaRequests(System.Nullable{System.Guid},System.String,System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.Threading.CancellationToken)">
+            <summary>
+            Get RMA requests with filtering
+            </summary>
+            <param name="partnerId">Filter by partner</param>
+            <param name="status">Filter by status</param>
+            <param name="fromDate">Filter from date</param>
+            <param name="toDate">Filter to date</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>List of RMA requests</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.RMAController.GetRmaRequest(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get RMA request by ID
+            </summary>
+            <param name="id">RMA request ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>RMA request details</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.RMAController.CreateRmaRequest(CephasOps.Application.RMA.DTOs.CreateRmaRequestDto,System.Threading.CancellationToken)">
+            <summary>
+            Create a new RMA request
+            </summary>
+            <param name="dto">RMA request data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Created RMA request</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.RMAController.UpdateRmaRequest(System.Guid,CephasOps.Application.RMA.DTOs.UpdateRmaRequestDto,System.Threading.CancellationToken)">
+            <summary>
+            Update an existing RMA request
+            </summary>
+            <param name="id">RMA request ID</param>
+            <param name="dto">Updated RMA request data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Updated RMA request</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.RMAController.DeleteRmaRequest(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete an RMA request
+            </summary>
+            <param name="id">RMA request ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>No content</returns>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.SchedulerController">
+            <summary>
+            Scheduler endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.SchedulerController.GetCalendar(System.DateTime,System.DateTime,System.Threading.CancellationToken)">
+            <summary>
+            Get calendar view for date range
+            </summary>
+            <param name="fromDate">Start date</param>
+            <param name="toDate">End date</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Calendar view</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.SchedulerController.GetScheduleSlots(System.Nullable{System.Guid},System.Nullable{System.DateTime},System.Threading.CancellationToken)">
+            <summary>
+            Get schedule slots
+            </summary>
+            <param name="siId">Filter by SI ID</param>
+            <param name="date">Filter by date</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>List of schedule slots</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.SchedulerController.GetSiAvailability(System.Guid,System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.Threading.CancellationToken)">
+            <summary>
+            Get SI availability
+            </summary>
+            <param name="siId">SI ID</param>
+            <param name="fromDate">Start date</param>
+            <param name="toDate">End date</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>List of SI availabilities</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.SchedulerController.CreateScheduleSlot(CephasOps.Application.Scheduler.DTOs.CreateScheduleSlotDto,System.Threading.CancellationToken)">
+            <summary>
+            Create a schedule slot
+            </summary>
+            <param name="dto">Schedule slot data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Created schedule slot</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.SchedulerController.CreateSiAvailability(CephasOps.Application.Scheduler.DTOs.CreateSiAvailabilityDto,System.Threading.CancellationToken)">
+            <summary>
+            Create SI availability
+            </summary>
+            <param name="dto">SI availability data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Created SI availability</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.SchedulerController.GetUnassignedOrders(System.Nullable{System.Guid},System.Nullable{System.DateTime},System.Nullable{System.DateTime},System.Threading.CancellationToken)">
+            <summary>
+            Get unassigned orders (pending orders not yet scheduled)
+            </summary>
+            <param name="partnerId">Filter by partner ID</param>
+            <param name="fromDate">Filter from date</param>
+            <param name="toDate">Filter to date</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>List of unassigned orders</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.SchedulerController.UpdateScheduleSlot(System.Guid,CephasOps.Application.Scheduler.DTOs.UpdateScheduleSlotDto,System.Threading.CancellationToken)">
+            <summary>
+            Update schedule slot (for rescheduling)
+            </summary>
+            <param name="slotId">Slot ID</param>
+            <param name="dto">Update data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Updated schedule slot</returns>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.ServiceInstallersController">
+            <summary>
+            Service Installers endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.ServiceInstallersController.GetServiceInstallers(System.Nullable{System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            Get all service installers for the current company
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.ServiceInstallersController.GetServiceInstaller(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get service installer by ID
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.ServiceInstallersController.CreateServiceInstaller(CephasOps.Application.ServiceInstallers.DTOs.CreateServiceInstallerDto,System.Threading.CancellationToken)">
+            <summary>
+            Create a new service installer
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.ServiceInstallersController.UpdateServiceInstaller(System.Guid,CephasOps.Application.ServiceInstallers.DTOs.UpdateServiceInstallerDto,System.Threading.CancellationToken)">
+            <summary>
+            Update an existing service installer
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.ServiceInstallersController.DeleteServiceInstaller(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete a service installer
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.SplittersController">
+            <summary>
+            Splitters endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.SplittersController.GetSplitters(System.Nullable{System.Guid},System.Nullable{System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            Get all splitters for the current company
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.SplittersController.GetSplitter(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get splitter by ID
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.SplittersController.CreateSplitter(CephasOps.Application.Buildings.DTOs.CreateSplitterDto,System.Threading.CancellationToken)">
+            <summary>
+            Create a new splitter
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.SplittersController.UpdateSplitter(System.Guid,CephasOps.Application.Buildings.DTOs.UpdateSplitterDto,System.Threading.CancellationToken)">
+            <summary>
+            Update an existing splitter
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.SplittersController.DeleteSplitter(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete a splitter
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.SplittersController.UpdateSplitterPort(System.Guid,System.Guid,CephasOps.Application.Buildings.DTOs.UpdateSplitterPortDto,System.Threading.CancellationToken)">
+            <summary>
+            Update a splitter port
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.SplitterTypesController">
+            <summary>
+            SplitterType management endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.SplitterTypesController.GetSplitterTypes(System.Nullable{System.Guid},System.Nullable{System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            Get splitter types list
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.SplitterTypesController.GetSplitterType(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get splitter type by ID
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.SplitterTypesController.CreateSplitterType(CephasOps.Application.Buildings.DTOs.CreateSplitterTypeDto,System.Threading.CancellationToken)">
+            <summary>
+            Create new splitter type
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.SplitterTypesController.UpdateSplitterType(System.Guid,CephasOps.Application.Buildings.DTOs.UpdateSplitterTypeDto,System.Threading.CancellationToken)">
+            <summary>
+            Update splitter type
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.SplitterTypesController.DeleteSplitterType(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete splitter type
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Controllers.TasksController">
+            <summary>
+            Task management endpoints
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.TasksController.GetTasks(System.Nullable{System.Guid},System.Nullable{System.Guid},System.Nullable{System.Guid},System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get tasks with filtering
+            </summary>
+            <param name="assignedToUserId">Filter by assigned user</param>
+            <param name="requestedByUserId">Filter by requester</param>
+            <param name="departmentId">Filter by department</param>
+            <param name="status">Filter by status</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>List of tasks</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.TasksController.GetTask(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get task by ID
+            </summary>
+            <param name="id">Task ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Task details</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.TasksController.CreateTask(CephasOps.Application.Tasks.DTOs.CreateTaskDto,System.Threading.CancellationToken)">
+            <summary>
+            Create a new task
+            </summary>
+            <param name="dto">Task data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Created task</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.TasksController.UpdateTask(System.Guid,CephasOps.Application.Tasks.DTOs.UpdateTaskDto,System.Threading.CancellationToken)">
+            <summary>
+            Update an existing task
+            </summary>
+            <param name="id">Task ID</param>
+            <param name="dto">Updated task data</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>Updated task</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.TasksController.DeleteTask(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete a task
+            </summary>
+            <param name="id">Task ID</param>
+            <param name="cancellationToken">Cancellation token</param>
+            <returns>No content</returns>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.WorkflowController.ExecuteTransition(CephasOps.Application.Workflow.DTOs.ExecuteTransitionDto,System.Threading.CancellationToken)">
+            <summary>
+            Execute a workflow transition for an entity
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.WorkflowController.GetAllowedTransitions(System.String,System.Guid,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get allowed transitions for an entity in its current status
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.WorkflowController.CanTransition(System.String,System.Guid,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Check if a transition is allowed
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.WorkflowController.GetWorkflowJob(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get workflow job by ID
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.WorkflowController.GetWorkflowJobs(System.String,System.Guid,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Get workflow jobs for an entity
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.WorkflowDefinitionsController.GetWorkflowDefinitions(System.String,System.Nullable{System.Boolean},System.Threading.CancellationToken)">
+            <summary>
+            Get all workflow definitions for the current company
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.WorkflowDefinitionsController.GetWorkflowDefinition(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get workflow definition by ID
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.WorkflowDefinitionsController.GetEffectiveWorkflowDefinition(System.String,System.Nullable{System.Guid},System.Threading.CancellationToken)">
+            <summary>
+            Get effective workflow definition for an entity type
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.WorkflowDefinitionsController.CreateWorkflowDefinition(CephasOps.Application.Workflow.DTOs.CreateWorkflowDefinitionDto,System.Threading.CancellationToken)">
+            <summary>
+            Create a new workflow definition
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.WorkflowDefinitionsController.UpdateWorkflowDefinition(System.Guid,CephasOps.Application.Workflow.DTOs.UpdateWorkflowDefinitionDto,System.Threading.CancellationToken)">
+            <summary>
+            Update an existing workflow definition
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.WorkflowDefinitionsController.DeleteWorkflowDefinition(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete a workflow definition
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.WorkflowDefinitionsController.GetTransitions(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Get transitions for a workflow definition
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.WorkflowDefinitionsController.AddTransition(System.Guid,CephasOps.Application.Workflow.DTOs.CreateWorkflowTransitionDto,System.Threading.CancellationToken)">
+            <summary>
+            Add a transition to a workflow definition
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.WorkflowDefinitionsController.UpdateTransition(System.Guid,CephasOps.Application.Workflow.DTOs.UpdateWorkflowTransitionDto,System.Threading.CancellationToken)">
+            <summary>
+            Update a workflow transition
+            </summary>
+        </member>
+        <member name="M:CephasOps.Api.Controllers.WorkflowDefinitionsController.DeleteTransition(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Delete a workflow transition
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.Converters.NullableGuidJsonConverter">
+            <summary>
+            JSON converter for nullable Guid that handles empty strings as null
+            </summary>
+        </member>
+        <member name="T:CephasOps.Api.SwaggerConfiguration">
+            <summary>
+            Swagger/OpenAPI configuration
+            </summary>
+        </member>
+        <member name="T:Program">
+            <summary>
+            Auto-generated public partial Program class for top-level statement apps.
+            </summary>
+        </member>
+    </members>
+</doc>

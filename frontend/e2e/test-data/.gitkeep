@@ -1,0 +1,2 @@
+# Placeholder for E2E test data. Credentials come from env (TEST_EMAIL, TEST_PASSWORD).
+# Add static fixtures (e.g. JSON) here if needed for multi-tenant or role tests.

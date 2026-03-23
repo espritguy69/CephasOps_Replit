@@ -1,0 +1,88 @@
+# CephasOps API + worker + PostgreSQL + Redis (optional).
+# From repo root: docker compose -f infra/docker/docker-compose.yml up -d
+# Set env or .env: ConnectionStrings__DefaultConnection, ConnectionStrings__Redis (optional), Jwt__SecretKey, etc.
+
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=${ConnectionStrings__DefaultConnection:-Host=db;Port=5432;Database=cephasops;Username=cephasops_app;Password=changeme;SslMode=Disable}
+      - ConnectionStrings__Redis=redis:6379
+      - Jwt__SecretKey=${Jwt__SecretKey:-change-me-in-production-min-16-chars}
+      - ProductionRoles__RunJobWorkers=false
+      - ProductionRoles__RunGuardian=false
+      - ProductionRoles__RunStorageLifecycle=false
+      - ProductionRoles__RunMetricsAggregation=false
+      - ProductionRoles__RunWatchdog=false
+      - ProductionRoles__RunSchedulers=false
+      - ProductionRoles__RunEventDispatcher=false
+      - ProductionRoles__RunNotificationWorkers=false
+      - ProductionRoles__RunIntegrationWorkers=false
+      - ProductionRoles__RunEmailCleanup=false
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=${ConnectionStrings__DefaultConnection:-Host=db;Port=5432;Database=cephasops;Username=cephasops_app;Password=changeme;SslMode=Disable}
+      - ConnectionStrings__Redis=redis:6379
+      - Jwt__SecretKey=${Jwt__SecretKey:-change-me-in-production-min-16-chars}
+      - ProductionRoles__RunJobWorkers=true
+      - ProductionRoles__RunGuardian=true
+      - ProductionRoles__RunStorageLifecycle=true
+      - ProductionRoles__RunMetricsAggregation=true
+      - ProductionRoles__RunWatchdog=true
+      - ProductionRoles__RunSchedulers=true
+      - ProductionRoles__RunEventDispatcher=true
+      - ProductionRoles__RunNotificationWorkers=true
+      - ProductionRoles__RunIntegrationWorkers=true
+      - ProductionRoles__RunEmailCleanup=true
+    command: ["dotnet", "CephasOps.Api.dll"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: cephasops
+      POSTGRES_USER: cephasops_app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cephasops_app -d cephasops"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  pgdata:

@@ -1,0 +1,26 @@
+---
+description: Tenant safety architecture enforcement
+alwaysApply: true
+---
+
+CephasOps enforces strict tenant isolation.
+
+Rules:
+
+• Tenant-owned writes must occur inside a valid tenant scope
+• TenantScopeExecutor is the standard execution boundary
+• TenantSafetyGuard protects persistence
+• CompanyId must be propagated for tenant-owned jobs/events/webhooks
+
+Reject solutions that:
+
+• write tenant-scoped entities without tenant context
+• silently fallback from tenant scope to platform bypass
+• bypass TenantSafetyGuard
+
+Before implementation, determine:
+
+1. Tenant or platform execution
+2. Executor method required
+3. Null-company behavior
+4. Required tests

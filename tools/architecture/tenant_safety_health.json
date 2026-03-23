@@ -1,0 +1,115 @@
+{
+  "deductions": {
+    "sensitiveFilesChanged": 0,
+    "executorGap": 0,
+    "allowlistIncrease": 0,
+    "documentationIntegrity": 0,
+    "manualScope": 40
+  },
+  "documentation": {
+    "guardDocDriftConfigured": true,
+    "primaryDocsExist": true,
+    "diagramInSync": true
+  },
+  "testHealth": {
+    "analyzerTestsExist": true
+  },
+  "trend": "Stable",
+  "allowlist": {
+    "manualScopeAllowed": 10,
+    "executorNotRequired": 8
+  },
+  "guards": {
+    "financialIsolation": {
+      "documentedReport": "backend/docs/operations/FINANCIAL_ISOLATION_GUARD_REPORT.md",
+      "enforcement": "runtime",
+      "coverage": "BillingService, PayrollService, OrderPayoutSnapshotService, OrderProfitabilityService, PnlService, RateEngineService, PayoutAnomalyService"
+    },
+    "eventStoreConsistency": {
+      "documentedReport": "backend/docs/operations/EVENTSTORE_CONSISTENCY_GUARD_REPORT.md",
+      "enforcement": "runtime",
+      "coverage": "EventStoreRepository.AppendAsync, AppendInCurrentTransaction"
+    }
+  },
+  "executorAdoption": {
+    "allowlisted": 8,
+    "gapFiles": [],
+    "withExecutor": 10,
+    "total": 18
+  },
+  "enforcementLimitations": [
+    "Guard failures (finance, EventStore) are runtime-only; not auto-detected in CI.",
+    "EventStore append/replay scope is not verified by analyzer; EventStoreConsistencyGuard is runtime-only.",
+    "Approved bypass usage is allowlisted; new bypass locations require allowlist entry with reason."
+  ],
+  "overallStatus": "Drifting",
+  "safetyScore": 60,
+  "sensitiveFilesChanged": [],
+  "manualScope": {
+    "violationLocations": [
+      {
+        "file": "backend/src/CephasOps.Application/Common/FinancialIsolationGuard.cs",
+        "kind": "CurrentTenantId",
+        "line": 25
+      },
+      {
+        "file": "backend/src/CephasOps.Application/Common/FinancialIsolationGuard.cs",
+        "kind": "CurrentTenantId",
+        "line": 28
+      },
+      {
+        "file": "backend/src/CephasOps.Infrastructure/Persistence/EventStoreConsistencyGuard.cs",
+        "kind": "CurrentTenantId",
+        "line": 24
+      },
+      {
+        "file": "backend/src/CephasOps.Infrastructure/Persistence/EventStoreConsistencyGuard.cs",
+        "kind": "CurrentTenantId",
+        "line": 27
+      }
+    ],
+    "allowlisted": {
+      "currentTenantId": 37,
+      "enterBypass": 10,
+      "exitBypass": 7
+    },
+    "unallowlisted": {
+      "currentTenantId": 4,
+      "enterBypass": 0,
+      "exitBypass": 0
+    }
+  },
+  "generatedAt": "2026-03-13T14:20:13.5279163+08:00",
+  "approvedPlatformBypass": {
+    "note": "Bypass only via TenantScopeExecutor.RunWithPlatformBypassAsync or allowlisted paths",
+    "allowlistPath": "tools/tenant_safety_ci_allowlist.json",
+    "summary": "manual_scope_allowed and executor_not_required in allowlist"
+  },
+  "sensitiveFiles": [
+    {
+      "name": "TenantSafetyGuard",
+      "changedInBranch": false,
+      "path": "backend/src/CephasOps.Infrastructure/Persistence/TenantSafetyGuard.cs"
+    },
+    {
+      "name": "TenantScopeExecutor",
+      "changedInBranch": false,
+      "path": "backend/src/CephasOps.Infrastructure/Persistence/TenantScopeExecutor.cs"
+    },
+    {
+      "name": "SiWorkflowGuard",
+      "changedInBranch": false,
+      "path": "backend/src/CephasOps.Application/Workflow/SiWorkflowGuard.cs"
+    },
+    {
+      "name": "FinancialIsolationGuard",
+      "changedInBranch": false,
+      "path": "backend/src/CephasOps.Application/Common/FinancialIsolationGuard.cs"
+    },
+    {
+      "name": "EventStoreConsistencyGuard",
+      "changedInBranch": false,
+      "path": "backend/src/CephasOps.Infrastructure/Persistence/EventStoreConsistencyGuard.cs"
+    }
+  ]
+}

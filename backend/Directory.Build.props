@@ -1,0 +1,31 @@
+<Project>
+  <PropertyGroup>
+    <!-- Base version - will be overridden by GitVersion if available -->
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <VersionSuffix></VersionSuffix>
+    <Version Condition="'$(Version)' == ''">$(VersionPrefix)</Version>
+    
+    <!-- Assembly versioning -->
+    <AssemblyVersion>$(Version).0</AssemblyVersion>
+    <FileVersion>$(Version).0</FileVersion>
+    <InformationalVersion>$(Version)</InformationalVersion>
+    
+    <!-- Company and product info -->
+    <Company>CephasOps</Company>
+    <Product>CephasOps Operations Platform</Product>
+    <Copyright>Copyright © CephasOps $(Year)</Copyright>
+    
+    <!-- Generate documentation file -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+  
+  <!-- GitVersion integration (if GitVersion is installed) -->
+  <PropertyGroup Condition="'$(GitVersion_NuGetVersion)' != ''">
+    <Version>$(GitVersion_NuGetVersion)</Version>
+    <AssemblyVersion>$(GitVersion_AssemblySemVer)</AssemblyVersion>
+    <FileVersion>$(GitVersion_MajorMinorPatch).$(GitVersion_CommitsSinceVersionSource)</FileVersion>
+    <InformationalVersion>$(GitVersion_InformationalVersion)</InformationalVersion>
+  </PropertyGroup>
+</Project>
+

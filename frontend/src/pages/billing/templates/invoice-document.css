@@ -1,0 +1,223 @@
+/**
+ * Invoice Document - Print layout
+ * A4 page, no app chrome, for Print and PDF generation
+ */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 20mm;
+  }
+
+  body.invoice-print-mode * {
+    visibility: hidden;
+  }
+
+  body.invoice-print-mode .invoice-document,
+  body.invoice-print-mode .invoice-document * {
+    visibility: visible;
+  }
+
+  body.invoice-print-mode .invoice-document {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
+
+.invoice-document {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 11pt;
+  line-height: 1.4;
+  color: #1a1a1a;
+  max-width: 210mm;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.invoice-document .page-break {
+  page-break-before: always;
+}
+
+.invoice-document .no-break {
+  page-break-inside: avoid;
+}
+
+/* Company letterhead */
+.invoice-document .letterhead {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.invoice-document .letterhead h1 {
+  font-size: 18pt;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  color: #111827;
+}
+
+.invoice-document .letterhead .letterhead-detail {
+  font-size: 10pt;
+  color: #4b5563;
+  margin: 2px 0;
+}
+
+/* Invoice metadata */
+.invoice-document .invoice-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.invoice-document .invoice-meta .bill-to {
+  flex: 1;
+}
+
+.invoice-document .invoice-meta .bill-to h3 {
+  font-size: 9pt;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  margin: 0 0 8px 0;
+}
+
+.invoice-document .invoice-meta .bill-to .client-name {
+  font-weight: 600;
+  font-size: 12pt;
+  margin-bottom: 4px;
+}
+
+.invoice-document .invoice-meta .bill-to .client-detail {
+  font-size: 10pt;
+  color: #4b5563;
+  margin: 2px 0;
+}
+
+.invoice-document .invoice-meta .invoice-info {
+  text-align: right;
+  min-width: 180px;
+}
+
+.invoice-document .invoice-meta .invoice-info .info-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin: 4px 0;
+}
+
+.invoice-document .invoice-meta .invoice-info .info-label {
+  font-weight: 500;
+  color: #6b7280;
+  min-width: 90px;
+}
+
+/* Line items table */
+.invoice-document .line-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 24px;
+}
+
+.invoice-document .line-items-table th {
+  text-align: left;
+  font-size: 9pt;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+  padding: 10px 12px;
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.invoice-document .line-items-table th.text-right {
+  text-align: right;
+}
+
+.invoice-document .line-items-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 10pt;
+}
+
+.invoice-document .line-items-table td.text-right {
+  text-align: right;
+}
+
+.invoice-document .line-items-table .col-no {
+  width: 5%;
+  text-align: center;
+}
+
+.invoice-document .line-items-table .col-desc {
+  width: 38%;
+}
+
+.invoice-document .line-items-table .desc-block {
+  margin: 0;
+  font-family: inherit;
+  font-size: 9pt;
+  line-height: 1.3;
+  white-space: pre-wrap;
+}
+
+.invoice-document .line-items-table .col-qty {
+  width: 10%;
+}
+
+.invoice-document .line-items-table .col-price {
+  width: 15%;
+}
+
+.invoice-document .line-items-table .col-discount {
+  width: 12%;
+}
+
+.invoice-document .line-items-table .col-total {
+  width: 18%;
+}
+
+/* Totals */
+.invoice-document .totals {
+  margin-left: auto;
+  max-width: 280px;
+  padding-top: 12px;
+}
+
+.invoice-document .totals .total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 10pt;
+}
+
+.invoice-document .totals .total-row.grand-total {
+  font-size: 12pt;
+  font-weight: 700;
+  border-top: 2px solid #111827;
+  margin-top: 8px;
+  padding-top: 12px;
+  color: #111827;
+}
+
+.invoice-document .totals .total-row .label {
+  color: #6b7280;
+}
+
+.invoice-document .footer {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 9pt;
+  color: #374151;
+}
+
+.invoice-document .footer .footer-disclaimer {
+  margin-top: 10px;
+  color: #9ca3af;
+  font-style: italic;
+}

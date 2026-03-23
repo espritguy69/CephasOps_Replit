@@ -1,0 +1,1997 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>CephasOps.Domain</name>
+    </assembly>
+    <members>
+        <member name="T:CephasOps.Domain.Billing.Entities.BillingRatecard">
+            <summary>
+            Billing ratecard entity - defines billing rates per partner/order type
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.BillingRatecard.PartnerId">
+            <summary>
+            Partner ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.BillingRatecard.OrderTypeId">
+            <summary>
+            Order type ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.BillingRatecard.BuildingType">
+            <summary>
+            Building type (optional - for building-specific rates)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.BillingRatecard.Description">
+            <summary>
+            Description
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.BillingRatecard.Amount">
+            <summary>
+            Rate amount per job
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.BillingRatecard.TaxRate">
+            <summary>
+            Tax rate (0, 0.06 for SST, etc.)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.BillingRatecard.IsActive">
+            <summary>
+            Whether this ratecard is active
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.BillingRatecard.EffectiveFrom">
+            <summary>
+            Effective from date
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.BillingRatecard.EffectiveTo">
+            <summary>
+            Effective to date (null = still valid)
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Billing.Entities.Invoice">
+            <summary>
+            Invoice entity
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.Invoice.InvoiceNumber">
+            <summary>
+            Invoice number (unique within company)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.Invoice.PartnerId">
+            <summary>
+            Partner ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.Invoice.InvoiceDate">
+            <summary>
+            Invoice date
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.Invoice.DueDate">
+            <summary>
+            Due date
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.Invoice.TotalAmount">
+            <summary>
+            Total amount (including tax)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.Invoice.TaxAmount">
+            <summary>
+            Tax amount (SST/GST)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.Invoice.SubTotal">
+            <summary>
+            Subtotal (before tax)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.Invoice.Status">
+            <summary>
+            Status (Draft, Sent, Paid, Overdue, Cancelled)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.Invoice.SubmissionId">
+            <summary>
+            MyInvois submission ID (if submitted)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.Invoice.SubmittedAt">
+            <summary>
+            Submission timestamp
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.Invoice.PaidAt">
+            <summary>
+            Payment timestamp
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.Invoice.CreatedByUserId">
+            <summary>
+            User ID who created this invoice
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Billing.Entities.InvoiceLineItem">
+            <summary>
+            Invoice line item entity
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.InvoiceLineItem.InvoiceId">
+            <summary>
+            Invoice ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.InvoiceLineItem.Description">
+            <summary>
+            Line item description
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.InvoiceLineItem.Quantity">
+            <summary>
+            Quantity
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.InvoiceLineItem.UnitPrice">
+            <summary>
+            Unit price
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.InvoiceLineItem.Total">
+            <summary>
+            Total (Quantity * UnitPrice)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Billing.Entities.InvoiceLineItem.OrderId">
+            <summary>
+            Related order ID (if applicable)
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Buildings.Entities.Building">
+            <summary>
+            Building entity - represents buildings where installations occur
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Buildings.Entities.BuildingType">
+            <summary>
+            BuildingType entity - represents building types (Prelaid, Non-Prelaid, SDU, RDF_POLE)
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Buildings.Entities.Splitter">
+            <summary>
+            Splitter entity - represents splitters in buildings
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Buildings.Entities.SplitterPort">
+            <summary>
+            Splitter port entity - represents individual ports on a splitter
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Buildings.Entities.SplitterType">
+            <summary>
+            SplitterType entity - represents splitter types (1:8, 1:12, 1:32)
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Common.CompanyScopedEntity">
+            <summary>
+            Base entity class for all company-scoped entities
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Common.CompanyScopedEntity.Id">
+            <summary>
+            Unique identifier
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Common.CompanyScopedEntity.CompanyId">
+            <summary>
+            Company ID this entity belongs to (nullable since company feature removed)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Common.CompanyScopedEntity.CreatedAt">
+            <summary>
+            Timestamp when the entity was created
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Common.CompanyScopedEntity.UpdatedAt">
+            <summary>
+            Timestamp when the entity was last updated
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Companies.Entities.Company">
+            <summary>
+            Company entity - represents a legal entity using CephasOps
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Companies.Entities.CompanyDocument">
+            <summary>
+            Company document entity - stores legal, banking, tax, contract documents per company
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Companies.Entities.CompanyDocument.Category">
+            <summary>
+            Document category
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Companies.Entities.CompanyDocument.Title">
+            <summary>
+            Document title
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Companies.Entities.CompanyDocument.DocumentType">
+            <summary>
+            Document type (free text or lookup: "Bank Facility", "Tenancy Agreement", "SSM Certificate", etc.)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Companies.Entities.CompanyDocument.FileId">
+            <summary>
+            File ID reference to Files table
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Companies.Entities.CompanyDocument.EffectiveDate">
+            <summary>
+            Effective date (when document comes into effect)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Companies.Entities.CompanyDocument.ExpiryDate">
+            <summary>
+            Expiry date (critical for tenancy, insurance, licences)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Companies.Entities.CompanyDocument.IsCritical">
+            <summary>
+            Whether this is a critical document (things you NEVER want to lose)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Companies.Entities.CompanyDocument.Notes">
+            <summary>
+            Notes/description
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Companies.Entities.CompanyDocument.RelatedModule">
+            <summary>
+            Related module (e.g., "Finance", "HR", "Solar", "ISP")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Companies.Entities.CompanyDocument.RelatedEntityId">
+            <summary>
+            Related entity ID (polymorphic reference)
+            e.g., link Vendor Agreement to Vendor, PPA to Project
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Companies.Entities.CompanyDocument.CreatedByUserId">
+            <summary>
+            User who created/uploaded this document
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "T:CephasOps.Domain.Companies.Entities.CostCentre" -->
+        <member name="T:CephasOps.Domain.Companies.Entities.Partner">
+            <summary>
+            Partner entity - represents partners like TIME, Celcom, etc.
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Companies.Entities.PartnerGroup">
+            <summary>
+            Partner group entity - logical grouping of partners
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Companies.Entities.Vertical">
+            <summary>
+            Vertical entity - represents business verticals (ISP, Retail, Travel, Barbershop, Mixed, etc.)
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Departments.Entities.Department">
+            <summary>
+            Department entity
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Departments.Entities.Department.Name">
+            <summary>
+            Department name
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Departments.Entities.Department.Code">
+            <summary>
+            Department code
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Departments.Entities.Department.Description">
+            <summary>
+            Description
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Departments.Entities.Department.CostCentreId">
+            <summary>
+            Cost centre ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Departments.Entities.Department.IsActive">
+            <summary>
+            Whether this department is active
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Departments.Entities.MaterialAllocation">
+            <summary>
+            Material allocation entity (materials allocated to departments)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Departments.Entities.MaterialAllocation.DepartmentId">
+            <summary>
+            Department ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Departments.Entities.MaterialAllocation.MaterialId">
+            <summary>
+            Material ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Departments.Entities.MaterialAllocation.Quantity">
+            <summary>
+            Allocated quantity
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Departments.Entities.MaterialAllocation.Notes">
+            <summary>
+            Notes
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Files.Entities.File">
+            <summary>
+            Represents a stored file in the system (photos, PDFs, dockets, etc.)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Files.Entities.File.FileName">
+            <summary>
+            Original file name as uploaded by the user
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Files.Entities.File.StoragePath">
+            <summary>
+            Storage path in the file system or object storage
+            Format: files/{companyId}/{module}/{year}/{month}/{fileId}.{ext}
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Files.Entities.File.ContentType">
+            <summary>
+            MIME type of the file (e.g., image/jpeg, application/pdf)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Files.Entities.File.SizeBytes">
+            <summary>
+            File size in bytes
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Files.Entities.File.Checksum">
+            <summary>
+            Optional checksum/hash for integrity verification
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Files.Entities.File.CreatedById">
+            <summary>
+            ID of the user or service installer who uploaded the file
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Files.Entities.File.Module">
+            <summary>
+            Optional module/category this file belongs to (e.g., "Orders", "RMA", "SIApp")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Files.Entities.File.EntityId">
+            <summary>
+            Optional reference to the entity this file is attached to (e.g., OrderId, RmaTicketId)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Files.Entities.File.EntityType">
+            <summary>
+            Optional entity type (e.g., "Order", "RmaTicket", "Invoice")
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Inventory.Entities.Material">
+            <summary>
+            Material master entity
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.Material.ItemCode">
+            <summary>
+            Item code (unique within company)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.Material.Description">
+            <summary>
+            Material description
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.Material.Category">
+            <summary>
+            Category (Router, ONU, Cable, Patchcord, Connector, Splitter, etc.)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.Material.IsSerialised">
+            <summary>
+            Whether this material requires serial number tracking
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.Material.UnitOfMeasure">
+            <summary>
+            Unit of measure (pcs, m, kg, etc.)
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "P:CephasOps.Domain.Inventory.Entities.Material.DefaultCost" -->
+        <member name="P:CephasOps.Domain.Inventory.Entities.Material.PartnerId">
+            <summary>
+            Linked partner ID (if applicable)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.Material.DepartmentId">
+            <summary>
+            Department ID (required - materials must be assigned to a department)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.Material.VerticalFlags">
+            <summary>
+            Vertical flags (comma-separated: ISP, Barbershop, Travel)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.Material.IsActive">
+            <summary>
+            Whether this material is active
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Inventory.Entities.MaterialCategory">
+            <summary>
+            Material category entity
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.MaterialCategory.Name">
+            <summary>
+            Category name (unique within company)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.MaterialCategory.Description">
+            <summary>
+            Category description
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.MaterialCategory.DisplayOrder">
+            <summary>
+            Display order for sorting in dropdowns
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.MaterialCategory.IsActive">
+            <summary>
+            Whether this category is active
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Inventory.Entities.SerialisedItem">
+            <summary>
+            Serialised item entity (for tracking individual serial numbers)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.SerialisedItem.MaterialId">
+            <summary>
+            Material ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.SerialisedItem.SerialNumber">
+            <summary>
+            Serial number (unique within company)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.SerialisedItem.CurrentLocationId">
+            <summary>
+            Current location ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.SerialisedItem.Status">
+            <summary>
+            Status (InWarehouse, WithSI, InstalledAtCustomer, FaultyInWarehouse, InTransitToPartner, RMAClosed, Scrapped)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.SerialisedItem.LastOrderId">
+            <summary>
+            Last order ID where this item was used
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.SerialisedItem.LastServiceId">
+            <summary>
+            Last service ID (if applicable)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.SerialisedItem.Notes">
+            <summary>
+            Notes
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Inventory.Entities.StockBalance">
+            <summary>
+            Stock balance entity (quantity at a location)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.StockBalance.MaterialId">
+            <summary>
+            Material ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.StockBalance.StockLocationId">
+            <summary>
+            Stock location ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.StockBalance.Quantity">
+            <summary>
+            Quantity available
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Inventory.Entities.StockLocation">
+            <summary>
+            Stock location entity
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.StockLocation.Name">
+            <summary>
+            Location name
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.StockLocation.Type">
+            <summary>
+            Location type (Warehouse, SI, RMA, CustomerSite)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.StockLocation.LinkedServiceInstallerId">
+            <summary>
+            Linked service installer ID (if Type is SI)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.StockLocation.LinkedBuildingId">
+            <summary>
+            Linked building ID (if Type is CustomerSite)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.StockLocation.IsActive">
+            <summary>
+            Whether this location is active
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Inventory.Entities.StockMovement">
+            <summary>
+            Stock movement entity (transaction record)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.StockMovement.FromLocationId">
+            <summary>
+            Source location ID (null for GRN)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.StockMovement.ToLocationId">
+            <summary>
+            Destination location ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.StockMovement.MaterialId">
+            <summary>
+            Material ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.StockMovement.Quantity">
+            <summary>
+            Quantity moved
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.StockMovement.MovementType">
+            <summary>
+            Movement type (GRN, IssueToSI, ReturnFromSI, InstallAtCustomer, ReturnFaulty, RMAOutbound, RMAInbound, Adjust)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.StockMovement.OrderId">
+            <summary>
+            Related order ID (if applicable)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.StockMovement.ServiceInstallerId">
+            <summary>
+            Service installer ID (if applicable)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.StockMovement.PartnerId">
+            <summary>
+            Partner ID (if applicable)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.StockMovement.Remarks">
+            <summary>
+            Remarks/notes
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Inventory.Entities.StockMovement.CreatedByUserId">
+            <summary>
+            User ID who created this movement
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Notifications.Entities.Notification">
+            <summary>
+            Notification entity - user notifications
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Notifications.Entities.NotificationSetting">
+            <summary>
+            Notification setting entity - user/company notification preferences
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Orders.Entities.InstallationType">
+            <summary>
+            InstallationType entity - represents installation types (FTTH, FTTO, FTTR, FTTC, SDU, RDF_POLE)
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Orders.Entities.Order">
+            <summary>
+            Order entity - represents a work order/job
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Orders.Entities.OrderBlocker">
+            <summary>
+            Order blocker entity - represents conditions preventing job progress
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Orders.Entities.OrderDocket">
+            <summary>
+            Order docket entity - links orders to docket files
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Orders.Entities.OrderMaterialUsage">
+            <summary>
+            Order material usage entity - tracks materials used per order
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Orders.Entities.OrderReschedule">
+            <summary>
+            Order reschedule entity - tracks reschedule requests
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Orders.Entities.OrderStatusLog">
+            <summary>
+            Order status log entity - tracks all status changes
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Orders.Entities.OrderType">
+            <summary>
+            OrderType entity - represents order categories (Activation, ModificationIndoor, ModificationOutdoor, Assurance, ValueAddedService)
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Parser.Entities.EmailMessage">
+            <summary>
+            Email message entity - represents ingested emails
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Parser.Entities.ParsedOrderDraft">
+            <summary>
+            Parsed order draft entity - intermediate representation before Order creation
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Parser.Entities.ParserRule">
+            <summary>
+            Parser rule entity - email filtering and routing rules
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Parser.Entities.ParseSession">
+            <summary>
+            Parse session entity - represents one parsing attempt
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Payroll.Entities.JobEarningRecord">
+            <summary>
+            Job earning record entity (per order/job)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.JobEarningRecord.PayrollRunId">
+            <summary>
+            Payroll run ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.JobEarningRecord.OrderId">
+            <summary>
+            Order ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.JobEarningRecord.ServiceInstallerId">
+            <summary>
+            Service installer ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.JobEarningRecord.JobType">
+            <summary>
+            Job type (Activation, Modification, Assurance, etc.)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.JobEarningRecord.KpiResult">
+            <summary>
+            KPI result (OnTime, Late, Rework, etc.)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.JobEarningRecord.BaseRate">
+            <summary>
+            Base rate for this job type
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.JobEarningRecord.KpiAdjustment">
+            <summary>
+            KPI adjustment (bonus or penalty)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.JobEarningRecord.FinalPay">
+            <summary>
+            Final pay (BaseRate + KpiAdjustment)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.JobEarningRecord.Period">
+            <summary>
+            Period (e.g., "2025-01")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.JobEarningRecord.Status">
+            <summary>
+            Status (Draft, Confirmed, Paid)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.JobEarningRecord.ConfirmedAt">
+            <summary>
+            Confirmed timestamp
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.JobEarningRecord.PaidAt">
+            <summary>
+            Paid timestamp
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Payroll.Entities.PayrollLine">
+            <summary>
+            Payroll line entity (per SI in a payroll run)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollLine.PayrollRunId">
+            <summary>
+            Payroll run ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollLine.ServiceInstallerId">
+            <summary>
+            Service installer ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollLine.TotalJobs">
+            <summary>
+            Total number of jobs
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollLine.TotalPay">
+            <summary>
+            Total pay before adjustments
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollLine.Adjustments">
+            <summary>
+            Adjustments (positive or negative)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollLine.NetPay">
+            <summary>
+            Net pay (TotalPay + Adjustments)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollLine.ExportReference">
+            <summary>
+            Export reference (e.g., GIRO batch ID)
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Payroll.Entities.PayrollPeriod">
+            <summary>
+            Payroll period entity
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollPeriod.Period">
+            <summary>
+            Period identifier (e.g., "2025-01")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollPeriod.PeriodStart">
+            <summary>
+            Period start date
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollPeriod.PeriodEnd">
+            <summary>
+            Period end date
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollPeriod.Status">
+            <summary>
+            Status (Draft, Final, Locked)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollPeriod.IsLocked">
+            <summary>
+            Whether this period is locked
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollPeriod.CreatedByUserId">
+            <summary>
+            User ID who created this period
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Payroll.Entities.PayrollRun">
+            <summary>
+            Payroll run entity (batch processing)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollRun.PayrollPeriodId">
+            <summary>
+            Payroll period ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollRun.PeriodStart">
+            <summary>
+            Period start date
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollRun.PeriodEnd">
+            <summary>
+            Period end date
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollRun.Status">
+            <summary>
+            Status (Draft, Final, Exported, Paid)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollRun.TotalAmount">
+            <summary>
+            Total amount for this run
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollRun.Notes">
+            <summary>
+            Notes/remarks
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollRun.ExportReference">
+            <summary>
+            Export reference (e.g., GIRO batch ID)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollRun.CreatedByUserId">
+            <summary>
+            User ID who created this run
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollRun.FinalizedAt">
+            <summary>
+            Finalized timestamp
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.PayrollRun.PaidAt">
+            <summary>
+            Paid timestamp
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Payroll.Entities.SiRatePlan">
+            <summary>
+            SI rate plan entity
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.SiRatePlan.ServiceInstallerId">
+            <summary>
+            Service installer ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.SiRatePlan.Level">
+            <summary>
+            Level (Junior, Senior, Lead, Subcon)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.SiRatePlan.ActivationRate">
+            <summary>
+            Activation rate
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.SiRatePlan.ModificationRate">
+            <summary>
+            Modification rate
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.SiRatePlan.AssuranceRate">
+            <summary>
+            Assurance rate
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.SiRatePlan.FttrRate">
+            <summary>
+            FTTR rate
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.SiRatePlan.FttcRate">
+            <summary>
+            FTTC rate
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.SiRatePlan.SduRate">
+            <summary>
+            SDU rate
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.SiRatePlan.RdfPoleRate">
+            <summary>
+            RDF Pole rate
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.SiRatePlan.OnTimeBonus">
+            <summary>
+            On-time bonus
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.SiRatePlan.LatePenalty">
+            <summary>
+            Late penalty
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.SiRatePlan.ReworkRate">
+            <summary>
+            Rework rate
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Payroll.Entities.SiRatePlan.IsActive">
+            <summary>
+            Whether this rate plan is active
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Pnl.Entities.OverheadEntry">
+            <summary>
+            Overhead entry entity (indirect costs)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.OverheadEntry.CostCentreId">
+            <summary>
+            Cost centre ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.OverheadEntry.Period">
+            <summary>
+            Period (e.g., "2025-01")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.OverheadEntry.Amount">
+            <summary>
+            Amount
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.OverheadEntry.Description">
+            <summary>
+            Description
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.OverheadEntry.AllocationBasis">
+            <summary>
+            Allocation basis (e.g., percentage to ISP vs Barbershop)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.OverheadEntry.CreatedByUserId">
+            <summary>
+            User ID who created this entry
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "T:CephasOps.Domain.Pnl.Entities.PnlDetailPerOrder" -->
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlDetailPerOrder.OrderId">
+            <summary>
+            Order ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlDetailPerOrder.PartnerId">
+            <summary>
+            Partner ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlDetailPerOrder.Period">
+            <summary>
+            Period (e.g., "2025-01")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlDetailPerOrder.OrderType">
+            <summary>
+            Order type
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlDetailPerOrder.RevenueAmount">
+            <summary>
+            Revenue amount
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlDetailPerOrder.MaterialCost">
+            <summary>
+            Material cost
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlDetailPerOrder.LabourCost">
+            <summary>
+            Labour cost
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlDetailPerOrder.OverheadAllocated">
+            <summary>
+            Overhead allocated
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlDetailPerOrder.ProfitForOrder">
+            <summary>
+            Profit for this order
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "T:CephasOps.Domain.Pnl.Entities.PnlFact" -->
+        <!-- Badly formed XML comment ignored for member "P:CephasOps.Domain.Pnl.Entities.PnlFact.PnlPeriodId" -->
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlFact.PartnerId">
+            <summary>
+            Partner ID (nullable)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlFact.Vertical">
+            <summary>
+            Vertical (ISP, Barbershop, Travel)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlFact.CostCentreId">
+            <summary>
+            Cost centre ID (nullable)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlFact.Period">
+            <summary>
+            Period (e.g., "2025-01")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlFact.OrderType">
+            <summary>
+            Order type (Activation, Assurance, etc.)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlFact.RevenueAmount">
+            <summary>
+            Revenue amount
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlFact.DirectMaterialCost">
+            <summary>
+            Direct material cost
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlFact.DirectLabourCost">
+            <summary>
+            Direct labour cost
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlFact.IndirectCost">
+            <summary>
+            Indirect cost
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlFact.GrossProfit">
+            <summary>
+            Gross profit (Revenue - DirectMaterialCost - DirectLabourCost)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlFact.NetProfit">
+            <summary>
+            Net profit (GrossProfit - IndirectCost)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlFact.JobsCount">
+            <summary>
+            Jobs count
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlFact.OrdersCompletedCount">
+            <summary>
+            Orders completed count
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlFact.ReschedulesCount">
+            <summary>
+            Reschedules count
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlFact.AssuranceJobsCount">
+            <summary>
+            Assurance jobs count
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlFact.LastRecalculatedAt">
+            <summary>
+            Last recalculated timestamp
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "T:CephasOps.Domain.Pnl.Entities.PnlPeriod" -->
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlPeriod.Period">
+            <summary>
+            Period identifier (e.g., "2025-01")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlPeriod.PeriodStart">
+            <summary>
+            Period start date
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlPeriod.PeriodEnd">
+            <summary>
+            Period end date
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlPeriod.IsLocked">
+            <summary>
+            Whether this period is locked
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlPeriod.CreatedByUserId">
+            <summary>
+            User ID who created this period
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Pnl.Entities.PnlPeriod.LastRecalculatedAt">
+            <summary>
+            Last recalculated timestamp
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.RMA.Entities.RmaRequest">
+            <summary>
+            RMA request entity
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.RMA.Entities.RmaRequest.PartnerId">
+            <summary>
+            Partner ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.RMA.Entities.RmaRequest.RmaNumber">
+            <summary>
+            RMA number from partner (if provided)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.RMA.Entities.RmaRequest.RequestDate">
+            <summary>
+            Request date
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.RMA.Entities.RmaRequest.Reason">
+            <summary>
+            Reason for RMA
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.RMA.Entities.RmaRequest.Status">
+            <summary>
+            Status (Requested, InTransit, Closed)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.RMA.Entities.RmaRequest.MraDocumentId">
+            <summary>
+            MRA document file ID (if attached)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.RMA.Entities.RmaRequest.CreatedByUserId">
+            <summary>
+            User ID who created this request
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.RMA.Entities.RmaRequestItem">
+            <summary>
+            RMA request item entity
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.RMA.Entities.RmaRequestItem.RmaRequestId">
+            <summary>
+            RMA request ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.RMA.Entities.RmaRequestItem.SerialisedItemId">
+            <summary>
+            Serialised item ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.RMA.Entities.RmaRequestItem.OriginalOrderId">
+            <summary>
+            Original order ID (if applicable)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.RMA.Entities.RmaRequestItem.Notes">
+            <summary>
+            Notes
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.RMA.Entities.RmaRequestItem.Result">
+            <summary>
+            Result (Repaired, Replaced, Credited, Scrapped)
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Scheduler.Entities.ScheduledSlot">
+            <summary>
+            Scheduled slot entity - binding between Order and SI time slot
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Scheduler.Entities.SiAvailability">
+            <summary>
+            SI availability entity - daily availability per SI
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Scheduler.Entities.SiLeaveRequest">
+            <summary>
+            SI leave request entity - tracks leave/unavailability
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.ServiceInstallers.Entities.ServiceInstaller">
+            <summary>
+            Service installer entity - represents SIs (in-house and subcon)
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Settings.Entities.DocumentTemplate">
+            <summary>
+            Document template entity - reusable, versioned templates for document generation
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.DocumentTemplate.Name">
+            <summary>
+            Template name (e.g. "TIME Invoice", "Default Docket")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.DocumentTemplate.DocumentType">
+            <summary>
+            Document type (Invoice, JobDocket, RmaForm, PaymentReceipt, PnlSummary, GenericLetter)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.DocumentTemplate.PartnerId">
+            <summary>
+            Partner ID (nullable - if template is partner-specific)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.DocumentTemplate.IsActive">
+            <summary>
+            Whether this is the active template for (CompanyId, DocumentType, PartnerId)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.DocumentTemplate.Engine">
+            <summary>
+            Template engine (Razor, Handlebars, Liquid)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.DocumentTemplate.HtmlBody">
+            <summary>
+            HTML body with placeholders
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.DocumentTemplate.JsonSchema">
+            <summary>
+            Optional JSON schema describing expected data shape
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.DocumentTemplate.Version">
+            <summary>
+            Version number (incremented on updates)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.DocumentTemplate.CreatedByUserId">
+            <summary>
+            User ID who created this template
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.DocumentTemplate.UpdatedByUserId">
+            <summary>
+            User ID who last updated this template
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Settings.Entities.GeneratedDocument">
+            <summary>
+            Generated document entity - represents a single rendered document instance
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GeneratedDocument.DocumentType">
+            <summary>
+            Document type
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GeneratedDocument.ReferenceEntity">
+            <summary>
+            Reference entity type (Order, Invoice, RmaTicket, PayrollRun, PnlFact, Generic)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GeneratedDocument.ReferenceId">
+            <summary>
+            Reference entity ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GeneratedDocument.TemplateId">
+            <summary>
+            Template ID used to generate this document
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GeneratedDocument.FileId">
+            <summary>
+            File ID (FK to File entity)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GeneratedDocument.Format">
+            <summary>
+            Format (Pdf, Html)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GeneratedDocument.GeneratedAt">
+            <summary>
+            Timestamp when document was generated
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GeneratedDocument.GeneratedByUserId">
+            <summary>
+            User ID who generated this document (or System)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GeneratedDocument.MetadataJson">
+            <summary>
+            Additional metadata as JSON (partnerName, invoiceNo, etc.)
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Settings.Entities.DocumentPlaceholderDefinition">
+            <summary>
+            Document placeholder definition - catalogs available placeholder variables
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.DocumentPlaceholderDefinition.Id">
+            <summary>
+            Unique identifier
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.DocumentPlaceholderDefinition.DocumentType">
+            <summary>
+            Document type these placeholders apply to
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.DocumentPlaceholderDefinition.Key">
+            <summary>
+            Placeholder key (e.g. "{{customer.name}}", "{{order.serviceId}}")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.DocumentPlaceholderDefinition.Description">
+            <summary>
+            Description of what this placeholder represents
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.DocumentPlaceholderDefinition.ExampleValue">
+            <summary>
+            Example value for UI reference
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.DocumentPlaceholderDefinition.IsRequired">
+            <summary>
+            Whether this placeholder is required in templates of this type
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.DocumentPlaceholderDefinition.CreatedAt">
+            <summary>
+            Timestamp when created
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Settings.Entities.GlobalSetting">
+            <summary>
+            Global setting entity - system-wide or default configuration values
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GlobalSetting.Id">
+            <summary>
+            Unique identifier
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GlobalSetting.Key">
+            <summary>
+            Setting key (unique, e.g. "SnapshotRetentionDays")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GlobalSetting.Value">
+            <summary>
+            Setting value (stored as string, may contain JSON)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GlobalSetting.ValueType">
+            <summary>
+            Value type (String, Int, Decimal, Bool, Json)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GlobalSetting.Description">
+            <summary>
+            Description of what this setting controls
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GlobalSetting.Module">
+            <summary>
+            Module category (Parser, Email, PnL, Inventory, Security, UI, etc.)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GlobalSetting.CreatedAt">
+            <summary>
+            Timestamp when the setting was created
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GlobalSetting.CreatedByUserId">
+            <summary>
+            User ID who created this setting
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GlobalSetting.UpdatedAt">
+            <summary>
+            Timestamp when the setting was last updated
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.GlobalSetting.UpdatedByUserId">
+            <summary>
+            User ID who last updated this setting
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Settings.Entities.KpiProfile">
+            <summary>
+            KPI profile entity - defines configurable KPI rules for scheduler and payroll
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.KpiProfile.Name">
+            <summary>
+            Profile name (e.g. "TIME Prelaid KPI", "TIME SDU KPI")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.KpiProfile.PartnerId">
+            <summary>
+            Partner ID (nullable)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.KpiProfile.OrderType">
+            <summary>
+            Order type (Activation, Assurance, FTTR, FTTC, SDU, RDFPole, etc.)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.KpiProfile.BuildingTypeId">
+            <summary>
+            Building type ID (nullable)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.KpiProfile.MaxJobDurationMinutes">
+            <summary>
+            Maximum job duration in minutes (target from Assigned → OrderCompleted)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.KpiProfile.DocketKpiMinutes">
+            <summary>
+            Docket KPI in minutes (target time from OrderCompleted → DocketsReceived)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.KpiProfile.MaxReschedulesAllowed">
+            <summary>
+            Maximum reschedules allowed (optional)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.KpiProfile.IsDefault">
+            <summary>
+            Whether this is the default profile for (CompanyId, OrderType)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.KpiProfile.EffectiveFrom">
+            <summary>
+            Effective from date
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.KpiProfile.EffectiveTo">
+            <summary>
+            Effective to date (nullable for ongoing profiles)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.KpiProfile.CreatedByUserId">
+            <summary>
+            User ID who created this profile
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.KpiProfile.UpdatedByUserId">
+            <summary>
+            User ID who last updated this profile
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Settings.Entities.MaterialTemplate">
+            <summary>
+            Material template entity - defines standard material kits per order type/building/partner
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.MaterialTemplate.Name">
+            <summary>
+            Template name (e.g. "TIME Prelaid High-Rise kit")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.MaterialTemplate.OrderType">
+            <summary>
+            Order type (Activation, Assurance, FTTR, FTTC, SDU, RDFPole, etc.)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.MaterialTemplate.BuildingTypeId">
+            <summary>
+            Building type ID (nullable)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.MaterialTemplate.PartnerId">
+            <summary>
+            Partner ID (nullable - if template is partner-specific)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.MaterialTemplate.IsDefault">
+            <summary>
+            Whether this is the default template for (CompanyId, OrderType, BuildingTypeId)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.MaterialTemplate.IsActive">
+            <summary>
+            Whether this template is active
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.MaterialTemplate.CreatedByUserId">
+            <summary>
+            User ID who created this template
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.MaterialTemplate.UpdatedByUserId">
+            <summary>
+            User ID who last updated this template
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.MaterialTemplate.Items">
+            <summary>
+            Template items
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Settings.Entities.MaterialTemplateItem">
+            <summary>
+            Material template item - defines a material and quantity in a template
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.MaterialTemplateItem.Id">
+            <summary>
+            Unique identifier
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.MaterialTemplateItem.MaterialTemplateId">
+            <summary>
+            Material template ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.MaterialTemplateItem.MaterialId">
+            <summary>
+            Material ID
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.MaterialTemplateItem.Quantity">
+            <summary>
+            Default quantity
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.MaterialTemplateItem.UnitOfMeasure">
+            <summary>
+            Unit of measure
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.MaterialTemplateItem.IsSerialised">
+            <summary>
+            Whether this material is serialised (mirror of Material.IsSerialised)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.MaterialTemplateItem.Notes">
+            <summary>
+            Optional notes
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Settings.Entities.MaterialTemplateItem.CreatedAt">
+            <summary>
+            Timestamp when created
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Tasks.Entities.TaskItem">
+            <summary>
+            Task item entity - represents tasks/todos
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Users.Entities.Permission">
+            <summary>
+            Permission entity - represents system permissions
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Users.Entities.Role">
+            <summary>
+            Role entity - represents user roles
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Users.Entities.RolePermission">
+            <summary>
+            Role-Permission assignment entity
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Users.Entities.User">
+            <summary>
+            User entity - represents system users
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Users.Entities.UserCompany">
+            <summary>
+            User-Company membership entity
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Users.Entities.UserRole">
+            <summary>
+            User-Role assignment entity (company-scoped)
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "T:CephasOps.Domain.Workflow.Entities.BackgroundJob" -->
+        <member name="P:CephasOps.Domain.Workflow.Entities.BackgroundJob.Id">
+            <summary>
+            Unique identifier
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.BackgroundJob.JobType">
+            <summary>
+            Type of background job (e.g., "EmailIngest", "PnlRebuild", "InvoiceSubmission", "PayrollCalculation")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.BackgroundJob.PayloadJson">
+            <summary>
+            JSON serialized job data/payload
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.BackgroundJob.State">
+            <summary>
+            Current state of the job (Queued, Running, Succeeded, Failed)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.BackgroundJob.RetryCount">
+            <summary>
+            Number of retry attempts
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.BackgroundJob.MaxRetries">
+            <summary>
+            Maximum number of retry attempts allowed
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.BackgroundJob.LastError">
+            <summary>
+            Last error message if the job failed
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.BackgroundJob.Priority">
+            <summary>
+            Priority of the job (higher numbers = higher priority)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.BackgroundJob.ScheduledAt">
+            <summary>
+            Scheduled execution time (null = execute immediately)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.BackgroundJob.CreatedAt">
+            <summary>
+            Timestamp when the job was created
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.BackgroundJob.StartedAt">
+            <summary>
+            Timestamp when the job started processing
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.BackgroundJob.CompletedAt">
+            <summary>
+            Timestamp when the job completed (successfully or failed)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.BackgroundJob.UpdatedAt">
+            <summary>
+            Timestamp when the job was last updated
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Workflow.Entities.BackgroundJobState">
+            <summary>
+            Enumeration of background job states
+            </summary>
+        </member>
+        <member name="F:CephasOps.Domain.Workflow.Entities.BackgroundJobState.Queued">
+            <summary>
+            Job is queued and waiting to be processed
+            </summary>
+        </member>
+        <member name="F:CephasOps.Domain.Workflow.Entities.BackgroundJobState.Running">
+            <summary>
+            Job is currently being processed
+            </summary>
+        </member>
+        <member name="F:CephasOps.Domain.Workflow.Entities.BackgroundJobState.Succeeded">
+            <summary>
+            Job completed successfully
+            </summary>
+        </member>
+        <member name="F:CephasOps.Domain.Workflow.Entities.BackgroundJobState.Failed">
+            <summary>
+            Job failed with an error
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Workflow.Entities.SystemLog">
+            <summary>
+            System log entity - application-level structured logging
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.SystemLog.Id">
+            <summary>
+            Unique identifier
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.SystemLog.CompanyId">
+            <summary>
+            Company ID (nullable for global events)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.SystemLog.Severity">
+            <summary>
+            Severity level (Info, Warning, Error, Critical)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.SystemLog.Category">
+            <summary>
+            Category/Module (e.g., "Orders", "Billing", "Parser", "Workflow")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.SystemLog.Message">
+            <summary>
+            Short description message
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.SystemLog.DetailsJson">
+            <summary>
+            Additional structured information in JSON format
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.SystemLog.UserId">
+            <summary>
+            User ID who triggered the log entry (if applicable)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.SystemLog.EntityType">
+            <summary>
+            Entity type related to this log entry (e.g., "Order", "Invoice")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.SystemLog.EntityId">
+            <summary>
+            Entity ID related to this log entry
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.SystemLog.CreatedAt">
+            <summary>
+            Timestamp when the log entry was created
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Workflow.Entities.SystemLogSeverity">
+            <summary>
+            Enumeration of system log severity levels
+            </summary>
+        </member>
+        <member name="F:CephasOps.Domain.Workflow.Entities.SystemLogSeverity.Info">
+            <summary>
+            Informational message
+            </summary>
+        </member>
+        <member name="F:CephasOps.Domain.Workflow.Entities.SystemLogSeverity.Warning">
+            <summary>
+            Warning message
+            </summary>
+        </member>
+        <member name="F:CephasOps.Domain.Workflow.Entities.SystemLogSeverity.Error">
+            <summary>
+            Error message
+            </summary>
+        </member>
+        <member name="F:CephasOps.Domain.Workflow.Entities.SystemLogSeverity.Critical">
+            <summary>
+            Critical error message
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Workflow.Entities.WorkflowDefinition">
+            <summary>
+            Workflow definition entity - defines a workflow configuration for an entity type (e.g., Order, Invoice)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowDefinition.Name">
+            <summary>
+            Workflow name (e.g., "ISP_Order_Workflow", "Invoice_Workflow")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowDefinition.EntityType">
+            <summary>
+            Entity type this workflow applies to (e.g., "Order", "Invoice")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowDefinition.Description">
+            <summary>
+            Optional description of the workflow
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowDefinition.IsActive">
+            <summary>
+            Whether this workflow is active
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowDefinition.PartnerId">
+            <summary>
+            Optional: Partner ID if this workflow is partner-specific
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowDefinition.CreatedByUserId">
+            <summary>
+            User ID who created this workflow definition
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowDefinition.UpdatedByUserId">
+            <summary>
+            User ID who last updated this workflow definition
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowDefinition.Transitions">
+            <summary>
+            Navigation property for workflow transitions
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Workflow.Entities.WorkflowJob">
+            <summary>
+            Workflow job entity - represents an in-progress workflow action or scheduled step
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowJob.WorkflowDefinitionId">
+            <summary>
+            Foreign key to WorkflowDefinition
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowJob.EntityType">
+            <summary>
+            Entity type being processed (e.g., "Order", "Invoice")
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowJob.EntityId">
+            <summary>
+            ID of the entity being processed
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowJob.CurrentStatus">
+            <summary>
+            Current business status of the entity
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowJob.TargetStatus">
+            <summary>
+            Intended next status
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowJob.State">
+            <summary>
+            Current state of the workflow job (Pending, Running, Succeeded, Failed)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowJob.LastError">
+            <summary>
+            Last error message if the job failed
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowJob.PayloadJson">
+            <summary>
+            JSON payload with transition context (actor, metadata, etc.)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowJob.InitiatedByUserId">
+            <summary>
+            User ID who initiated this workflow job
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowJob.StartedAt">
+            <summary>
+            Timestamp when the job started processing
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowJob.CompletedAt">
+            <summary>
+            Timestamp when the job completed (successfully or failed)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowJob.WorkflowDefinition">
+            <summary>
+            Navigation property to WorkflowDefinition
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Workflow.Entities.WorkflowJobState">
+            <summary>
+            Enumeration of workflow job states
+            </summary>
+        </member>
+        <member name="F:CephasOps.Domain.Workflow.Entities.WorkflowJobState.Pending">
+            <summary>
+            Job is queued and waiting to be processed
+            </summary>
+        </member>
+        <member name="F:CephasOps.Domain.Workflow.Entities.WorkflowJobState.Running">
+            <summary>
+            Job is currently being processed
+            </summary>
+        </member>
+        <member name="F:CephasOps.Domain.Workflow.Entities.WorkflowJobState.Succeeded">
+            <summary>
+            Job completed successfully
+            </summary>
+        </member>
+        <member name="F:CephasOps.Domain.Workflow.Entities.WorkflowJobState.Failed">
+            <summary>
+            Job failed with an error
+            </summary>
+        </member>
+        <member name="T:CephasOps.Domain.Workflow.Entities.WorkflowTransition">
+            <summary>
+            Workflow transition entity - defines allowed status transitions within a workflow
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowTransition.WorkflowDefinitionId">
+            <summary>
+            Foreign key to WorkflowDefinition
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowTransition.FromStatus">
+            <summary>
+            Starting status (null = initial state)
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowTransition.ToStatus">
+            <summary>
+            Target status
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowTransition.AllowedRolesJson">
+            <summary>
+            JSON array of role names allowed to trigger this transition (e.g., ["Admin", "SI", "Scheduler"])
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowTransition.GuardConditionsJson">
+            <summary>
+            JSON object defining guard conditions that must be met before transition (e.g., {"photosRequired": true, "docketUploaded": true})
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowTransition.SideEffectsConfigJson">
+            <summary>
+            JSON object defining side effects/actions on transition (e.g., {"notify": true, "createStockMovement": true})
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowTransition.DisplayOrder">
+            <summary>
+            Display order for UI
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowTransition.IsActive">
+            <summary>
+            Whether this transition is active
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowTransition.CreatedByUserId">
+            <summary>
+            User ID who created this transition
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowTransition.UpdatedByUserId">
+            <summary>
+            User ID who last updated this transition
+            </summary>
+        </member>
+        <member name="P:CephasOps.Domain.Workflow.Entities.WorkflowTransition.WorkflowDefinition">
+            <summary>
+            Navigation property to WorkflowDefinition
+            </summary>
+        </member>
+    </members>
+</doc>

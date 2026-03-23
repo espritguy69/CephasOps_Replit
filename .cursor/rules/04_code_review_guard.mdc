@@ -1,0 +1,33 @@
+---
+description: CephasOps architecture code review
+alwaysApply: false
+---
+
+Review the code for safety violations.
+
+Check for:
+
+• manual TenantScope.CurrentTenantId
+• manual EnterPlatformBypass / ExitPlatformBypass
+• missing TenantScopeExecutor usage
+• tenant-owned writes without CompanyId
+• weakened guards:
+  - SiWorkflowGuard
+  - FinancialIsolationGuard
+  - EventStoreConsistencyGuard
+  - TenantSafetyGuard
+
+Also verify:
+
+• TenantScopeExecutor usage is correct
+• Tenant-owned operations cannot run under platform bypass
+• Platform bypass is justified and documented
+• Tests exist for tenant-sensitive logic
+• Documentation updates are included if architecture changed
+
+Return:
+
+1. Safe
+2. Needs changes
+3. Violations
+4. Recommended fixes

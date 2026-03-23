@@ -1,0 +1,28 @@
+{
+  "artifactIntegrity": {
+    "message": "Guardian and health artifacts present.",
+    "allPresent": true,
+    "missingArtifacts": []
+  },
+  "driftDetected": true,
+  "scanTimestamp": "2026-03-13T14:20:15.0069244+08:00",
+  "changesDetected": [
+    "Documented-only findings: 0 -> 1 (delta 1)"
+  ],
+  "bypassGrowth": {
+    "unallowlistedIncrease": false,
+    "allowlistIncrease": false,
+    "detail": "allowlist manual: 10 -> 10; executor not required: 8 -> 8; unallowlisted enter: 0 -> 0; exit: 0 -> 0; currentTenantId: 4 -> 4"
+  },
+  "newSensitiveFiles": [],
+  "advisoryDelta": 0,
+  "enforcedDelta": 0,
+  "summary": "Drift detected: 1 change(s). Review recommended.",
+  "limitations": [
+    "Baseline is single previous run; no long-term history.",
+    "Advisory drift is informational only; do not fail CI on advisory increases.",
+    "Bypass footprint uses health allowlist/unallowlisted counts; new bypass files are not enumerated in this report."
+  ],
+  "baselineTimestamp": "2026-03-13T14:09:06.5402086+08:00",
+  "documentedOnlyDelta": 1
+}

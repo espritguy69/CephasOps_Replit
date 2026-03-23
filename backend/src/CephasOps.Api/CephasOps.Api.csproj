@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591;NU1510</NoWarn>
+    <UserSecretsId>24d0758c-b450-4229-b68b-a3632c3c914d</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Swagger/OpenAPI -->
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.8.1" />
+    <PackageReference Include="Microsoft.OpenApi" Version="1.6.14" />
+    
+    <!-- JWT Authentication -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.3" />
+    <PackageReference Include="Syncfusion.Licensing" Version="31.2.15" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.2.1" />
+    
+    <!-- Entity Framework Core -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    
+    <!-- PostgreSQL Provider -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <!-- Redis (optional): distributed rate limit store when ConnectionStrings:Redis is set -->
+    <PackageReference Include="StackExchange.Redis" Version="2.8.16" />
+    <!-- OpenTelemetry + Prometheus (optional): metrics at /metrics when enabled. Pin OpenTelemetry.Api for security (transitive via Hosting). -->
+    <PackageReference Include="OpenTelemetry.Api" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.12.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.9.0-beta.2" />
+    <!-- InMemory for integration tests (used only when EnvironmentName == "Testing") -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.3" />
+    <!-- ExcelDataReader for admin test parse-excel (read-only .xls parsing, no Syncfusion) -->
+    <PackageReference Include="ExcelDataReader" Version="3.6.0" />
+    <PackageReference Include="ExcelDataReader.DataSet" Version="3.6.0" />
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Clean Architecture: API references Application, Infrastructure, and Domain -->
+    <ProjectReference Include="..\CephasOps.Application\CephasOps.Application.csproj" />
+    <ProjectReference Include="..\CephasOps.Infrastructure\CephasOps.Infrastructure.csproj" />
+    <ProjectReference Include="..\CephasOps.Domain\CephasOps.Domain.csproj" />
+    <!-- Tenant-safety Roslyn analyzer (CEPHAS001–CEPHAS003); runs at build and in IDE -->
+    <ProjectReference Include="..\..\..\analyzers\CephasOps.TenantSafetyAnalyzers\CephasOps.TenantSafetyAnalyzers.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>
+
