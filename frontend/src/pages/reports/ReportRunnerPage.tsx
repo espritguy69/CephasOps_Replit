@@ -115,51 +115,91 @@ const ReportRunnerPage: React.FC = () => {
     }
   };
 
+  const buildExportParams = (): Record<string, string | boolean | undefined> => {
+    const params: Record<string, string | boolean | undefined> = { format: exportFormat };
+    Object.entries(currentFilters).forEach(([k, v]) => {
+      if (v === '' || v === undefined || k === 'page' || k === 'pageSize') return;
+      if (typeof v === 'boolean') params[k] = v;
+      else params[k] = String(v);
+    });
+    if (departmentId && !params.departmentId) params.departmentId = departmentId;
+    return params;
+  };
+
   const handleExport = async () => {
     try {
+      const ep = buildExportParams();
+
       if (reportKey === 'orders-list') {
         await exportOrdersListReport({
-          format: exportFormat,
-          departmentId: currentFilters.departmentId ? String(currentFilters.departmentId) : undefined,
-          keyword: currentFilters.keyword ? String(currentFilters.keyword) : undefined,
-          status: currentFilters.status ? String(currentFilters.status) : undefined,
-          fromDate: currentFilters.fromDate ? String(currentFilters.fromDate) : undefined,
-          toDate: currentFilters.toDate ? String(currentFilters.toDate) : undefined,
-          assignedSiId: currentFilters.assignedSiId ? String(currentFilters.assignedSiId) : undefined
+          format: ep.format as ExportFormat,
+          departmentId: ep.departmentId as string | undefined,
+          keyword: ep.keyword as string | undefined,
+          status: ep.status as string | undefined,
+          fromDate: ep.fromDate as string | undefined,
+          toDate: ep.toDate as string | undefined,
+          assignedSiId: ep.assignedSiId as string | undefined,
         });
       } else if (reportKey === 'materials-list') {
         await exportMaterialsReport({
-          format: exportFormat,
-          departmentId: currentFilters.departmentId ? String(currentFilters.departmentId) : undefined,
-          category: currentFilters.category ? String(currentFilters.category) : undefined,
-          isActive: currentFilters.isActive !== undefined && currentFilters.isActive !== '' ? Boolean(currentFilters.isActive) : undefined
+          format: ep.format as ExportFormat,
+          departmentId: ep.departmentId as string | undefined,
+          category: ep.category as string | undefined,
+          isActive: typeof ep.isActive === 'boolean' ? ep.isActive : undefined,
         });
       } else if (reportKey === 'stock-summary') {
         await exportStockSummaryReport({
-          format: exportFormat,
-          departmentId: currentFilters.departmentId ? String(currentFilters.departmentId) : undefined,
-          locationId: currentFilters.locationId ? String(currentFilters.locationId) : undefined,
-          materialId: currentFilters.materialId ? String(currentFilters.materialId) : undefined
+          format: ep.format as ExportFormat,
+          departmentId: ep.departmentId as string | undefined,
+          locationId: ep.locationId as string | undefined,
+          materialId: ep.materialId as string | undefined,
         });
       } else if (reportKey === 'ledger') {
         await exportLedgerReport({
-          format: exportFormat,
-          departmentId: currentFilters.departmentId ? String(currentFilters.departmentId) : undefined,
-          materialId: currentFilters.materialId ? String(currentFilters.materialId) : undefined,
-          locationId: currentFilters.locationId ? String(currentFilters.locationId) : undefined,
-          orderId: currentFilters.orderId ? String(currentFilters.orderId) : undefined,
-          entryType: currentFilters.entryType ? String(currentFilters.entryType) : undefined,
-          fromDate: currentFilters.fromDate ? String(currentFilters.fromDate) : undefined,
-          toDate: currentFilters.toDate ? String(currentFilters.toDate) : undefined
+          format: ep.format as ExportFormat,
+          departmentId: ep.departmentId as string | undefined,
+          materialId: ep.materialId as string | undefined,
+          locationId: ep.locationId as string | undefined,
+          orderId: ep.orderId as string | undefined,
+          entryType: ep.entryType as string | undefined,
+          fromDate: ep.fromDate as string | undefined,
+          toDate: ep.toDate as string | undefined,
         });
       } else if (reportKey === 'scheduler-utilization') {
         await exportSchedulerUtilizationReport({
-          format: exportFormat,
-          departmentId: currentFilters.departmentId ? String(currentFilters.departmentId) : undefined,
-          fromDate: currentFilters.fromDate ? String(currentFilters.fromDate) : undefined,
-          toDate: currentFilters.toDate ? String(currentFilters.toDate) : undefined,
-          siId: currentFilters.siId ? String(currentFilters.siId) : undefined
+          format: ep.format as ExportFormat,
+          departmentId: ep.departmentId as string | undefined,
+          fromDate: ep.fromDate as string | undefined,
+          toDate: ep.toDate as string | undefined,
+          siId: ep.siId as string | undefined,
         });
+      } else {
+        if (exportFormat !== 'csv') {
+          showError('This report type only supports CSV export.');
+          return;
+        }
+        if (!result || !result.items || result.items.length === 0) {
+          showError('No data to export. Please run the report first.');
+          return;
+        }
+        const firstItem = result.items[0] as Record<string, unknown>;
+        const headers = Object.keys(firstItem);
+        const csvRows = [
+          headers.join(','),
+          ...result.items.map((item) => {
+            const row = item as Record<string, unknown>;
+            return headers.map(h => `"${String(row[h] ?? '').replace(/"/g, '""')}"`).join(',');
+          })
+        ];
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${reportKey}-export.csv`;
+        document.body.appendChild(a);
+        a.click();
+        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
       }
     } catch (err) {
       showError((err as Error).message ?? 'Export failed');
@@ -243,6 +283,9 @@ const ReportRunnerPage: React.FC = () => {
 
       <Card className="p-4">
         <h2 className={cn(designTokens.typography.sectionHeader, 'mb-3')}>Filters</h2>
+        {definition.parameterSchema.length === 0 ? (
+          <p className="text-sm text-muted-foreground mb-3">This report has no configurable filters. Click "Run report" to generate results.</p>
+        ) : null}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {definition.parameterSchema.map((p) => (
             <div key={p.name} className="flex flex-col gap-1">

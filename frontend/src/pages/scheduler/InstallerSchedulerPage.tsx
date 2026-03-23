@@ -9,7 +9,7 @@ import {
   useDraggable,
   type DragEndEvent,
 } from '@dnd-kit/core';
-import { Calendar, Clock, CheckCircle2, Users, Wrench, Plus, AlertTriangle } from 'lucide-react';
+import { Calendar, Clock, CheckCircle2, Users, Wrench, Plus, AlertTriangle, X } from 'lucide-react';
 import {
   getUnassignedOrders,
   getCalendar,
@@ -27,7 +27,7 @@ import {
 import { getServiceInstallers } from '../../api/serviceInstallers';
 import { getDepartments } from '../../api/departments';
 import { updateOrder } from '../../api/orders';
-import { useToast, Button, Badge, StatusBadge, Skeleton, EmptyState } from '../../components/ui';
+import { useToast, Button, Badge, StatusBadge, Skeleton, EmptyState, Modal } from '../../components/ui';
 import Card from '../../components/ui/Card';
 import { ScrollArea } from '../../components/ui/scroll-area';
 import { PageShell } from '../../components/layout';
@@ -88,6 +88,14 @@ const InstallerSchedulerPage: React.FC = () => {
   const [detailSlot, setDetailSlot] = useState<CalendarSlot | null>(null);
   const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
 
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [assignOrderId, setAssignOrderId] = useState<string>('');
+  const [assignInstallerId, setAssignInstallerId] = useState<string>('');
+  const [assignDate, setAssignDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [assignTimeFrom, setAssignTimeFrom] = useState<string>('09:00');
+  const [assignTimeTo, setAssignTimeTo] = useState<string>('11:00');
+  const [assignSubmitting, setAssignSubmitting] = useState(false);
+
   const departmentScope = user?.departmentId ?? null;
 
   const loadData = useCallback(async () => {
@@ -123,7 +131,7 @@ const InstallerSchedulerPage: React.FC = () => {
           id: o.id,
           orderId: o.id,
           name: o.serviceId || o.customerName || `Order ${(o.id || '').slice(0, 8)}`,
-          description: `${o.orderType || 'Order'} - ${o.buildingName || o.address || 'Location TBD'}`,
+          description: `${o.orderType || 'Order'} - ${o.buildingName || o.address || 'Address pending'}`,
           serviceId: o.serviceId,
           customerName: o.customerName,
           buildingName: o.buildingName,
@@ -338,6 +346,40 @@ const InstallerSchedulerPage: React.FC = () => {
     }
   };
 
+  const openAssignModal = useCallback((orderId?: string) => {
+    setAssignOrderId(orderId || '');
+    setAssignInstallerId('');
+    setAssignDate(selectedDate.toISOString().split('T')[0]);
+    setAssignTimeFrom('09:00');
+    setAssignTimeTo('11:00');
+    setAssignModalOpen(true);
+  }, [selectedDate]);
+
+  const handleAssignJob = async () => {
+    if (!assignOrderId || !assignInstallerId) {
+      showError('Please select both an order and an installer');
+      return;
+    }
+    try {
+      setAssignSubmitting(true);
+      await createSlot({
+        orderId: assignOrderId,
+        serviceInstallerId: assignInstallerId,
+        date: assignDate,
+        windowFrom: `${assignTimeFrom}:00`,
+        windowTo: `${assignTimeTo}:00`,
+      });
+      await updateOrder(assignOrderId, { status: 'Assigned', assignedSiId: assignInstallerId });
+      showSuccess('Job assigned successfully');
+      setAssignModalOpen(false);
+      await loadData();
+    } catch (err: any) {
+      showError(err?.message || 'Failed to assign job');
+    } finally {
+      setAssignSubmitting(false);
+    }
+  };
+
   const getScheduleStatusVariant = (
     status: string
   ): 'default' | 'success' | 'error' | 'warning' | 'info' | 'secondary' => {
@@ -398,7 +440,7 @@ const InstallerSchedulerPage: React.FC = () => {
       title="Service Installer Schedule"
       breadcrumbs={[{ label: 'Scheduler', path: '/scheduler' }, { label: 'Timeline' }]}
       actions={
-        <Button size="sm">
+        <Button size="sm" onClick={() => openAssignModal()}>
           <Plus className="h-4 w-4 mr-2" />
           Assign job
         </Button>
@@ -437,7 +479,7 @@ const InstallerSchedulerPage: React.FC = () => {
             onDateChange={setSelectedDate}
             onToday={() => setSelectedDate(new Date())}
             onRefresh={loadData}
-            onAssignJob={() => {}}
+            onAssignJob={() => openAssignModal()}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
             departments={departments}
@@ -470,7 +512,7 @@ const InstallerSchedulerPage: React.FC = () => {
                       <UnassignedCard
                         key={order.id}
                         order={order}
-                        onAssignClick={() => {}}
+                        onAssignClick={() => openAssignModal(order.orderId)}
                       />
                     ))
                   )}
@@ -537,6 +579,85 @@ const InstallerSchedulerPage: React.FC = () => {
           }}
         />
       </DndContext>
+
+      <Modal isOpen={assignModalOpen} onClose={() => setAssignModalOpen(false)} title="Assign Job" size="md">
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium mb-1 block">Order *</label>
+            <select
+              value={assignOrderId}
+              onChange={(e) => setAssignOrderId(e.target.value)}
+              className="w-full px-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">Select an order...</option>
+              {unassignedOrders.map((o) => (
+                <option key={o.orderId} value={o.orderId}>
+                  {o.name} - {o.description}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium mb-1 block">Installer *</label>
+            <select
+              value={assignInstallerId}
+              onChange={(e) => setAssignInstallerId(e.target.value)}
+              className="w-full px-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">Select an installer...</option>
+              {filteredInstallers.map((si) => (
+                <option key={si.id} value={si.id}>
+                  {si.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium mb-1 block">Date</label>
+            <input
+              type="date"
+              value={assignDate}
+              onChange={(e) => setAssignDate(e.target.value)}
+              className="w-full px-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-medium mb-1 block">From</label>
+              <input
+                type="time"
+                value={assignTimeFrom}
+                onChange={(e) => setAssignTimeFrom(e.target.value)}
+                className="w-full px-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-1 block">To</label>
+              <input
+                type="time"
+                value={assignTimeTo}
+                onChange={(e) => setAssignTimeTo(e.target.value)}
+                className="w-full px-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setAssignModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAssignJob}
+              disabled={assignSubmitting || !assignOrderId || !assignInstallerId}
+            >
+              {assignSubmitting ? 'Assigning...' : 'Assign Job'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </PageShell>
   );
 };
@@ -564,11 +685,24 @@ function UnassignedCard({
       {...listeners}
       className="rounded-lg border bg-card p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow text-left"
     >
-      <div className="font-medium text-sm truncate">{order.name}</div>
-      <div className="text-xs text-muted-foreground truncate mt-0.5">{order.description}</div>
-      {order.customerName && (
-        <div className="text-xs text-muted-foreground truncate mt-0.5">{order.customerName}</div>
-      )}
+      <div className="flex items-start justify-between gap-1">
+        <div className="min-w-0 flex-1">
+          <div className="font-medium text-sm truncate">{order.name}</div>
+          <div className="text-xs text-muted-foreground truncate mt-0.5">{order.description}</div>
+          {order.customerName && (
+            <div className="text-xs text-muted-foreground truncate mt-0.5">{order.customerName}</div>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onAssignClick(); }}
+          onPointerDown={(e) => e.stopPropagation()}
+          className="shrink-0 mt-0.5 p-1 rounded hover:bg-primary/10 text-primary"
+          title="Assign job"
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+      </div>
     </div>
   );
 }

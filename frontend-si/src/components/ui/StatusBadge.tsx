@@ -50,8 +50,8 @@ export function StatusBadge({
 export function getOrderStatusVariant(status: string): StatusBadgeProps['variant'] {
   const s = status || '';
   if (['Completed', 'OrderCompleted'].includes(s)) return 'success';
-  if (['Blocker', 'Rejected', 'Overdue'].some((x) => s.includes(x))) return 'error';
+  if (['Blocker', 'Rejected', 'Overdue', 'Cancelled', 'OrderCancelled'].some((x) => s.includes(x))) return 'error';
   if (['Pending', 'Assigned', 'ReschedulePendingApproval'].includes(s)) return 'warning';
-  if (['OnTheWay', 'MetCustomer', 'Installing'].includes(s)) return 'info';
+  if (['OnTheWay', 'MetCustomer', 'Installing', 'InProgress'].includes(s)) return 'info';
   return 'secondary';
 }

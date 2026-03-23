@@ -1,7 +1,7 @@
 # Companies – System Workflow Diagram
 
 **Date:** December 12, 2025  
-**Purpose:** End-to-end workflow representation for the Companies module, covering company creation, configuration, and single-company mode operations
+**Purpose:** End-to-end workflow representation for the Companies module, covering company creation, configuration, and SaaS multi-tenant operations
 
 ---
 
@@ -22,7 +22,7 @@
         │ • Create Company       │      │ • Locale Settings       │
         │ • Validate Uniqueness   │      │ • Timezone              │
         │ • Set Defaults          │      │ • Date/Time Format      │
-        │ • Single-Company Mode   │      │ • Currency              │
+        │ • SaaS Tenant Mode      │      │ • Currency              │
         └───────────────────────┘      └───────────────────────┘
                     │                               │
                     └───────────────┬───────────────┘
@@ -69,7 +69,7 @@ CreateCompanyDto {
          |
          v
 ┌────────────────────────────────────────┐
-│ VALIDATE SINGLE-COMPANY RULE              │
+│ VALIDATE COMPANY CREATION                    │
 │ CompanyService.CreateCompanyAsync()        │
 └────────────────────────────────────────┘
          |
@@ -84,7 +84,7 @@ CreateCompanyDto {
    |            |
    |            v
    |       [Throw InvalidOperationException]
-   |       "A company already exists. Only a single company is allowed."
+   |       "A company with this ShortName already exists."
    |
    v
 ┌────────────────────────────────────────┐
@@ -195,7 +195,7 @@ UpdateCompanyDto {
          v
 [System Uses Company Context]
   ICurrentUserService.CompanyId
-    → Returns Guid.Empty (single-company mode)
+    → Returns tenant CompanyId from user context
          |
          v
 [Query Company-Scoped Data]
@@ -211,30 +211,30 @@ UpdateCompanyDto {
 
 ---
 
-## Single-Company Mode Rules
+## Multi-Tenant Company Rules
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    SINGLE-COMPANY MODE RULES                            │
+│                    MULTI-TENANT COMPANY RULES                            │
 └─────────────────────────────────────────────────────────────────────────┘
 
-[Rule 1: Only One Company Allowed]
-  Company.count() must be 0 before creating new company
+[Rule 1: Company Provisioning]
+  New companies created via tenant provisioning workflow
   → Enforced in CreateCompanyAsync()
 
 [Rule 2: CompanyId Context]
-  ICurrentUserService.CompanyId returns Guid.Empty
-  → All entities use implicit company context
+  ICurrentUserService.CompanyId returns tenant-scoped CompanyId
+  → All entities use explicit company context
 
-[Rule 3: No Company Switching]
-  SwitchCompanyAsync() removed
-  → Single company always active
+[Rule 3: Tenant Isolation]
+  Users are scoped to their assigned company
+  → Company context enforced via EF Core global query filters
 
 [Rule 4: Company-Scoped Queries]
   Queries use:
-    - CompanyId = Guid.Empty (for SuperAdmin)
+    - CompanyId = SuperAdmin's selected context (for SuperAdmin)
     - CompanyId = actualCompanyId (for regular users)
-    - No company filter (for single-company entities)
+    - All entities are company-scoped
 ```
 
 ---
@@ -296,7 +296,7 @@ Company
 ## API Endpoints Involved
 
 ### Company Management
-- `GET /api/companies` - List companies (returns single company in single-company mode)
+- `GET /api/companies` - List companies (scoped by user role and tenant context)
 - `GET /api/companies/{id}` - Get company details
 - `POST /api/companies` - Create company (only if no company exists)
 - `PUT /api/companies/{id}` - Update company
@@ -307,7 +307,7 @@ Company
 ## Module Rules & Validations
 
 ### Company Creation Rules
-- Only one company allowed (single-company mode)
+- Company ShortName must be globally unique across all tenants
 - ShortName must be unique
 - LegalName is required
 - Vertical is required
@@ -319,11 +319,11 @@ Company
 - IsActive can be toggled
 - Locale settings can be updated
 
-### Single-Company Mode Rules
-- CompanyId context is Guid.Empty for all users
-- No company switching functionality
-- All entities implicitly scoped to single company
-- SuperAdmin sees all data (no company filter)
+### Multi-Tenant Isolation Rules
+- CompanyId context is tenant-scoped for all users
+- Users operate within their assigned company context
+- All entities explicitly scoped to tenant CompanyId
+- SuperAdmin can view data across all tenants
 
 ---
 

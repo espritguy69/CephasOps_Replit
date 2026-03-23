@@ -9,7 +9,7 @@
 
 ```mermaid
 flowchart TB
-    subgraph Company["🏢 CephasOps (Single Company)"]
+    subgraph Company["🏢 CephasOps (SaaS Platform — Per-Tenant View)"]
         direction TB
         GPON["📊 GPON Department<br/>(Active)"]
         CWO["🚧 CWO Department<br/>(Future)"]
@@ -91,7 +91,7 @@ flowchart TB
 ## Key Relationships
 
 ### Company Structure
-- **Single Company Mode**: CephasOps operates as one company with multiple departments
+- **Multi-Tenant SaaS**: CephasOps operates as a SaaS platform with per-company data isolation and multiple departments per tenant
 - **Departments**: Functional units (GPON active, CWO/NWO future)
 - **Branches**: Physical locations for organizational structure
 

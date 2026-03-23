@@ -37,9 +37,9 @@ Database + Status Changes
 
 ---
 
-## 2. Single-Company, Multi-Department Architecture
+## 2. Multi-Tenant, Multi-Department Architecture
 
-CephasOps operates in **single-company mode** with multiple departments:
+CephasOps operates as a **multi-tenant SaaS platform** with per-company data isolation and multiple departments per tenant:
 
 - **Company**: One root company (Cephas Ops)
 - **Departments**: GPON (active), CWO (future), NWO (future)

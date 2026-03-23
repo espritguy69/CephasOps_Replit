@@ -201,7 +201,7 @@ const InventoryStockTrendPage: React.FC = () => {
         ) : items.length === 0 ? (
           <EmptyState
             title="No stock history"
-            description="No snapshot data for the selected filters and date range. The report API may not be implemented yet."
+            description="No snapshot data found for the selected filters and date range. Try adjusting the date range or clearing filters."
             action={{ label: 'Clear filters', onClick: () => { setMaterialId(''); setLocationId(''); setPage(1); } }}
           />
         ) : (

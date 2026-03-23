@@ -421,7 +421,7 @@ export function ReplacementForm({
               value={replacementReason}
               onChange={(e) => setReplacementReason(e.target.value)}
               disabled={replacementMutation.isPending}
-              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary min-h-[44px] text-base"
               required
             >
               <option value="">Select reason...</option>

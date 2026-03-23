@@ -4,9 +4,9 @@
 
 \*\*Project Name:\*\* CephasOps  
 
-\*\*Project Type:\*\* Multi-Company / Multi-Tenant Operations Platform  
+\*\*Project Type:\*\* Multi-Tenant SaaS Operations Platform  
 
-\*\*Current deployment:\*\* Single-company mode (one company, multiple departments).
+\*\*Architecture:\*\* Multi-tenant SaaS with per-company data isolation, role-based module enablement, and department-scoped operations.
 
 
 
@@ -54,7 +54,7 @@ Service installers and contractors in the telecom and utilities space manage hig
 
 \### 1. Multi-Company / Multi-Tenant Architecture
 
-Current production runs in single-company mode; the following describes the platform capability for possible future multi-company use.
+CephasOps is architected as a multi-tenant SaaS platform with per-company data isolation.
 
 A secure platform that can serve:
 

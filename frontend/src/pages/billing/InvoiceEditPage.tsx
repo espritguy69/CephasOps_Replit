@@ -162,7 +162,7 @@ const InvoiceEditPage: React.FC = () => {
     (sum, i) => sum + (Number(i.quantity) || 0) * (Number(i.unitPrice) || 0),
     0
   );
-  const taxRate = 0.06;
+  const taxRate = invoice?.taxRate != null ? Number(invoice.taxRate) / 100 : 0.06;
   const calculatedTax = calculatedSubtotal * taxRate;
   const calculatedTotal = calculatedSubtotal + calculatedTax;
 
@@ -364,7 +364,7 @@ const InvoiceEditPage: React.FC = () => {
                 Subtotal: {formatCurrency(calculatedSubtotal)}
               </div>
               <div className="text-sm text-slate-600">
-                Tax (6%): {formatCurrency(calculatedTax)}
+                Tax ({(taxRate * 100).toFixed(0)}%): {formatCurrency(calculatedTax)}
               </div>
               <div className="text-base font-bold text-slate-800">
                 Total: {formatCurrency(calculatedTotal)}

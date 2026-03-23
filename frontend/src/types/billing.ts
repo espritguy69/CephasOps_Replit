@@ -26,6 +26,7 @@ export interface Invoice {
   subTotal: number;
   taxAmount?: number;
   totalAmount: number;
+  taxRate?: number;
   doRefNo?: string | null;
   purchaseOrderNo?: string | null;
   status: 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Cancelled';

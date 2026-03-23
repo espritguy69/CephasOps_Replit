@@ -1,7 +1,11 @@
 # CephasOps Admin Portal
 
 ## Project Overview
-CephasOps is a comprehensive operations platform for single-company ISP (Internet Service Provider) subcontracting workflows. Reconstructed from the `single_company` branch of the original CephasOps repo.
+CephasOps is a multi-tenant SaaS operations platform for ISP (Internet Service Provider) subcontracting workflows. Built with per-company data isolation, role-based module enablement, and department-scoped operations.
+
+## Project Goal
+Build CephasOps into a full multi-tenant SaaS platform implementing ALL features documented in the `docs/` folder. All 755 documentation files across system architecture, modules, business rules, API contracts, data models, UI specs, and SaaS readiness plans define the target product scope. The `docs/` folder is the source of truth for what the finished product looks like.
+
 
 ## Architecture
 
@@ -10,7 +14,8 @@ CephasOps is a comprehensive operations platform for single-company ISP (Interne
 - **Framework:** React 18 + TypeScript + Vite 6
 - **Styling:** Tailwind CSS v4 + ShadCN UI components
 - **State:** React Query (TanStack Query v5) + React Context
-- **Routing:** React Router v6 with auth-protected routes
+- **Routing:** React Router v6 with auth-protected routes (ProtectedRoute, SettingsProtectedRoute, PermissionProtectedRoute)
+- **RBAC:** usePermissions hook provides role→permission mapping; PermissionProtectedRoute guards individual routes with clean no-access UX
 - **UI Components:** Syncfusion Enterprise (grids, charts, schedule, PDF viewer, etc.) + custom ShadCN components
 - **Forms:** React Hook Form + Zod validation
 - **Dev Port:** 5000 (host: 0.0.0.0, allowedHosts: true for Replit proxy)
@@ -193,11 +198,19 @@ curl -sf https://api.yourdomain.com/health/platform # platform services
 - **Public directory:** `frontend/dist`
 
 ## Implemented Frontend Modules
-- Auth (Login, Change Password, Forgot/Reset Password)
+- Auth (Login, Change Password, Forgot/Reset Password) with session expiry messaging
 - Dashboard, Orders, Scheduler, Parser
 - Inventory (Dashboard, List, Stock Summary, Ledger, Receive, Transfer, Allocate, Issue, Return, Reports)
 - RMA, Billing, Payroll, P&L, Accounting
 - Operations (Dockets, Installer Payout Breakdown)
-- Settings (Email, Materials, Templates, Company, Departments, KPI, Rate Plans, Users, RBAC, Buildings)
+- Settings (50+ configuration pages with full CRUD - see GO_LIVE_READINESS.md for complete list)
+- Admin (Background Jobs, Event Bus, Workers, Scheduler, Replay, State Rebuilder, Event Ledger, Trace Explorer, SLA Monitor, User Management, Security, RBAC)
 - Workflow (Definitions, Guard Conditions, Side Effects)
-- Tasks, Notifications, Documents, Buildings, Reports Hub
+- Tasks, Notifications, Documents, Buildings, Reports Hub, Insights Dashboards, Assets, KPI
+
+## Go-Live Readiness
+- See `GO_LIVE_READINESS.md` for full module-by-module readiness assessment
+- All API methods (GET/POST/PATCH/PUT/DELETE) have consistent network error handling
+- Session expiry redirects to login with user-friendly message
+- Global ErrorBoundary wraps the entire application
+- No placeholder/sample data in production paths

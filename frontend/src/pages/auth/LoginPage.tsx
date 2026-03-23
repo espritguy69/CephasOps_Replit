@@ -1,4 +1,4 @@
-import React, { useState, FormEvent } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingSpinner, Button, TextInput } from '../../components/ui';
@@ -7,9 +7,18 @@ const LoginPage: React.FC = () => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [sessionExpiredMsg, setSessionExpiredMsg] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const expired = sessionStorage.getItem('sessionExpired');
+    if (expired) {
+      setSessionExpiredMsg('Your session has expired. Please sign in again.');
+      sessionStorage.removeItem('sessionExpired');
+    }
+  }, []);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -47,6 +56,11 @@ const LoginPage: React.FC = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
+            {sessionExpiredMsg && !error && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-800 p-4 text-sm text-amber-800 dark:text-amber-200" role="status">
+                {sessionExpiredMsg}
+              </div>
+            )}
             {error && (
               <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 p-4 text-sm text-red-800 dark:text-red-200" role="alert">
                 {error}

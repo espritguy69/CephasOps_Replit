@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { BarChart3, Package, Briefcase, TrendingUp, AlertCircle, CheckCircle, Clock, Users } from 'lucide-react';
-import { Card, Skeleton, EmptyState } from '../../components/ui';
+import { BarChart3, Package, Briefcase, TrendingUp, AlertCircle, CheckCircle, Clock, Users, RefreshCw, WifiOff } from 'lucide-react';
+import { Card, Skeleton, EmptyState, Button, StatusBadge, getOrderStatusVariant } from '../../components/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAllOrders } from '../../api/orders';
@@ -16,7 +16,7 @@ export function DashboardPage() {
   const siId = ((user as any)?.siId || serviceInstaller?.id || (serviceInstaller as any)?.Id) as string | undefined;
 
   // Fetch orders (all for admin, assigned for SI)
-  const { data: orders, isLoading: isLoadingOrders } = useQuery({
+  const { data: orders, isLoading: isLoadingOrders, error: ordersError, refetch: refetchOrders } = useQuery({
     queryKey: ['dashboardOrders', isAdmin, siId, dateRange],
     queryFn: () => {
       if (isAdmin) {
@@ -51,13 +51,19 @@ export function DashboardPage() {
   // Calculate KPIs
   const totalOrders = orders?.length || 0;
   const pendingOrders = orders?.filter((o: any) => 
-    o.status === 'Pending' || o.status === 'Assigned' || o.status === 'OnTheWay'
+    ['Pending', 'Assigned', 'ReschedulePendingApproval'].includes(o.status)
   ).length || 0;
   const completedOrders = orders?.filter((o: any) => 
-    o.status === 'Completed' || o.status === 'OrderCompleted'
+    ['Completed', 'OrderCompleted'].includes(o.status)
   ).length || 0;
   const inProgressOrders = orders?.filter((o: any) => 
-    o.status === 'MetCustomer' || o.status === 'Installing'
+    ['OnTheWay', 'MetCustomer', 'Installing', 'InProgress'].includes(o.status)
+  ).length || 0;
+  const cancelledOrders = orders?.filter((o: any) => 
+    ['Cancelled', 'OrderCancelled'].includes(o.status)
+  ).length || 0;
+  const blockerOrders = orders?.filter((o: any) => 
+    ['Blocker', 'Rejected'].includes(o.status) || (o.status || '').includes('Blocker')
   ).length || 0;
 
   const lowStockCount = stockLevels?.filter((s: any) => 
@@ -103,6 +109,32 @@ export function DashboardPage() {
               </div>
             ))}
           </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (ordersError) {
+    return (
+      <div className="p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <BarChart3 className="h-6 w-6" />
+            Dashboard
+          </h2>
+        </div>
+        <Card className="p-6">
+          <EmptyState
+            title="Unable to load dashboard"
+            description={(ordersError as Error).message || 'Something went wrong. Please check your connection and try again.'}
+            icon={<WifiOff className="h-12 w-12 text-muted-foreground" />}
+            action={
+              <Button variant="outline" onClick={() => refetchOrders()} className="min-h-[44px]">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            }
+          />
         </Card>
       </div>
     );
@@ -193,6 +225,22 @@ export function DashboardPage() {
           </div>
         </Card>
 
+        {(blockerOrders > 0 || cancelledOrders > 0) && (
+          <Card className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  {blockerOrders > 0 && cancelledOrders > 0 
+                    ? 'Blocked / Cancelled' 
+                    : blockerOrders > 0 ? 'Blocked' : 'Cancelled'}
+                </p>
+                <p className="text-2xl font-bold text-red-600">{blockerOrders + cancelledOrders}</p>
+              </div>
+              <AlertCircle className="h-8 w-8 text-red-600" />
+            </div>
+          </Card>
+        )}
+
         {isAdmin && (
           <>
             <Card className="p-4">
@@ -247,21 +295,9 @@ export function DashboardPage() {
                       </p>
                     )}
                   </div>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      order.status === 'Pending' || order.status === 'Assigned'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : order.status === 'OnTheWay'
-                        ? 'bg-blue-100 text-blue-800'
-                        : order.status === 'MetCustomer' || order.status === 'Installing'
-                        ? 'bg-purple-100 text-purple-800'
-                        : order.status === 'Completed' || order.status === 'OrderCompleted'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
+                  <StatusBadge variant={getOrderStatusVariant(order.status)} size="sm">
                     {order.status}
-                  </span>
+                  </StatusBadge>
                 </div>
               </div>
             ))}

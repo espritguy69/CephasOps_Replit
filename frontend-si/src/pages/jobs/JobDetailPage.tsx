@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, Skeleton, EmptyState, Button, useToast, Tabs, TabPanel, Breadcrumbs } from '../../components/ui';
+import { Card, Skeleton, EmptyState, Button, useToast, Tabs, TabPanel, Breadcrumbs, StatusBadge, getOrderStatusVariant } from '../../components/ui';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { AlertTriangle, Calendar, Camera, Package, RefreshCw, User } from 'lucide-react';
 import { getAllowedTransitions, executeTransition } from '../../api/workflow';
@@ -37,13 +37,6 @@ export function JobDetailPage() {
   // Get SI ID from service installer profile or user object
   const siId = ((user as any)?.siId || serviceInstaller?.id || (serviceInstaller as any)?.Id) as string | undefined;
 
-  // Check if order type is Assurance
-  const orderTypeStr = (order?.orderType || '').toLowerCase();
-  const isAssuranceOrder = orderTypeStr.includes('assurance') || orderTypeStr.includes('assur');
-
-  // Check if order status allows material actions
-  const canMarkFaulty = order?.status && ['MetCustomer', 'InProgress', 'OrderCompleted'].includes(order.status);
-
   const { data: order, isLoading, error } = useQuery({
     queryKey: ['jobDetails', orderId],
     queryFn: () => getOrder(orderId || ''),
@@ -77,6 +70,11 @@ export function JobDetailPage() {
       setScheduleSlot(null);
     }
   }, [slot]);
+
+  const orderTypeStr = (order?.orderType || '').toLowerCase();
+  const isAssuranceOrder = orderTypeStr.includes('assurance') || orderTypeStr.includes('assur');
+  const canMarkFaulty = order?.status && ['MetCustomer', 'InProgress', 'OrderCompleted'].includes(order.status);
+  const isCancelled = order?.status === 'Cancelled' || order?.status === 'OrderCancelled';
 
   const executeTransitionMutation = useMutation({
     mutationFn: async ({ toStatus, metadata }: { toStatus: string; metadata?: any }) => {
@@ -171,7 +169,13 @@ export function JobDetailPage() {
         },
       });
     } catch (err: any) {
-      showError(err.message || `Failed to transition status to ${newStatus}`);
+      const isNetworkError = !navigator.onLine || 
+        (err.message && (err.message.includes('network') || err.message.includes('fetch') || err.message.includes('Failed to fetch')));
+      showError(
+        isNetworkError 
+          ? 'Network error. Please check your connection and try again.'
+          : (err.message || `Failed to transition status to ${newStatus}`)
+      );
     } finally {
       setTransitioning(false);
     }
@@ -253,21 +257,47 @@ export function JobDetailPage() {
       </div>
       <PageHeader title={order.customerName || 'Job Details'} />
       <div className="p-4 space-y-4">
+        {isCancelled && (
+          <Card className="p-4 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 border-2">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-red-900 dark:text-red-200">Job Cancelled</h3>
+                <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                  This job has been cancelled. Job details are read-only.
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
+
         <Tabs defaultActiveTab={0}>
           <TabPanel label="Details" icon={<User className="h-4 w-4" />}>
             <div className="space-y-4">
               {/* Customer Information */}
               <Card className="p-4">
-                <h3 className="text-lg font-semibold mb-2">{order.customerName || 'N/A'}</h3>
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-lg font-semibold">{order.customerName || 'N/A'}</h3>
+                  <StatusBadge variant={getOrderStatusVariant(order.status)} size="sm">
+                    {order.status || 'N/A'}
+                  </StatusBadge>
+                </div>
                 <p className="text-muted-foreground text-sm mb-1">
-                  {order.addressLine1 || ''}, {order.city || ''}
+                  {order.addressLine1 || ''}{order.city ? `, ${order.city}` : ''}
                 </p>
                 {order.customerPhone && (
-                  <p className="text-sm text-muted-foreground">Phone: {order.customerPhone}</p>
+                  <a
+                    href={`tel:${order.customerPhone}`}
+                    className="text-sm text-primary underline inline-flex items-center gap-1 min-h-[44px] py-2"
+                  >
+                    Phone: {order.customerPhone}
+                  </a>
                 )}
-                <p className="text-sm mt-2">
-                  Status: <span className="font-medium">{order.status || 'N/A'}</span>
-                </p>
+                {order.orderType && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Type: <span className="font-medium">{order.orderType}</span>
+                  </p>
+                )}
               </Card>
 
               {/* Appointment & Reschedule */}
@@ -316,16 +346,23 @@ export function JobDetailPage() {
               )}
 
               {/* Status Transitions */}
-              {allowedTransitions && allowedTransitions.length > 0 && (
+              {!isCancelled && allowedTransitions && allowedTransitions.length > 0 && (
                 <Card className="p-4">
                   <h3 className="font-semibold mb-3">Status Actions</h3>
-                  <div className="flex flex-wrap gap-2">
+                  {transitioning && (
+                    <div className="flex items-center gap-2 mb-3 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md">
+                      <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
+                      <span className="text-sm text-blue-700 dark:text-blue-300">Updating status...</span>
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-3">
                     {allowedTransitions.map((transition: any) => (
                       <Button
                         key={transition.toStatus}
                         onClick={() => handleStatusTransition(transition.toStatus)}
                         disabled={transitioning}
                         variant="outline"
+                        className="min-h-[48px] min-w-[120px] text-base px-4"
                       >
                         {transition.name || transition.toStatus}
                       </Button>
@@ -336,7 +373,7 @@ export function JobDetailPage() {
 
               {/* Checklist */}
               {order.status && (
-                <ChecklistDisplay orderId={orderId || ''} statusCode={order.status} />
+                <ChecklistDisplay orderId={orderId || ''} statusCode={order.status} readonly={isCancelled} />
               )}
 
               {/* Location Display */}
@@ -346,24 +383,24 @@ export function JobDetailPage() {
 
           <TabPanel label="Materials" icon={<Package className="h-4 w-4" />}>
             <div className="space-y-4">
-              {order.status === 'Assigned' && (
+              {!isCancelled && order.status === 'Assigned' && (
                 <MaterialCollectionAlert orderId={orderId || ''} />
               )}
-              {siId && requiredMaterials && requiredMaterials.some(m => m.isSerialised) && (
+              {!isCancelled && siId && requiredMaterials && requiredMaterials.some(m => m.isSerialised) && (
                 <SerialScanner orderId={orderId || ''} sessionId={orderId || ''} existingScans={[]} />
               )}
-              {requiredMaterials && requiredMaterials.some(m => !m.isSerialised) && (
+              {!isCancelled && requiredMaterials && requiredMaterials.some(m => !m.isSerialised) && (
                 <NonSerialisedMaterialEntry orderId={orderId || ''} requiredMaterials={requiredMaterials} />
               )}
               <MaterialsDisplay
                 orderId={orderId || ''}
-                onMarkFaulty={(serialNumber, materialName) => {
+                onMarkFaulty={isCancelled ? undefined : (serialNumber, materialName) => {
                   setSelectedSerialNumber(serialNumber);
                   setSelectedMaterialName(materialName);
                   setMarkFaultyModalOpen(true);
                 }}
               />
-              {canMarkFaulty && (
+              {!isCancelled && canMarkFaulty && (
                 <Card className="p-4">
                   <h3 className="font-semibold mb-3">Material Actions</h3>
                   <div className="flex flex-wrap gap-2">
@@ -392,7 +429,15 @@ export function JobDetailPage() {
           </TabPanel>
 
           <TabPanel label="Photos" icon={<Camera className="h-4 w-4" />}>
-            <PhotoUpload orderId={orderId || ''} existingPhotos={[]} maxPhotos={10} />
+            {isCancelled ? (
+              <Card className="p-4">
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Photo uploads are disabled for cancelled jobs.
+                </p>
+              </Card>
+            ) : (
+              <PhotoUpload orderId={orderId || ''} existingPhotos={[]} maxPhotos={10} />
+            )}
           </TabPanel>
         </Tabs>
       </div>

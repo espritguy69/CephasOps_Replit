@@ -307,18 +307,19 @@ Future: SMS/WhatsApp (infrastructure ready)
 
 ## 7. Important Architectural Decisions & Tradeoffs
 
-### 7.1 Single-Company Mode
+### 7.1 Multi-Tenant SaaS Architecture
 
-**Decision:** Operate in single-company mode with multiple departments.
+**Decision:** Operate as a multi-tenant SaaS platform with per-company data isolation.
 
 **Rationale:**
-- Simplifies data isolation
-- Reduces complexity in queries
-- Department-based filtering is sufficient
+- Enables onboarding multiple companies without code changes
+- Per-company data isolation via CompanyId scoping on all entities
+- Department-based filtering within each tenant
 
-**Tradeoff:**
-- Multi-company infrastructure exists but unused
-- Future migration possible if needed
+**Implementation:**
+- All queries scoped by CompanyId via EF Core global query filters
+- Company-aware RBAC controls module visibility per tenant
+- Shared infrastructure with logical data separation
 
 ### 7.2 Settings-Driven Configuration
 

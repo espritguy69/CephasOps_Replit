@@ -137,8 +137,15 @@ export function MaterialsScanPage() {
       setIsScanning(true);
     } catch (error: any) {
       const errorMsg = error.message || 'Failed to start camera';
-      setCameraError(errorMsg);
-      showError(`Camera error: ${errorMsg}`);
+      const isPermissionDenied = errorMsg.toLowerCase().includes('permission') || 
+                                  errorMsg.toLowerCase().includes('denied') ||
+                                  errorMsg.toLowerCase().includes('not allowed');
+      setCameraError(
+        isPermissionDenied 
+          ? 'Camera permission denied. Please allow camera access in your browser settings to use the scanner.'
+          : errorMsg
+      );
+      showError(isPermissionDenied ? 'Camera permission denied. Please enable camera access.' : `Camera error: ${errorMsg}`);
       setIsScanning(false);
     }
   };
@@ -259,10 +266,18 @@ export function MaterialsScanPage() {
             )}
           </div>
         )}
-        {!isScanning && (
+        {!isScanning && !cameraError && (
           <p className="text-sm text-muted-foreground text-center py-8">
-            Click "Start Scanner" to activate camera for barcode/QR code scanning
+            Tap "Start Scanner" to activate camera for barcode/QR code scanning
           </p>
+        )}
+        {!isScanning && cameraError && (
+          <div className="py-6 px-4 text-center">
+            <AlertCircle className="h-10 w-10 text-yellow-500 mx-auto mb-3" />
+            <p className="text-sm font-medium text-foreground mb-1">Camera Unavailable</p>
+            <p className="text-sm text-muted-foreground mb-3">{cameraError}</p>
+            <p className="text-xs text-muted-foreground">You can still enter serial numbers manually below.</p>
+          </div>
         )}
       </Card>
 

@@ -114,7 +114,7 @@ export function EarningsPage() {
             <select
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
-              className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+              className="h-11 rounded-md border border-input bg-background px-3 py-1 text-base min-w-[140px]"
             >
               {(() => {
                 const now = new Date();
@@ -138,6 +138,22 @@ export function EarningsPage() {
         }
       />
       <div className="p-4 space-y-4">
+        {earnings.length > 0 && (
+          <Card className="p-4 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-green-700 dark:text-green-300">Total Earnings</p>
+                <p className="text-2xl font-bold text-green-900 dark:text-green-100">
+                  RM {earnings.reduce((sum: number, e: any) => sum + (e.finalPay ?? e.baseRate ?? 0), 0).toFixed(2)}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-green-700 dark:text-green-300">Jobs</p>
+                <p className="text-2xl font-bold text-green-900 dark:text-green-100">{earnings.length}</p>
+              </div>
+            </div>
+          </Card>
+        )}
         <Card className="p-4">
           {earnings.length > 0 ? (
             <DataTable data={earnings} columns={columns} sortable />

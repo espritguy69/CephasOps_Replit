@@ -76,25 +76,31 @@ export function JobsListPage() {
   return (
     <>
       <PageHeader title="Assigned Jobs" />
-      <div className="p-4 md:p-6 space-y-4">
-        {jobs.map((job: any) => (
-          <Link to={`/jobs/${job.id}`} key={job.id}>
-            <Card className="p-4">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-lg font-semibold">{job.customerName}</h3>
-                <StatusBadge variant={getOrderStatusVariant(job.status)} size="sm">
-                  {job.status}
-                </StatusBadge>
-              </div>
-            <p className="text-muted-foreground text-sm mb-1">{job.addressLine1}, {job.city}</p>
-            {job.appointmentDate && (
-              <p className="text-muted-foreground text-sm">
-                Appointment: {format(new Date(job.appointmentDate), 'MMM dd, yyyy')} {job.appointmentWindowFrom} - {job.appointmentWindowTo}
-              </p>
-            )}
-          </Card>
-        </Link>
-      ))}
+      <div className="p-4 md:p-6 space-y-3">
+        {jobs.map((job: any) => {
+          const jobCancelled = job.status === 'Cancelled' || job.status === 'OrderCancelled';
+          return (
+            <Link to={`/jobs/${job.id}`} key={job.id} className="block">
+              <Card className={`p-4 active:bg-muted/50 transition-colors ${jobCancelled ? 'opacity-60' : ''}`}>
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-base font-semibold leading-tight flex-1 mr-2">{job.customerName}</h3>
+                  <StatusBadge variant={getOrderStatusVariant(job.status)} size="sm">
+                    {job.status}
+                  </StatusBadge>
+                </div>
+                <p className="text-muted-foreground text-sm mb-1">{job.addressLine1}{job.city ? `, ${job.city}` : ''}</p>
+                {job.appointmentDate && (
+                  <p className="text-muted-foreground text-sm">
+                    {format(new Date(job.appointmentDate), 'MMM dd, yyyy')} {job.appointmentWindowFrom ? `${job.appointmentWindowFrom} - ${job.appointmentWindowTo}` : ''}
+                  </p>
+                )}
+                {job.orderType && (
+                  <p className="text-xs text-muted-foreground mt-1">{job.orderType}</p>
+                )}
+              </Card>
+            </Link>
+          );
+        })}
       </div>
     </>
   );

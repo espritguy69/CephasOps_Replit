@@ -1,44 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  DiagramComponent, 
-  Inject, 
-  DataBinding, 
-  HierarchicalTree,
-  DiagramTools,
-  NodeModel,
-  ConnectorModel
-} from '@syncfusion/ej2-react-diagrams';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { LoadingSpinner, useToast, Button, Card, Modal, DataTable } from '../../components/ui';
+import { LoadingSpinner, EmptyState, useToast, Button, Card, Modal, DataTable } from '../../components/ui';
 import { PageShell } from '../../components/layout';
-import { Warehouse, Search, MapPin, Package, X } from 'lucide-react';
+import { Warehouse, Search, Package, RefreshCw, Download } from 'lucide-react';
 import apiClient from '../../api/client';
 
-/**
- * Warehouse Visual Layout Page
- * 🔥 UNIQUE COMPETITIVE FEATURE 🔥
- * 
- * Features:
- * - Visual bin locations (Section A, B, C)
- * - Capacity color-coding (Green >70%, Yellow 30-70%, Red <30%)
- * - Click bin to see contents
- * - Search & highlight material location
- * - Pick route optimizer
- * - Real-time capacity tracking
- * 
- * NO OTHER ISP SOFTWARE HAS THIS!
- */
+interface BinSummary {
+  id: string;
+  code: string;
+  name: string;
+  section: string;
+  capacity: number;
+  currentStock: number;
+  utilizationPercent: number;
+}
 
 interface BinContents {
-  bin: {
-    id: string;
-    code: string;
-    name: string;
-    section: string;
-    capacity: number;
-    currentStock: number;
-    utilizationPercent: number;
-  };
+  bin: BinSummary;
   stockBalances: Array<{
     id: string;
     materialCode: string;
@@ -47,14 +25,37 @@ interface BinContents {
   }>;
 }
 
+const getCapacityColor = (percent: number): { fill: string; stroke: string } => {
+  if (percent >= 70) return { fill: '#10b981', stroke: '#059669' };
+  if (percent >= 30) return { fill: '#f59e0b', stroke: '#d97706' };
+  return { fill: '#ef4444', stroke: '#dc2626' };
+};
+
+const getStockLevelColor = (quantity: number, capacity: number): string => {
+  if (capacity === 0) return 'text-gray-600';
+  const percent = (quantity / capacity) * 100;
+  if (percent < 30) return 'text-red-600';
+  if (percent < 70) return 'text-yellow-600';
+  return 'text-green-600';
+};
+
 const WarehouseLayoutPage: React.FC = () => {
   const { showSuccess, showError } = useToast();
-  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBinCode, setSelectedBinCode] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [highlightedBins, setHighlightedBins] = useState<string[]>([]);
 
-  // Fetch bin contents when a bin is selected
+  const { data: bins = [], isLoading: isLoadingBins, refetch: refetchBins } = useQuery<BinSummary[]>({
+    queryKey: ['warehouseBins'],
+    queryFn: async () => {
+      const response = await apiClient.get<BinSummary[] | { data?: BinSummary[]; items?: BinSummary[] }>('/bins');
+      if (Array.isArray(response)) return response;
+      const wrapped = response as { data?: BinSummary[]; items?: BinSummary[] };
+      return wrapped.data || wrapped.items || [];
+    },
+  });
+
   const { data: binContents, isLoading: isLoadingBinContents } = useQuery<BinContents>({
     queryKey: ['binContents', selectedBinCode],
     queryFn: async () => {
@@ -64,85 +65,73 @@ const WarehouseLayoutPage: React.FC = () => {
     enabled: !!selectedBinCode && isModalOpen,
   });
 
-  // Sample warehouse data (in production, fetch from API)
-  const warehouseNodes: NodeModel[] = [
-    // Section Headers
-    { id: 'sectionA', offsetX: 150, offsetY: 50, width: 100, height: 40, 
-      annotations: [{ content: 'Section A\nFiber Cables' }],
-      style: { fill: '#3b82f6', strokeColor: '#2563eb' } },
-    { id: 'sectionB', offsetX: 350, offsetY: 50, width: 100, height: 40,
-      annotations: [{ content: 'Section B\nONUs & Modems' }],
-      style: { fill: '#3b82f6', strokeColor: '#2563eb' } },
-    { id: 'sectionC', offsetX: 550, offsetY: 50, width: 100, height: 40,
-      annotations: [{ content: 'Section C\nSplitters' }],
-      style: { fill: '#3b82f6', strokeColor: '#2563eb' } },
-    
-    // Section A Bins
-    { id: 'A1', offsetX: 100, offsetY: 150, width: 80, height: 60,
-      annotations: [{ content: 'A1\n85%' }],
-      style: { fill: '#10b981', strokeColor: '#059669' } },
-    { id: 'A2', offsetX: 200, offsetY: 150, width: 80, height: 60,
-      annotations: [{ content: 'A2\n92%' }],
-      style: { fill: '#10b981', strokeColor: '#059669' } },
-    { id: 'A3', offsetX: 100, offsetY: 230, width: 80, height: 60,
-      annotations: [{ content: 'A3\n45%' }],
-      style: { fill: '#f59e0b', strokeColor: '#d97706' } },
-    { id: 'A4', offsetX: 200, offsetY: 230, width: 80, height: 60,
-      annotations: [{ content: 'A4\n28%' }],
-      style: { fill: '#ef4444', strokeColor: '#dc2626' } },
-    
-    // Section B Bins
-    { id: 'B1', offsetX: 300, offsetY: 150, width: 80, height: 60,
-      annotations: [{ content: 'B1\n78%' }],
-      style: { fill: '#10b981', strokeColor: '#059669' } },
-    { id: 'B2', offsetX: 400, offsetY: 150, width: 80, height: 60,
-      annotations: [{ content: 'B2\n65%' }],
-      style: { fill: '#f59e0b', strokeColor: '#d97706' } },
-    { id: 'B3', offsetX: 300, offsetY: 230, width: 80, height: 60,
-      annotations: [{ content: 'B3\n88%' }],
-      style: { fill: '#10b981', strokeColor: '#059669' } },
-    { id: 'B4', offsetX: 400, offsetY: 230, width: 80, height: 60,
-      annotations: [{ content: 'B4\n55%' }],
-      style: { fill: '#f59e0b', strokeColor: '#d97706' } },
-    
-    // Section C Bins
-    { id: 'C1', offsetX: 500, offsetY: 150, width: 80, height: 60,
-      annotations: [{ content: 'C1\n90%' }],
-      style: { fill: '#10b981', strokeColor: '#059669' } },
-    { id: 'C2', offsetX: 600, offsetY: 150, width: 80, height: 60,
-      annotations: [{ content: 'C2\n75%' }],
-      style: { fill: '#10b981', strokeColor: '#059669' } },
-    { id: 'C3', offsetX: 500, offsetY: 230, width: 80, height: 60,
-      annotations: [{ content: 'C3\n82%' }],
-      style: { fill: '#10b981', strokeColor: '#059669' } },
-    { id: 'C4', offsetX: 600, offsetY: 230, width: 80, height: 60,
-      annotations: [{ content: 'C4\n25%' }],
-      style: { fill: '#ef4444', strokeColor: '#dc2626' } }
-  ];
+  const sections = useMemo(() => {
+    const map = new Map<string, BinSummary[]>();
+    bins.forEach((bin) => {
+      const section = bin.section || 'Default';
+      if (!map.has(section)) map.set(section, []);
+      map.get(section)!.push(bin);
+    });
+    return map;
+  }, [bins]);
 
-  const onNodeClick = (args: any) => {
-    if (args.element && args.element.id) {
-      const binCode = args.element.id;
-      // Check if it's a bin (A1, B2, etc.) or section header
-      if (binCode.startsWith('section')) {
-        return; // Don't open modal for section headers
-      }
-      setSelectedBinCode(binCode);
-      setIsModalOpen(true);
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      setHighlightedBins([]);
+      return;
     }
+    try {
+      interface BinSearchResult { binCode?: string; code?: string; id?: string }
+      const response = await apiClient.get<BinSearchResult[] | { data?: BinSearchResult[] }>(`/bins/search?materialQuery=${encodeURIComponent(searchQuery)}`);
+      const results: BinSearchResult[] = Array.isArray(response) ? response : (response as { data?: BinSearchResult[] })?.data || [];
+      const binCodes = results.map((r) => r.binCode || r.code || r.id || '');
+      setHighlightedBins(binCodes);
+      if (binCodes.length === 0) {
+        showError(`No bins found containing "${searchQuery}"`);
+      } else {
+        showSuccess(`Found material in ${binCodes.length} bin(s)`);
+      }
+    } catch {
+      setHighlightedBins([]);
+      const matching = bins.filter(b =>
+        b.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        b.code?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setHighlightedBins(matching.map(b => b.code));
+      if (matching.length === 0) {
+        showError(`No bins found matching "${searchQuery}"`);
+      }
+    }
+  };
+
+  const handleExport = () => {
+    if (bins.length === 0) {
+      showError('No bin data to export');
+      return;
+    }
+    const headers = ['Code', 'Name', 'Section', 'Capacity', 'Current Stock', 'Utilization %'];
+    const rows = bins.map(b => [b.code, b.name, b.section, b.capacity, b.currentStock, b.utilizationPercent.toFixed(1)]);
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `warehouse-layout-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    showSuccess('Warehouse layout exported');
+  };
+
+  const openBinModal = (binCode: string) => {
+    setSelectedBinCode(binCode);
+    setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedBinCode(null);
-  };
-
-  const getStockLevelColor = (quantity: number, capacity: number): string => {
-    if (capacity === 0) return 'text-gray-600';
-    const percent = (quantity / capacity) * 100;
-    if (percent < 30) return 'text-red-600';
-    if (percent < 70) return 'text-yellow-600';
-    return 'text-green-600';
   };
 
   const binContentsColumns = [
@@ -162,7 +151,7 @@ const WarehouseLayoutPage: React.FC = () => {
       key: 'quantity',
       label: 'Quantity',
       width: '120px',
-      render: (value: number, row: any) => (
+      render: (value: number) => (
         <span className={`font-semibold ${getStockLevelColor(value, binContents?.bin.capacity || 0)}`}>
           {value.toLocaleString()}
         </span>
@@ -173,15 +162,21 @@ const WarehouseLayoutPage: React.FC = () => {
   return (
     <PageShell
       title="Warehouse Layout"
-      subtitle="🔥 Visual bin locations & capacity tracking"
+      subtitle="Visual bin locations & capacity tracking"
       actions={
-        <Button size="sm" variant="outline">
-          Export Layout
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => refetchBins()} className="gap-1">
+            <RefreshCw className="h-3.5 w-3.5" />
+            Refresh
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleExport} className="gap-1">
+            <Download className="h-3.5 w-3.5" />
+            Export Layout
+          </Button>
+        </div>
       }
     >
       <div className="space-y-4">
-        {/* Search Bar */}
         <Card className="p-4">
           <div className="flex gap-2">
             <div className="relative flex-1">
@@ -191,32 +186,75 @@ const WarehouseLayoutPage: React.FC = () => {
                 placeholder="Search material to find bin location..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="w-full pl-10 pr-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
-            <Button>Search</Button>
+            <Button onClick={handleSearch}>Search</Button>
+            {highlightedBins.length > 0 && (
+              <Button variant="outline" onClick={() => { setHighlightedBins([]); setSearchQuery(''); }}>
+                Clear
+              </Button>
+            )}
           </div>
         </Card>
 
-        {/* Warehouse Diagram */}
-        <Card className="p-6">
-          <DiagramComponent
-            id="warehouse-diagram"
-            width="100%"
-            height="600px"
-            nodes={warehouseNodes}
-            click={onNodeClick}
-            snapSettings={{ constraints: 0 }}
-            tool={DiagramTools.ZoomPan}
-          >
-            <Inject services={[DataBinding, HierarchicalTree]} />
-          </DiagramComponent>
-        </Card>
+        {isLoadingBins ? (
+          <LoadingSpinner message="Loading warehouse bins..." fullPage />
+        ) : bins.length === 0 ? (
+          <EmptyState
+            title="No warehouse bins configured"
+            description="Warehouse bins will appear here once they have been set up in the system. Contact your administrator to configure warehouse locations."
+            icon={<Warehouse className="h-12 w-12" />}
+          />
+        ) : (
+          <div className="space-y-6">
+            {Array.from(sections.entries()).map(([sectionName, sectionBins]) => (
+              <Card key={sectionName} className="p-4">
+                <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                  <Package className="h-4 w-4 text-blue-500" />
+                  {sectionName}
+                  <span className="text-muted-foreground font-normal">({sectionBins.length} bins)</span>
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  {sectionBins.map((bin) => {
+                    const colors = getCapacityColor(bin.utilizationPercent);
+                    const isHighlighted = highlightedBins.includes(bin.code);
+                    return (
+                      <div
+                        key={bin.id}
+                        onClick={() => openBinModal(bin.code)}
+                        className={`
+                          p-3 rounded-lg border-2 cursor-pointer transition-all hover:scale-105
+                          ${isHighlighted ? 'ring-2 ring-blue-500 ring-offset-2 shadow-lg' : ''}
+                        `}
+                        style={{
+                          backgroundColor: `${colors.fill}20`,
+                          borderColor: colors.stroke,
+                        }}
+                      >
+                        <div className="text-center">
+                          <p className="font-bold text-sm">{bin.code}</p>
+                          <p className="text-xs text-muted-foreground truncate" title={bin.name}>{bin.name}</p>
+                          <p className="text-lg font-semibold mt-1" style={{ color: colors.stroke }}>
+                            {bin.utilizationPercent.toFixed(0)}%
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {bin.currentStock}/{bin.capacity}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
 
-        {/* Legend & Instructions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card className="p-4">
-            <h3 className="font-semibold text-sm mb-3">📊 Capacity Legend</h3>
+            <h3 className="font-semibold text-sm mb-3">Capacity Legend</h3>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded bg-emerald-500"></div>
@@ -228,26 +266,23 @@ const WarehouseLayoutPage: React.FC = () => {
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded bg-red-500"></div>
-                <span><strong>Red</strong>: {'<'} 30% capacity (Reorder needed!)</span>
+                <span><strong>Red</strong>: {'<'} 30% capacity (Reorder needed)</span>
               </div>
             </div>
           </Card>
 
-          <Card className="p-4 bg-purple-50 dark:bg-purple-900/20">
-            <h3 className="font-semibold text-sm mb-3">✨ Features</h3>
+          <Card className="p-4">
+            <h3 className="font-semibold text-sm mb-3">Quick Guide</h3>
             <ul className="space-y-1 text-sm">
-              <li>• <strong>Click bin</strong>: View contents & quantities</li>
-              <li>• <strong>Search material</strong>: Highlights bin location</li>
-              <li>• <strong>Color-coded</strong>: Instant capacity overview</li>
-              <li>• <strong>Pick routes</strong>: Optimize collection path</li>
-              <li>• <strong>Real-time</strong>: Updates as stock moves</li>
-              <li>• 🔥 <strong>UNIQUE FEATURE</strong>: No competitor has this!</li>
+              <li>Click any bin to view its contents and stock details</li>
+              <li>Use the search bar to find which bin contains a material</li>
+              <li>Color-coded bins provide instant capacity overview</li>
+              <li>Export layout data as CSV for reporting</li>
             </ul>
           </Card>
         </div>
       </div>
 
-      {/* Bin Contents Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
@@ -298,7 +333,7 @@ const WarehouseLayoutPage: React.FC = () => {
           </div>
         ) : (
           <div className="text-center py-8 text-muted-foreground">
-            Bin not found
+            Could not load bin contents. The bin may not exist or the server may be unavailable.
           </div>
         )}
       </Modal>

@@ -11,7 +11,7 @@
 **Company → Systems → External Services**
 
 High-level overview showing:
-- Company structure (single company, multiple departments)
+- Company structure (multi-tenant SaaS, multiple departments per tenant)
 - Internal systems (Admin Portal, SI App, Backend API, Email Parser)
 - External systems (Partner Email Servers, Partner Portals)
 - Database and storage systems
@@ -125,7 +125,7 @@ End-to-end order lifecycle:
    - All operations flow through Clean Architecture layers: Frontend → API → Application → Domain → Infrastructure → Database
 
 4. **Company Context** (Diagram: `00_company-systems-overview.md`)
-   - Single company with multiple departments (GPON active, CWO/NWO future)
+   - Multi-tenant SaaS with multiple departments per company (GPON active, CWO/NWO future)
    - All systems support department-based routing and workflows
 
 ### Key Integration Points

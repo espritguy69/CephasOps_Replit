@@ -99,13 +99,13 @@ export function MainLayout({ children }: MainLayoutProps) {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto safe-area-bottom">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden safe-area-bottom">
         {children}
       </main>
 
       {/* Bottom Navigation (Mobile) */}
       <nav className="sticky bottom-0 z-50 w-full border-t bg-card safe-area-bottom md:hidden">
-        <div className="flex h-16 items-center justify-around">
+        <div className="flex h-[60px] items-center justify-around">
           {/* Dashboard Link (always visible) */}
           <Link
             to="/dashboard"

@@ -41,7 +41,7 @@ export function MaterialReturnsPage() {
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground">Material Returns</h2>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handleRefresh} className="min-h-[44px]">
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
@@ -53,14 +53,14 @@ export function MaterialReturnsPage() {
           <Filter className="h-5 w-5 text-muted-foreground" />
           <h3 className="font-semibold">Filters</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <div>
             <label className="block text-sm font-medium mb-1">From Date</label>
             <input
               type="date"
               value={dateFrom}
               onChange={(e) => setDateFrom(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground min-h-[44px] text-base"
             />
           </div>
           <div>
@@ -69,7 +69,7 @@ export function MaterialReturnsPage() {
               type="date"
               value={dateTo}
               onChange={(e) => setDateTo(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground min-h-[44px] text-base"
             />
           </div>
           <div>
@@ -77,7 +77,7 @@ export function MaterialReturnsPage() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground min-h-[44px] text-base"
             >
               <option value="all">All</option>
               <option value="faulty">Faulty</option>
@@ -90,7 +90,7 @@ export function MaterialReturnsPage() {
             <select
               value={filterReturnType}
               onChange={(e) => setFilterReturnType(e.target.value)}
-              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground"
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground min-h-[44px] text-base"
             >
               <option value="all">All</option>
               <option value="faulty">Faulty</option>

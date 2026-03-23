@@ -35,11 +35,13 @@ const PnlWaterfallChart: React.FC<PnlWaterfallChartProps> = ({
 
   const data: WaterfallDataPoint[] = [
     { x: 'Revenue', y: revenue },
-    { x: 'SI Costs', y: -siCosts },
-    { x: 'Material Costs', y: -materialCosts },
-    { x: 'Overheads', y: -overheads },
+    ...(siCosts > 0 ? [{ x: 'SI Costs', y: -siCosts }] : []),
+    ...(materialCosts > 0 ? [{ x: 'Direct Costs', y: -materialCosts }] : []),
+    ...(overheads > 0 ? [{ x: 'Overheads', y: -overheads }] : []),
     { x: 'Net Profit', y: netProfit, sum: true }
   ];
+
+  const sumIndex = data.length - 1;
 
   const primaryXAxis = {
     valueType: 'Category' as any,
@@ -95,7 +97,7 @@ const PnlWaterfallChart: React.FC<PnlWaterfallChartProps> = ({
             name="Amount"
             type="Waterfall"
             intermediateSumIndexes={[]}
-            sumIndexes={[4]}
+            sumIndexes={[sumIndex]}
             marker={marker}
             connector={connector}
             columnWidth={0.6}

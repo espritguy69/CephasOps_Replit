@@ -125,6 +125,12 @@ h3 { font-size: var(--heading-3); line-height: 1.4; }
 #root {
   min-height: 100vh;
   min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 /* Page content padding - matches p-4 md:p-6 rhythm (shared with Admin) */

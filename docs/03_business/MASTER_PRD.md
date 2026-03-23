@@ -15,7 +15,7 @@
 
 **Current Focus:** GPON (Gigabit Passive Optical Network) department operations for TIME and other ISP partners.
 
-**Architecture:** Single-company mode with multiple departments (functional units) and branches (physical locations).
+**Architecture:** Multi-tenant SaaS platform with per-company data isolation, multiple departments (functional units), and branches (physical locations).
 
 ### 1.2 Product Vision
 
@@ -366,8 +366,8 @@ Serial Numbers Scanned → Serialized Items Tracked
 - **Future:** New partners can be added via settings (no code changes)
 
 ### 6.3 Multi-Company
-- **Current:** Single-company mode (one global company context)
-- **Note:** Multi-company infrastructure exists but is not actively used
+- **Architecture:** Multi-tenant SaaS with per-company data isolation
+- **Implementation:** CompanyId scoping on all entities via EF Core global query filters
 
 ### 6.4 SI App
 - **Current:** Basic functionality (job list, status updates, photos)

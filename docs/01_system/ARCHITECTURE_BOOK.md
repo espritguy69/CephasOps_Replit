@@ -571,33 +571,33 @@ Every parser is defined using a Parser Template, which includes:
 
 
 
-Component	Description
+Component       Description
 
-Template Name	Human-friendly name (e.g., “TIME FTTH v3”)
+Template Name   Human-friendly name (e.g., “TIME FTTH v3”)
 
-Parser Type	Activation / Assurance / Modification / Reschedule
+Parser Type     Activation / Assurance / Modification / Reschedule
 
-Partner	DIGI / Celcom / TIME FTTH / TIME Assurance / U-Mobile
+Partner DIGI / Celcom / TIME FTTH / TIME Assurance / U-Mobile
 
-Partner Group	TIME Group (example)
+Partner Group   TIME Group (example)
 
-Department	GPON / CWO / NWO
+Department      GPON / CWO / NWO
 
-Supported Format	Excel / PDF / Email Body / Hybrid
+Supported Format        Excel / PDF / Email Body / Hybrid
 
-Header Mappings	Column-to-field rules
+Header Mappings Column-to-field rules
 
-Extraction Rules	Regex, keyword sets, NLP rules
+Extraction Rules        Regex, keyword sets, NLP rules
 
-Mandatory Fields	Service ID, TTKT, Address, Contact, Appointment
+Mandatory Fields        Service ID, TTKT, Address, Contact, Appointment
 
-Error Behaviour	Reject, fallback, manual review
+Error Behaviour Reject, fallback, manual review
 
-Normalisation Rules	Contact, date/time, address standards
+Normalisation Rules     Contact, date/time, address standards
 
-Field Types	String, number, enum, datetime
+Field Types     String, number, enum, datetime
 
-Test Parser	Upload a sample → Preview JSON
+Test Parser     Upload a sample → Preview JSON
 
 
 
@@ -636,7 +636,7 @@ This model enables:
 
 - Multi-partner ingestion
 - Multi-department routing
-- Single-company operation with multiple departments
+- Multi-tenant SaaS operation with multiple departments per company
 - Full future scalability without code changes
 
 

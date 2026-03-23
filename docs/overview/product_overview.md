@@ -10,7 +10,7 @@
 
 **Fibre/GPON (Fibre-to-the-Home) operations contractor.**
 
-CephasOps is built for a company that:
+CephasOps is a SaaS platform built for companies that:
 
 - Performs fibre installations and activations for telco partners (e.g. TIME, CelcomDigi, U Mobile).
 - Manages **new installations (activations)**, **modifications (indoor/outdoor)**, **assurance (fault repair)**, and **value-added services**.
@@ -49,7 +49,7 @@ CephasOps is built for a company that:
 
 ## 4. Operating model
 
-- **Single company,** **multi-department** (e.g. GPON active; CWO/NWO future).
+- **Multi-tenant SaaS,** **multi-department per tenant** (e.g. GPON active; CWO/NWO future).
 - **Department-scoped access:** Users see and act only on data for their department(s); 403 otherwise.
 - **Partner portal (e.g. TIME)** is reference only—no API; admin mirrors statuses with evidence.
 - **SI app** is source of truth for fieldwork (GPS, ONU scan, port, photos, signature).
@@ -58,5 +58,5 @@ CephasOps is built for a company that:
 
 ## 5. Assumptions
 
-- Current deployment is single-company; multi-company is documented as reference/future only.
+- CephasOps is a multi-tenant SaaS platform with per-company data isolation and department-scoped operations.
 - GPON department is the primary lifecycle; CWO/NWO workflows to be defined when activated.

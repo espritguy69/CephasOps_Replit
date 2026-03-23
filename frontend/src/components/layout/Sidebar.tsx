@@ -18,6 +18,8 @@ interface NavSubItem {
   path: string;
   label: string;
   icon: LucideIcon;
+  permission?: string;
+  permissions?: string[];
 }
 
 interface NavItem {
@@ -80,13 +82,13 @@ const NAV_SECTIONS: NavSection[] = [
         icon: BarChart3,
         description: 'Operational dashboards',
         subItems: [
-          { path: '/insights/platform', label: 'Platform Health', icon: Activity },
-          { path: '/insights/tenant', label: 'Tenant Performance', icon: TrendingUp },
-          { path: '/insights/operations', label: 'Operations Control', icon: CheckSquare },
-          { path: '/insights/financial', label: 'Financial Overview', icon: DollarSign },
-          { path: '/insights/risk', label: 'Risk & Quality', icon: AlertTriangle },
-          { path: '/insights/intelligence', label: 'Operational Intelligence', icon: Lightbulb },
-          { path: '/insights/sla', label: 'SLA Breach', icon: Clock }
+          { path: '/insights/platform', label: 'Platform Health', icon: Activity, permission: 'admin.tenants.view' },
+          { path: '/insights/tenant', label: 'Tenant Performance', icon: TrendingUp, permission: 'orders.view' },
+          { path: '/insights/operations', label: 'Operations Control', icon: CheckSquare, permission: 'orders.view' },
+          { path: '/insights/financial', label: 'Financial Overview', icon: DollarSign, permissions: ['billing.view', 'pnl.view'] },
+          { path: '/insights/risk', label: 'Risk & Quality', icon: AlertTriangle, permission: 'orders.view' },
+          { path: '/insights/intelligence', label: 'Operational Intelligence', icon: Lightbulb, permission: 'orders.view' },
+          { path: '/insights/sla', label: 'SLA Breach', icon: Clock, permission: 'orders.view' }
         ]
       }
     ]
@@ -120,6 +122,7 @@ const NAV_SECTIONS: NavSection[] = [
         title: 'Tasks',
         path: '/tasks',
         icon: CheckSquare,
+        permission: 'orders.view',
         subItems: [
           { path: '/tasks', label: 'All Tasks', icon: CheckSquare },
           { path: '/tasks/my', label: 'My Tasks', icon: CheckSquare }
@@ -499,12 +502,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, mobileOpen = false, onMobileC
     }
 
     // Fallback: role-based (pre-RBAC v2 or when permissions not loaded)
-    if (permission === 'admin.view') return userRoles.includes('Admin');
-    if (permission === 'admin.tenants.view') return userRoles.includes('Admin');
+    if (permission === 'admin.view' || permission === 'admin.tenants.view') return userRoles.includes('Admin');
     if (permission === 'admin.security.view' || permission === 'admin.roles.view') return userRoles.includes('Admin');
-    if (permission?.startsWith('payout.') || permission?.startsWith('rates.') || permission?.startsWith('payroll.')) return userRoles.includes('Admin');
+    if (permission === 'jobs.view' || permission === 'jobs.admin') return userRoles.includes('Admin');
+    if (permission?.startsWith('payout.') || permission?.startsWith('rates.')) return userRoles.includes('Admin');
     if (userRoles.includes('Admin')) return true;
-    if (userRoles.length > 0) return true;
+
+    const elevatedRoles = ['Director', 'HeadOfDepartment', 'Supervisor'];
+    const hasElevatedRole = userRoles.some(r => elevatedRoles.includes(r));
+    const elevatedPermissions = [
+      'orders.view', 'orders.edit', 'scheduler.view',
+      'inventory.view', 'billing.view', 'pnl.view', 'payroll.view',
+      'assets.view', 'buildings.view', 'documents.view',
+      'files.view', 'email.view', 'workflow.view',
+      'kpi.view', 'reports.view', 'accounting.view', 'settings.view',
+    ];
+    if (hasElevatedRole) return elevatedPermissions.includes(permission);
+
+    const memberPermissions = [
+      'orders.view', 'scheduler.view', 'inventory.view',
+      'documents.view', 'files.view',
+    ];
+    if (userRoles.length > 0) return memberPermissions.includes(permission);
 
     return false;
   };
@@ -599,8 +618,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, mobileOpen = false, onMobileC
             {/* Section Items */}
             <div className="space-y-0.5 px-2">
               {section.items.map((item) => {
-                // Skip items without permission
-                if (item.permission && !hasPermission(item.permission) && !isSuperAdmin) {
+                // For items with subitems that have individual permissions, show parent if any subitem is accessible
+                if (!item.permission && item.subItems && item.subItems.some(si => si.permission || si.permissions)) {
+                  const hasAnySubPermission = item.subItems.some(si => {
+                    if (isSuperAdmin) return true;
+                    if (si.permissions && si.permissions.length > 0) return si.permissions.some(p => hasPermission(p));
+                    if (!si.permission) return true;
+                    return hasPermission(si.permission);
+                  });
+                  if (!hasAnySubPermission) return null;
+                } else if (item.permission && !hasPermission(item.permission) && !isSuperAdmin) {
                   return null;
                 }
 
@@ -633,6 +660,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, mobileOpen = false, onMobileC
                       onToggle={() => toggleMenu(item.title)}
                       isActive={isActive}
                       onLinkClick={handleLinkClick}
+                      checkPermission={hasPermission}
                     />
                   );
                 }
@@ -709,11 +737,20 @@ interface ExpandableMenuItemProps {
   onToggle: () => void;
   isActive: (path: string) => boolean;
   onLinkClick?: () => void;
+  checkPermission?: (permission: string | undefined) => boolean;
 }
 
-const ExpandableMenuItem: React.FC<ExpandableMenuItemProps> = ({ item, isOpen, isExpanded, onToggle, isActive, onLinkClick }) => {
+const ExpandableMenuItem: React.FC<ExpandableMenuItemProps> = ({ item, isOpen, isExpanded, onToggle, isActive, onLinkClick, checkPermission }) => {
   const Icon = item.icon;
-  const hasActiveChild = item.subItems?.some(sub => isActive(sub.path)) || false;
+  const visibleSubItems = item.subItems?.filter(sub => {
+    if (!checkPermission) return true;
+    if (sub.permissions && sub.permissions.length > 0) {
+      return sub.permissions.some(p => checkPermission(p));
+    }
+    if (!sub.permission) return true;
+    return checkPermission(sub.permission);
+  }) || [];
+  const hasActiveChild = visibleSubItems.some(sub => isActive(sub.path));
   
   return (
     <div>
@@ -739,9 +776,9 @@ const ExpandableMenuItem: React.FC<ExpandableMenuItemProps> = ({ item, isOpen, i
         )}
       </button>
       
-      {isOpen && isExpanded && item.subItems && (
+      {isOpen && isExpanded && visibleSubItems.length > 0 && (
         <div className="mt-1 ml-4 pl-3 border-l border-border space-y-0.5">
-          {item.subItems.map((subItem) => {
+          {visibleSubItems.map((subItem) => {
             const SubIcon = subItem.icon;
             const subActive = isActive(subItem.path);
             

@@ -25,10 +25,10 @@ export function Button({
   };
 
   const sizes = {
-    default: 'h-9 px-3 py-1 text-xs',
-    sm: 'h-8 px-2 py-1 text-xs',
-    lg: 'h-10 px-4 py-1 text-sm',
-    icon: 'h-8 w-8',
+    default: 'h-11 px-4 py-2 text-sm',
+    sm: 'h-9 px-3 py-1.5 text-xs',
+    lg: 'h-12 px-5 py-2 text-base',
+    icon: 'h-10 w-10',
   };
 
   return (

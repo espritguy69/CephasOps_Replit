@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import SettingsProtectedRoute from './components/auth/SettingsProtectedRoute';
+import PermissionProtectedRoute from './components/auth/PermissionProtectedRoute';
 import MainLayout from './components/layout/MainLayout';
 import LoginPage from './pages/auth/LoginPage';
 import ChangePasswordPage from './pages/auth/ChangePasswordPage';
@@ -203,99 +204,99 @@ const App: React.FC = () => {
                 <Route path="/dashboard" element={<DashboardPage />} />
 
                 {/* Orders */}
-                <Route path="/orders" element={<OrdersListPage />} />
-                <Route path="/orders/create" element={<CreateOrderPage />} />
-                <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+                <Route path="/orders" element={<PermissionProtectedRoute permission="orders.view" fallbackMessage="Orders"><OrdersListPage /></PermissionProtectedRoute>} />
+                <Route path="/orders/create" element={<PermissionProtectedRoute permission="orders.view" fallbackMessage="Orders"><CreateOrderPage /></PermissionProtectedRoute>} />
+                <Route path="/orders/:orderId" element={<PermissionProtectedRoute permission="orders.view" fallbackMessage="Orders"><OrderDetailPage /></PermissionProtectedRoute>} />
 
                 {/* Scheduler */}
-                <Route path="/scheduler" element={<CalendarPage />} />
-                <Route path="/scheduler/timeline" element={<InstallerSchedulerPage />} />
-                <Route path="/scheduler/availability" element={<SIAvailabilityPage />} />
+                <Route path="/scheduler" element={<PermissionProtectedRoute permission="scheduler.view" fallbackMessage="Scheduler"><CalendarPage /></PermissionProtectedRoute>} />
+                <Route path="/scheduler/timeline" element={<PermissionProtectedRoute permission="scheduler.view" fallbackMessage="Scheduler"><InstallerSchedulerPage /></PermissionProtectedRoute>} />
+                <Route path="/scheduler/availability" element={<PermissionProtectedRoute permission="scheduler.view" fallbackMessage="Scheduler"><SIAvailabilityPage /></PermissionProtectedRoute>} />
 
                 {/* Orders - Parser */}
-                <Route path="/orders/parser" element={<ParserListingPage />} />
-                <Route path="/orders/parser/dashboard" element={<ParserDashboardPage />} />
-                <Route path="/orders/parser/sessions/:id" element={<ParseSessionDetailsPage />} />
-                <Route path="/orders/parser/list" element={<ParserListingPage />} />
-                <Route path="/orders/parser/snapshots" element={<ParserSnapshotViewerPage />} />
+                <Route path="/orders/parser" element={<PermissionProtectedRoute permission="orders.view" fallbackMessage="Parser"><ParserListingPage /></PermissionProtectedRoute>} />
+                <Route path="/orders/parser/dashboard" element={<PermissionProtectedRoute permission="orders.view" fallbackMessage="Parser"><ParserDashboardPage /></PermissionProtectedRoute>} />
+                <Route path="/orders/parser/sessions/:id" element={<PermissionProtectedRoute permission="orders.view" fallbackMessage="Parser"><ParseSessionDetailsPage /></PermissionProtectedRoute>} />
+                <Route path="/orders/parser/list" element={<PermissionProtectedRoute permission="orders.view" fallbackMessage="Parser"><ParserListingPage /></PermissionProtectedRoute>} />
+                <Route path="/orders/parser/snapshots" element={<PermissionProtectedRoute permission="orders.view" fallbackMessage="Parser"><ParserSnapshotViewerPage /></PermissionProtectedRoute>} />
 
                 {/* Email Management */}
-                <Route path="/email" element={<EmailManagementPage />} />
+                <Route path="/email" element={<PermissionProtectedRoute permission="email.view" fallbackMessage="Email Management"><EmailManagementPage /></PermissionProtectedRoute>} />
 
                 {/* Inventory */}
-                <Route path="/inventory" element={<InventoryDashboardPage />} />
-                <Route path="/inventory/list" element={<InventoryListPage />} />
-                <Route path="/inventory/stock-summary" element={<InventoryStockSummaryPage />} />
-                <Route path="/inventory/ledger" element={<InventoryLedgerPage />} />
-                <Route path="/inventory/receive" element={<InventoryReceivePage />} />
-                <Route path="/inventory/transfer" element={<InventoryTransferPage />} />
-                <Route path="/inventory/allocate" element={<InventoryAllocatePage />} />
-                <Route path="/inventory/issue" element={<InventoryIssuePage />} />
-                <Route path="/inventory/return" element={<InventoryReturnPage />} />
-                <Route path="/reports" element={<ReportsHubPage />} />
-                <Route path="/reports/payout-health" element={<PayoutHealthDashboardPage />} />
-                <Route path="/reports/payout-health/anomalies" element={<PayoutAnomaliesPage />} />
-                <Route path="/reports/:reportKey" element={<ReportRunnerPage />} />
-                <Route path="/inventory/reports" element={<InventoryReportsIndexPage />} />
-                <Route path="/inventory/reports/usage" element={<InventoryUsageByPeriodPage />} />
-                <Route path="/inventory/reports/serial-lifecycle" element={<InventorySerialLifecyclePage />} />
-                <Route path="/inventory/reports/stock-trend" element={<InventoryStockTrendPage />} />
+                <Route path="/inventory" element={<PermissionProtectedRoute permission="inventory.view" fallbackMessage="Inventory"><InventoryDashboardPage /></PermissionProtectedRoute>} />
+                <Route path="/inventory/list" element={<PermissionProtectedRoute permission="inventory.view" fallbackMessage="Inventory"><InventoryListPage /></PermissionProtectedRoute>} />
+                <Route path="/inventory/stock-summary" element={<PermissionProtectedRoute permission="inventory.view" fallbackMessage="Inventory"><InventoryStockSummaryPage /></PermissionProtectedRoute>} />
+                <Route path="/inventory/ledger" element={<PermissionProtectedRoute permission="inventory.view" fallbackMessage="Inventory"><InventoryLedgerPage /></PermissionProtectedRoute>} />
+                <Route path="/inventory/receive" element={<PermissionProtectedRoute permission="inventory.view" fallbackMessage="Inventory"><InventoryReceivePage /></PermissionProtectedRoute>} />
+                <Route path="/inventory/transfer" element={<PermissionProtectedRoute permission="inventory.view" fallbackMessage="Inventory"><InventoryTransferPage /></PermissionProtectedRoute>} />
+                <Route path="/inventory/allocate" element={<PermissionProtectedRoute permission="inventory.view" fallbackMessage="Inventory"><InventoryAllocatePage /></PermissionProtectedRoute>} />
+                <Route path="/inventory/issue" element={<PermissionProtectedRoute permission="inventory.view" fallbackMessage="Inventory"><InventoryIssuePage /></PermissionProtectedRoute>} />
+                <Route path="/inventory/return" element={<PermissionProtectedRoute permission="inventory.view" fallbackMessage="Inventory"><InventoryReturnPage /></PermissionProtectedRoute>} />
+                <Route path="/reports" element={<PermissionProtectedRoute permission="reports.view" fallbackMessage="Reports"><ReportsHubPage /></PermissionProtectedRoute>} />
+                <Route path="/reports/payout-health" element={<PermissionProtectedRoute permission="payout.health.view" fallbackMessage="Payout Health"><PayoutHealthDashboardPage /></PermissionProtectedRoute>} />
+                <Route path="/reports/payout-health/anomalies" element={<PermissionProtectedRoute permission="payout.health.view" fallbackMessage="Payout Health"><PayoutAnomaliesPage /></PermissionProtectedRoute>} />
+                <Route path="/reports/:reportKey" element={<PermissionProtectedRoute permission="reports.view" fallbackMessage="Reports"><ReportRunnerPage /></PermissionProtectedRoute>} />
+                <Route path="/inventory/reports" element={<PermissionProtectedRoute permission="inventory.view" fallbackMessage="Inventory Reports"><InventoryReportsIndexPage /></PermissionProtectedRoute>} />
+                <Route path="/inventory/reports/usage" element={<PermissionProtectedRoute permission="inventory.view" fallbackMessage="Inventory Reports"><InventoryUsageByPeriodPage /></PermissionProtectedRoute>} />
+                <Route path="/inventory/reports/serial-lifecycle" element={<PermissionProtectedRoute permission="inventory.view" fallbackMessage="Inventory Reports"><InventorySerialLifecyclePage /></PermissionProtectedRoute>} />
+                <Route path="/inventory/reports/stock-trend" element={<PermissionProtectedRoute permission="inventory.view" fallbackMessage="Inventory Reports"><InventoryStockTrendPage /></PermissionProtectedRoute>} />
 
                 {/* RMA */}
-                <Route path="/rma" element={<RMAListPage />} />
+                <Route path="/rma" element={<PermissionProtectedRoute permission="inventory.view" fallbackMessage="RMA"><RMAListPage /></PermissionProtectedRoute>} />
 
                 {/* Operations - Dockets */}
-                <Route path="/operations/dockets" element={<DocketsPage />} />
-                <Route path="/operations/installer-payout-breakdown" element={<InstallerPayoutBreakdownPage />} />
+                <Route path="/operations/dockets" element={<PermissionProtectedRoute permission="orders.view" fallbackMessage="Dockets"><DocketsPage /></PermissionProtectedRoute>} />
+                <Route path="/operations/installer-payout-breakdown" element={<PermissionProtectedRoute permission="orders.view" fallbackMessage="Installer Payout"><InstallerPayoutBreakdownPage /></PermissionProtectedRoute>} />
 
                 {/* Billing */}
                 <Route path="/billing" element={<Navigate to="/billing/invoices" replace />} />
-                <Route path="/billing/invoices" element={<InvoicesListPage />} />
-                <Route path="/billing/invoices/:id" element={<InvoiceDetailPage />} />
-                <Route path="/billing/invoices/:id/edit" element={<InvoiceEditPage />} />
+                <Route path="/billing/invoices" element={<PermissionProtectedRoute permission="billing.view" fallbackMessage="Billing"><InvoicesListPage /></PermissionProtectedRoute>} />
+                <Route path="/billing/invoices/:id" element={<PermissionProtectedRoute permission="billing.view" fallbackMessage="Billing"><InvoiceDetailPage /></PermissionProtectedRoute>} />
+                <Route path="/billing/invoices/:id/edit" element={<PermissionProtectedRoute permission="billing.view" fallbackMessage="Billing"><InvoiceEditPage /></PermissionProtectedRoute>} />
 
                 {/* Payroll */}
                 <Route path="/payroll" element={<Navigate to="/payroll/periods" replace />} />
-                <Route path="/payroll/periods" element={<PayrollPeriodsPage />} />
-                <Route path="/payroll/runs" element={<PayrollRunsPage />} />
-                <Route path="/payroll/earnings" element={<PayrollEarningsPage />} />
+                <Route path="/payroll/periods" element={<PermissionProtectedRoute permission="payroll.view" fallbackMessage="Payroll"><PayrollPeriodsPage /></PermissionProtectedRoute>} />
+                <Route path="/payroll/runs" element={<PermissionProtectedRoute permission="payroll.view" fallbackMessage="Payroll"><PayrollRunsPage /></PermissionProtectedRoute>} />
+                <Route path="/payroll/earnings" element={<PermissionProtectedRoute permission="payroll.view" fallbackMessage="Payroll"><PayrollEarningsPage /></PermissionProtectedRoute>} />
 
                 {/* P&L */}
                 <Route path="/pnl" element={<Navigate to="/pnl/summary" replace />} />
-                <Route path="/pnl/summary" element={<PnlSummaryPage />} />
+                <Route path="/pnl/summary" element={<PermissionProtectedRoute permission="pnl.view" fallbackMessage="P&L"><PnlSummaryPage /></PermissionProtectedRoute>} />
                 <Route path="/pnl/orders" element={<Navigate to="/pnl/drilldown" replace />} /> {/* Legacy route redirects to new drilldown */}
-                <Route path="/pnl/drilldown" element={<PnlDrilldownPage />} />
-                <Route path="/pnl/overheads" element={<PnlOverheadsPage />} />
+                <Route path="/pnl/drilldown" element={<PermissionProtectedRoute permission="pnl.view" fallbackMessage="P&L"><PnlDrilldownPage /></PermissionProtectedRoute>} />
+                <Route path="/pnl/overheads" element={<PermissionProtectedRoute permission="pnl.view" fallbackMessage="P&L"><PnlOverheadsPage /></PermissionProtectedRoute>} />
 
                 {/* KPI Module */}
                 <Route path="/kpi" element={<Navigate to="/kpi/dashboard" replace />} />
-                <Route path="/kpi/dashboard" element={<KpiDashboardPage />} />
-                <Route path="/kpi/profiles" element={<KpiProfilesPageDedicated />} />
+                <Route path="/kpi/dashboard" element={<PermissionProtectedRoute permission="kpi.view" fallbackMessage="KPI dashboards"><KpiDashboardPage /></PermissionProtectedRoute>} />
+                <Route path="/kpi/profiles" element={<PermissionProtectedRoute permission="kpi.view" fallbackMessage="KPI dashboards"><KpiProfilesPageDedicated /></PermissionProtectedRoute>} />
 
                 {/* Notifications */}
                 <Route path="/notifications" element={<NotificationsCenterPage />} />
 
                 {/* Accounting */}
-                <Route path="/accounting" element={<AccountingDashboardPage />} />
-                <Route path="/accounting/supplier-invoices" element={<SupplierInvoicesPage />} />
-                <Route path="/accounting/payments" element={<PaymentsPage />} />
+                <Route path="/accounting" element={<PermissionProtectedRoute permission="accounting.view" fallbackMessage="Accounting"><AccountingDashboardPage /></PermissionProtectedRoute>} />
+                <Route path="/accounting/supplier-invoices" element={<PermissionProtectedRoute permission="accounting.view" fallbackMessage="Accounting"><SupplierInvoicesPage /></PermissionProtectedRoute>} />
+                <Route path="/accounting/payments" element={<PermissionProtectedRoute permission="accounting.view" fallbackMessage="Accounting"><PaymentsPage /></PermissionProtectedRoute>} />
 
                 {/* Assets */}
-                <Route path="/assets" element={<AssetsDashboardPage />} />
-                <Route path="/assets/list" element={<AssetsListPage />} />
-                <Route path="/assets/:id" element={<AssetDetailPage />} />
-                <Route path="/assets/maintenance" element={<MaintenanceSchedulePage />} />
-                <Route path="/assets/depreciation" element={<DepreciationReportPage />} />
+                <Route path="/assets" element={<PermissionProtectedRoute permission="assets.view" fallbackMessage="Assets"><AssetsDashboardPage /></PermissionProtectedRoute>} />
+                <Route path="/assets/list" element={<PermissionProtectedRoute permission="assets.view" fallbackMessage="Assets"><AssetsListPage /></PermissionProtectedRoute>} />
+                <Route path="/assets/:id" element={<PermissionProtectedRoute permission="assets.view" fallbackMessage="Assets"><AssetDetailPage /></PermissionProtectedRoute>} />
+                <Route path="/assets/maintenance" element={<PermissionProtectedRoute permission="assets.view" fallbackMessage="Assets"><MaintenanceSchedulePage /></PermissionProtectedRoute>} />
+                <Route path="/assets/depreciation" element={<PermissionProtectedRoute permission="assets.view" fallbackMessage="Assets"><DepreciationReportPage /></PermissionProtectedRoute>} />
 
                 {/* ============================================ */}
                 {/* SYNCFUSION ENHANCED PAGES */}
                 {/* ============================================ */}
 
-                <Route path="/tasks/kanban" element={<TasksKanbanPage />} />
+                <Route path="/tasks/kanban" element={<PermissionProtectedRoute permission="orders.view" fallbackMessage="Tasks"><TasksKanbanPage /></PermissionProtectedRoute>} />
 
-                {/* Visual Features (🔥 Unique Competitive Advantages) */}
-                <Route path="/inventory/warehouse-layout" element={<WarehouseLayoutPage />} />
-                <Route path="/buildings/treegrid" element={<BuildingsTreeGridPage />} />
+                {/* Visual Features */}
+                <Route path="/inventory/warehouse-layout" element={<PermissionProtectedRoute permission="inventory.view" fallbackMessage="Warehouse Layout"><WarehouseLayoutPage /></PermissionProtectedRoute>} />
+                <Route path="/buildings/treegrid" element={<PermissionProtectedRoute permission="buildings.view" fallbackMessage="Buildings"><BuildingsTreeGridPage /></PermissionProtectedRoute>} />
 
                 {/* Admin - Background Jobs (settings-level access) */}
                 <Route path="/admin/background-jobs" element={<SettingsProtectedRoute><BackgroundJobsPage /></SettingsProtectedRoute>} />
@@ -323,12 +324,12 @@ const App: React.FC = () => {
                 {/* Operational dashboards (insights) */}
                 <Route path="/insights" element={<Navigate to="/insights/tenant" replace />} />
                 <Route path="/insights/platform" element={<SettingsProtectedRoute><PlatformDashboard /></SettingsProtectedRoute>} />
-                <Route path="/insights/tenant" element={<TenantDashboard />} />
-                <Route path="/insights/operations" element={<OperationsDashboard />} />
-                <Route path="/insights/financial" element={<FinancialDashboard />} />
-                <Route path="/insights/risk" element={<RiskDashboard />} />
-                <Route path="/insights/intelligence" element={<OperationalIntelligenceDashboard />} />
-                <Route path="/insights/sla" element={<SlaBreachDashboard />} />
+                <Route path="/insights/tenant" element={<PermissionProtectedRoute permission="orders.view" fallbackMessage="Tenant Performance dashboards"><TenantDashboard /></PermissionProtectedRoute>} />
+                <Route path="/insights/operations" element={<PermissionProtectedRoute permission="orders.view" fallbackMessage="Operations Control dashboards"><OperationsDashboard /></PermissionProtectedRoute>} />
+                <Route path="/insights/financial" element={<PermissionProtectedRoute permissions={['billing.view', 'pnl.view']} fallbackMessage="Financial dashboards"><FinancialDashboard /></PermissionProtectedRoute>} />
+                <Route path="/insights/risk" element={<PermissionProtectedRoute permission="orders.view" fallbackMessage="Risk & Quality dashboards"><RiskDashboard /></PermissionProtectedRoute>} />
+                <Route path="/insights/intelligence" element={<PermissionProtectedRoute permission="orders.view" fallbackMessage="Operational Intelligence dashboards"><OperationalIntelligenceDashboard /></PermissionProtectedRoute>} />
+                <Route path="/insights/sla" element={<PermissionProtectedRoute permission="orders.view" fallbackMessage="SLA Breach dashboards"><SlaBreachDashboard /></PermissionProtectedRoute>} />
                 {/* Admin - User Management (SuperAdmin/Admin only; API enforces) */}
                 <Route path="/admin/users" element={<SettingsProtectedRoute><UserManagementPage /></SettingsProtectedRoute>} />
                 {/* Admin - Security Activity (auth events); SuperAdmin/Admin only */}
@@ -439,35 +440,35 @@ const App: React.FC = () => {
                 } />
 
                 {/* Workflow */}
-                <Route path="/workflow/definitions" element={<WorkflowDefinitionsPage />} />
-                <Route path="/workflow/guard-conditions" element={<GuardConditionsPage />} />
-                <Route path="/workflow/side-effects" element={<SideEffectsPage />} />
+                <Route path="/workflow/definitions" element={<PermissionProtectedRoute permission="workflow.view" fallbackMessage="Workflow"><WorkflowDefinitionsPage /></PermissionProtectedRoute>} />
+                <Route path="/workflow/guard-conditions" element={<PermissionProtectedRoute permission="workflow.view" fallbackMessage="Workflow"><GuardConditionsPage /></PermissionProtectedRoute>} />
+                <Route path="/workflow/side-effects" element={<PermissionProtectedRoute permission="workflow.view" fallbackMessage="Workflow"><SideEffectsPage /></PermissionProtectedRoute>} />
 
                 {/* Tasks */}
-                <Route path="/tasks" element={<TasksListPage />} />
+                <Route path="/tasks" element={<PermissionProtectedRoute permission="orders.view" fallbackMessage="Tasks"><TasksListPage /></PermissionProtectedRoute>} />
                 <Route path="/tasks/my" element={<MyTasksPage />} />
-                <Route path="/tasks/department/:departmentId" element={<DepartmentTasksPage />} />
+                <Route path="/tasks/department/:departmentId" element={<PermissionProtectedRoute permission="orders.view" fallbackMessage="Tasks"><DepartmentTasksPage /></PermissionProtectedRoute>} />
 
                 {/* Notifications */}
                 <Route path="/notifications" element={<NotificationsPage />} />
 
                 {/* Documents */}
-                <Route path="/documents" element={<DocumentsPage />} />
-                <Route path="/doc-templates/new" element={<DocumentTemplateEditorPage />} />
-                <Route path="/doc-templates/:id" element={<DocumentTemplateEditorPage />} />
+                <Route path="/documents" element={<PermissionProtectedRoute permission="documents.view" fallbackMessage="Documents"><DocumentsPage /></PermissionProtectedRoute>} />
+                <Route path="/doc-templates/new" element={<PermissionProtectedRoute permission="documents.view" fallbackMessage="Document Templates"><DocumentTemplateEditorPage /></PermissionProtectedRoute>} />
+                <Route path="/doc-templates/:id" element={<PermissionProtectedRoute permission="documents.view" fallbackMessage="Document Templates"><DocumentTemplateEditorPage /></PermissionProtectedRoute>} />
 
                 {/* Files */}
-                <Route path="/files" element={<FilesPage />} />
+                <Route path="/files" element={<PermissionProtectedRoute permission="files.view" fallbackMessage="Files"><FilesPage /></PermissionProtectedRoute>} />
 
                 {/* Tests */}
-                <Route path="/tests" element={<TestDashboardPage />} />
+                <Route path="/tests" element={<SettingsProtectedRoute><TestDashboardPage /></SettingsProtectedRoute>} />
 
                 {/* Buildings Module */}
-                <Route path="/buildings" element={<BuildingsDashboardPage />} />
-                <Route path="/buildings/list" element={<BuildingsListPage />} />
-                <Route path="/buildings/new" element={<BuildingDetailPage />} />
-                <Route path="/buildings/:id" element={<BuildingDetailPage />} />
-                <Route path="/buildings/:id/edit" element={<BuildingDetailPage />} />
+                <Route path="/buildings" element={<PermissionProtectedRoute permission="buildings.view" fallbackMessage="Buildings"><BuildingsDashboardPage /></PermissionProtectedRoute>} />
+                <Route path="/buildings/list" element={<PermissionProtectedRoute permission="buildings.view" fallbackMessage="Buildings"><BuildingsListPage /></PermissionProtectedRoute>} />
+                <Route path="/buildings/new" element={<PermissionProtectedRoute permission="buildings.view" fallbackMessage="Buildings"><BuildingDetailPage /></PermissionProtectedRoute>} />
+                <Route path="/buildings/:id" element={<PermissionProtectedRoute permission="buildings.view" fallbackMessage="Buildings"><BuildingDetailPage /></PermissionProtectedRoute>} />
+                <Route path="/buildings/:id/edit" element={<PermissionProtectedRoute permission="buildings.view" fallbackMessage="Buildings"><BuildingDetailPage /></PermissionProtectedRoute>} />
 
                 {/* Default redirect */}
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />

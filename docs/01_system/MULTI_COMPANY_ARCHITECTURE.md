@@ -36,7 +36,7 @@ CephasOps – Multi-Company System Architecture
 
 Version 2.0 (Final)
 
-**⚠️ Current deployment:** CephasOps runs in **single-company mode** (one company, multiple departments). This document is **reference only** for possible future multi-company use.
+**Architecture:** CephasOps is a **multi-tenant SaaS platform** with per-company data isolation, role-based module enablement, and department-scoped operations. This document defines the multi-company architecture at the system level.
 
 ---
 
@@ -46,7 +46,7 @@ This document defines the architecture-level design for running multiple compani
 
 This is a high-level system architecture document, not a business module spec.
 
-**Note:** Current CephasOps deployment runs in **single-company mode** (one company, multiple departments). This document describes the multi-company design for reference or future use.
+**Note:** CephasOps is a **multi-tenant SaaS platform** with per-company data isolation. This document defines the multi-company architecture at the system level.
 
 1\. Architecture Goals
 

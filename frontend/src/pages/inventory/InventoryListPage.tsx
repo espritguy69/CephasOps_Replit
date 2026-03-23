@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Package, Warehouse } from 'lucide-react';
 import { getMaterials, getStockByLocation } from '../../api/inventory';
 import { LoadingSpinner, EmptyState, useToast, Button, Card, DataTable, Tabs, TabPanel, StatusBadge } from '../../components/ui';
@@ -17,6 +18,7 @@ interface TableColumn<T> {
 }
 
 const InventoryListPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { showError } = useToast();
   const roles = user?.roles ?? [];
@@ -92,7 +94,7 @@ const InventoryListPage: React.FC = () => {
       key: 'actions',
       label: 'Actions',
       render: (value, material) => (
-        <Button variant="ghost" size="sm">View</Button>
+        <Button variant="ghost" size="sm" onClick={() => navigate(`/inventory/stock-summary?materialId=${material.id}`)}>View</Button>
       )
     }
   ];

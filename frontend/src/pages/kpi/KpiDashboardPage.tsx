@@ -95,9 +95,12 @@ const KpiDashboardPage: React.FC = () => {
     const totalJobs = earningRecords.length;
     const onTimeRate = totalJobs > 0 ? (onTimeJobs / totalJobs) * 100 : 0;
 
-    // Note: Average completion time would need to be calculated from order data
-    // For now, we'll use a placeholder
-    const averageCompletionTime = 0;
+    const completionTimes = earningRecords
+      .filter(r => r.completionTimeMinutes != null && r.completionTimeMinutes > 0)
+      .map(r => r.completionTimeMinutes as number);
+    const averageCompletionTime = completionTimes.length > 0
+      ? Math.round(completionTimes.reduce((sum, t) => sum + t, 0) / completionTimes.length)
+      : 0;
 
     return {
       totalJobs,
@@ -203,6 +206,14 @@ const KpiDashboardPage: React.FC = () => {
           icon={AlertCircle}
           trend={stats.exceededSlaJobs === 0 ? 'up' : 'down'}
         />
+        {stats.averageCompletionTime > 0 && (
+          <KpiCard
+            title="Avg Completion Time"
+            value={`${stats.averageCompletionTime} min`}
+            subtitle="Average job duration"
+            icon={Clock}
+          />
+        )}
       </div>
 
       {/* KPI Breakdown by Order Type */}

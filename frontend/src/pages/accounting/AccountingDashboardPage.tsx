@@ -259,7 +259,7 @@ const AccountingDashboardPage: React.FC = () => {
         </Card>
       </div>
 
-      {/* Monthly Trend Chart Placeholder */}
+      {/* Monthly Cash Flow Trend */}
       {paymentSummary?.monthlyTrend && paymentSummary.monthlyTrend.length > 0 && (
         <Card className="p-4">
           <h3 className="text-lg font-semibold text-white mb-4">Monthly Cash Flow Trend</h3>

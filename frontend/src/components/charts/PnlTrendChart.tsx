@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChartComponent, SeriesCollectionDirective, SeriesDirective, Inject, LineSeries, Category, Tooltip, Legend, DataLabel, DateTime, AreaSeries, Crosshair } from '@syncfusion/ej2-react-charts';
+import { ChartComponent, SeriesCollectionDirective, SeriesDirective, Inject, LineSeries, Category, Tooltip, Legend, DataLabel, DateTime, AreaSeries, Crosshair, ColumnSeries } from '@syncfusion/ej2-react-charts';
 
 interface PnlTrendDataPoint {
   month: string;
@@ -14,16 +14,23 @@ interface PnlTrendChartProps {
   height?: string;
 }
 
-/**
- * PnL Trend Chart
- * Shows Revenue vs Costs vs Profit over last 12 months
- * Multi-line chart for trend analysis
- */
 const PnlTrendChart: React.FC<PnlTrendChartProps> = ({ 
   data, 
-  title = 'P&L Trend - Last 12 Months',
+  title = 'P&L Trend',
   height = '400px' 
 }) => {
+  if (!data || data.length === 0) {
+    return (
+      <div className="bg-card rounded-xl border border-border shadow-sm p-4 md:p-6">
+        <h3 className="text-base md:text-lg font-semibold text-foreground mb-4">{title}</h3>
+        <div className="flex items-center justify-center" style={{ height }}>
+          <p className="text-sm text-muted-foreground">No trend data available</p>
+        </div>
+      </div>
+    );
+  }
+
+  const useColumnChart = data.length <= 2;
   const primaryXAxis = {
     valueType: 'Category' as any,
     labelStyle: { color: 'hsl(var(--muted-foreground))' },
@@ -69,39 +76,39 @@ const PnlTrendChart: React.FC<PnlTrendChartProps> = ({
         height={height}
         crosshair={{ enable: true, lineType: 'Vertical' }}
       >
-        <Inject services={[LineSeries, AreaSeries, Category, Tooltip, Legend, DataLabel, DateTime, Crosshair]} />
+        <Inject services={[LineSeries, AreaSeries, ColumnSeries, Category, Tooltip, Legend, DataLabel, DateTime, Crosshair]} />
         <SeriesCollectionDirective>
           <SeriesDirective
             dataSource={data}
             xName="month"
             yName="revenue"
             name="Revenue"
-            type="Line"
+            type={useColumnChart ? 'Column' : 'Line'}
             width={3}
             fill="#10b981"
-            marker={marker}
+            marker={useColumnChart ? undefined : marker}
           />
           <SeriesDirective
             dataSource={data}
             xName="month"
             yName="costs"
             name="Costs"
-            type="Line"
+            type={useColumnChart ? 'Column' : 'Line'}
             width={3}
             fill="#ef4444"
-            marker={marker}
-            dashArray="5,5"
+            marker={useColumnChart ? undefined : marker}
+            dashArray={useColumnChart ? undefined : "5,5"}
           />
           <SeriesDirective
             dataSource={data}
             xName="month"
             yName="profit"
             name="Net Profit"
-            type="Area"
+            type={useColumnChart ? 'Column' : 'Area'}
             fill="#9874D3"
-            opacity={0.3}
-            border={{ width: 2, color: '#9874D3' }}
-            marker={marker}
+            opacity={useColumnChart ? 1 : 0.3}
+            border={useColumnChart ? undefined : { width: 2, color: '#9874D3' }}
+            marker={useColumnChart ? undefined : marker}
           />
         </SeriesCollectionDirective>
       </ChartComponent>

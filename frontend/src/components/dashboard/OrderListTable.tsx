@@ -18,14 +18,7 @@ interface OrderListTableProps {
 }
 
 const OrderListTable: React.FC<OrderListTableProps> = ({ orders = [], onView, onEdit, onDelete }) => {
-  // Sample data if none provided
-  const tableData: Order[] = orders.length > 0 ? orders : [
-    { id: 1, orderNumber: 'ORD-001', customer: 'John Doe', status: 'Pending', amount: 'RM 150.00', date: '2024-01-15' },
-    { id: 2, orderNumber: 'ORD-002', customer: 'Jane Smith', status: 'Completed', amount: 'RM 200.00', date: '2024-01-14' },
-    { id: 3, orderNumber: 'ORD-003', customer: 'Bob Johnson', status: 'In Progress', amount: 'RM 175.00', date: '2024-01-13' },
-    { id: 4, orderNumber: 'ORD-004', customer: 'Alice Brown', status: 'Pending', amount: 'RM 300.00', date: '2024-01-12' },
-    { id: 5, orderNumber: 'ORD-005', customer: 'Charlie Wilson', status: 'Completed', amount: 'RM 125.00', date: '2024-01-11' },
-  ];
+  const tableData: Order[] = orders;
 
   const getStatusBadge = (status: string): React.ReactNode => {
     const statusColors: Record<string, string> = {
@@ -50,79 +43,84 @@ const OrderListTable: React.FC<OrderListTableProps> = ({ orders = [], onView, on
         <p className="text-xs text-slate-600 mt-0.5">Latest order activity</p>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b border-slate-300">
-              <th className="text-left py-3 px-4 text-xs font-semibold text-slate-800">Order #</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-slate-800">Customer</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-slate-800">Status</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-slate-800">Amount</th>
-              <th className="text-left py-3 px-4 text-xs font-semibold text-slate-800">Date</th>
-              <th className="text-right py-3 px-4 text-xs font-semibold text-slate-800">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tableData.map((order) => (
-              <tr
-                key={order.id}
-                className="border-b border-slate-200 hover:bg-slate-50 transition-colors h-11"
-              >
-                <td className="py-2.5 px-4 text-xs text-slate-800 font-medium">{order.orderNumber}</td>
-                <td className="py-2.5 px-4 text-xs text-slate-700">{order.customer}</td>
-                <td className="py-2.5 px-4 text-xs">
-                  {getStatusBadge(order.status)}
-                </td>
-                <td className="py-2.5 px-4 text-xs text-slate-800 font-medium">{order.amount}</td>
-                <td className="py-2.5 px-4 text-xs text-slate-600">{order.date}</td>
-                <td className="py-2.5 px-4 text-xs">
-                  <div className="flex items-center justify-end gap-2">
-                    {onView && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onView(order);
-                        }}
-                        title="View"
-                        className="text-brand-600 hover:opacity-75 cursor-pointer transition-colors"
-                      >
-                        <Eye className="h-7 w-7" />
-                      </button>
-                    )}
-                    {onEdit && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEdit(order);
-                        }}
-                        title="Edit"
-                        className="text-blue-600 hover:opacity-75 cursor-pointer transition-colors"
-                      >
-                        <Edit className="h-7 w-7" />
-                      </button>
-                    )}
-                    {onDelete && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(order);
-                        }}
-                        title="Delete"
-                        className="text-red-600 hover:opacity-75 cursor-pointer transition-colors"
-                      >
-                        <Trash2 className="h-7 w-7" />
-                      </button>
-                    )}
-                  </div>
-                </td>
+      {tableData.length === 0 ? (
+        <div className="py-8 text-center">
+          <p className="text-sm text-muted-foreground">No orders to display</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-slate-300">
+                <th className="text-left py-3 px-4 text-xs font-semibold text-slate-800">Order #</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold text-slate-800">Customer</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold text-slate-800">Status</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold text-slate-800">Amount</th>
+                <th className="text-left py-3 px-4 text-xs font-semibold text-slate-800">Date</th>
+                <th className="text-right py-3 px-4 text-xs font-semibold text-slate-800">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {tableData.map((order) => (
+                <tr
+                  key={order.id}
+                  className="border-b border-slate-200 hover:bg-slate-50 transition-colors h-11"
+                >
+                  <td className="py-2.5 px-4 text-xs text-slate-800 font-medium">{order.orderNumber}</td>
+                  <td className="py-2.5 px-4 text-xs text-slate-700">{order.customer}</td>
+                  <td className="py-2.5 px-4 text-xs">
+                    {getStatusBadge(order.status)}
+                  </td>
+                  <td className="py-2.5 px-4 text-xs text-slate-800 font-medium">{order.amount}</td>
+                  <td className="py-2.5 px-4 text-xs text-slate-600">{order.date}</td>
+                  <td className="py-2.5 px-4 text-xs">
+                    <div className="flex items-center justify-end gap-2">
+                      {onView && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onView(order);
+                          }}
+                          title="View"
+                          className="text-brand-600 hover:opacity-75 cursor-pointer transition-colors"
+                        >
+                          <Eye className="h-7 w-7" />
+                        </button>
+                      )}
+                      {onEdit && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(order);
+                          }}
+                          title="Edit"
+                          className="text-blue-600 hover:opacity-75 cursor-pointer transition-colors"
+                        >
+                          <Edit className="h-7 w-7" />
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(order);
+                          }}
+                          title="Delete"
+                          className="text-red-600 hover:opacity-75 cursor-pointer transition-colors"
+                        >
+                          <Trash2 className="h-7 w-7" />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 };
 
 export default OrderListTable;
-

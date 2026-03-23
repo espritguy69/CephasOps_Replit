@@ -102,7 +102,7 @@ The workflow engine uses **workflow definitions** to determine which workflow ap
 A workflow definition is **active** when:
 - `IsActive = true` (explicitly enabled)
 - `EntityType` matches the target entity (e.g., "Order", "Invoice")
-- `CompanyId` matches the current company context (single-company mode)
+- `CompanyId` matches the current company context (tenant-scoped)
 
 #### 2.5.2 Resolution Priority
 

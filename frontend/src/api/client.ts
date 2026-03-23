@@ -227,12 +227,10 @@ const handleError = async (response: Response): Promise<void> => {
       // If response parsing fails, use default message
     }
 
-    // Handle specific error codes
     if (response.status === 401) {
-      // Unauthorized - clear auth but don't redirect during initialization
-      // The AuthContext will handle the redirect
       localStorage.removeItem('authToken');
       localStorage.removeItem('refreshToken');
+      sessionStorage.setItem('sessionExpired', '1');
     }
 
     const error: ApiError = new Error(errorMessage);
@@ -335,97 +333,117 @@ const apiClient: ApiClient = {
   async post<T = any>(url: string, data?: any, config: ApiClientConfig = {}): Promise<T> {
     const { headers: customHeaders, ...restConfig } = config;
     
-    // Skip auth for login/refresh endpoints
     const skipAuth = url.includes('/auth/login') || url.includes('/auth/refresh');
 
-    const response = await fetch(`${API_BASE_URL}${url}`, {
-      method: 'POST',
-      headers: buildHeaders(customHeaders, skipAuth),
-      body: JSON.stringify(data),
-      ...restConfig
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}${url}`, {
+        method: 'POST',
+        headers: buildHeaders(customHeaders, skipAuth),
+        body: JSON.stringify(data),
+        ...restConfig
+      });
 
-    await handleError(response);
-    
-    // Check if response has content before parsing JSON
-    const contentType = response.headers.get('content-type');
-    if (contentType && contentType.includes('application/json')) {
-      const json = await response.json();
-      return unwrapResponse<T>(json);
+      await handleError(response);
+      
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const json = await response.json();
+        return unwrapResponse<T>(json);
+      }
+      
+      return {} as T;
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Network error: Unable to connect to the server. Please check if the backend is running.');
+      }
+      throw error;
     }
-    
-    // If no JSON content, return empty object
-    return {} as T;
   },
 
   async patch<T = any>(url: string, data?: any, config: ApiClientConfig = {}): Promise<T> {
     const { headers: customHeaders, ...restConfig } = config;
 
-    const response = await fetch(`${API_BASE_URL}${url}`, {
-      method: 'PATCH',
-      headers: buildHeaders(customHeaders),
-      body: JSON.stringify(data),
-      ...restConfig
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}${url}`, {
+        method: 'PATCH',
+        headers: buildHeaders(customHeaders),
+        body: JSON.stringify(data),
+        ...restConfig
+      });
 
-    await handleError(response);
-    const json = await response.json();
-    return unwrapResponse<T>(json);
+      await handleError(response);
+      const json = await response.json();
+      return unwrapResponse<T>(json);
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Network error: Unable to connect to the server. Please check if the backend is running.');
+      }
+      throw error;
+    }
   },
 
   async put<T = any>(url: string, data?: any, config: ApiClientConfig = {}): Promise<T> {
     const { headers: customHeaders, ...restConfig } = config;
 
-    const response = await fetch(`${API_BASE_URL}${url}`, {
-      method: 'PUT',
-      headers: buildHeaders(customHeaders),
-      body: JSON.stringify(data),
-      ...restConfig
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}${url}`, {
+        method: 'PUT',
+        headers: buildHeaders(customHeaders),
+        body: JSON.stringify(data),
+        ...restConfig
+      });
 
-    await handleError(response);
-    const json = await response.json();
-    return unwrapResponse<T>(json);
+      await handleError(response);
+      const json = await response.json();
+      return unwrapResponse<T>(json);
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Network error: Unable to connect to the server. Please check if the backend is running.');
+      }
+      throw error;
+    }
   },
 
   async delete<T = any>(url: string, config: ApiClientConfig = {}): Promise<T | null> {
     const { headers: customHeaders, ...restConfig } = config;
 
-    const response = await fetch(`${API_BASE_URL}${url}`, {
-      method: 'DELETE',
-      headers: buildHeaders(customHeaders),
-      ...restConfig
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}${url}`, {
+        method: 'DELETE',
+        headers: buildHeaders(customHeaders),
+        ...restConfig
+      });
 
-    await handleError(response);
-    
-    // DELETE may return empty body (204 No Content)
-    // Check if response has content before trying to parse
-    const contentType = response.headers.get('content-type');
-    const contentLength = response.headers.get('content-length');
-    
-    // If 204 No Content or no content-length/content-type, return null
-    if (response.status === 204 || !contentLength || contentLength === '0') {
-      return null;
-    }
-    
-    // Only try to parse JSON if content-type indicates JSON and there's content
-    if (contentType && contentType.includes('application/json')) {
-      try {
-        const text = await response.text();
-        if (!text || text.trim() === '') {
-          return null;
-        }
-        const json = JSON.parse(text);
-        return unwrapResponse<T>(json);
-      } catch (parseError) {
-        // If JSON parsing fails, return null (empty response is valid for DELETE)
-        console.warn('Failed to parse DELETE response as JSON:', parseError);
+      await handleError(response);
+      
+      const contentType = response.headers.get('content-type');
+      const contentLength = response.headers.get('content-length');
+      
+      if (response.status === 204 || !contentLength || contentLength === '0') {
         return null;
       }
+      
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          const text = await response.text();
+          if (!text || text.trim() === '') {
+            return null;
+          }
+          const json = JSON.parse(text);
+          return unwrapResponse<T>(json);
+        } catch (parseError) {
+          console.warn('Failed to parse DELETE response as JSON:', parseError);
+          return null;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Network error: Unable to connect to the server. Please check if the backend is running.');
+      }
+      throw error;
     }
-    
-    return null;
   }
 };
 

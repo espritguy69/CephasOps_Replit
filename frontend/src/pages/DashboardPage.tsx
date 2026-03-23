@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 import { 
   FileText, Clock, Users, AlertTriangle, TrendingUp, TrendingDown,
   ArrowRight, Filter, CalendarDays, RefreshCw,
-  Eye, Edit, ChevronDown
+  Eye, Edit, ChevronDown, Package, Receipt, DollarSign,
+  Calendar, CheckSquare, Inbox, BarChart3, ShieldAlert,
+  ArrowDownToLine, AlertCircle, ExternalLink
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '../components/ui';
@@ -12,6 +14,13 @@ import { PageShell } from '../components/layout';
 import { getOrders } from '../api/orders';
 import type { Order } from '../types/orders';
 import { OrdersTrendChart, OrdersByPartnerChart } from '../components/charts';
+import { usePermissions } from '../hooks/usePermissions';
+import { getInvoices } from '../api/billing';
+import type { Invoice } from '../types/billing';
+import { getStockByLocation } from '../api/inventory';
+import type { StockBalance } from '../types/inventory';
+import { getParserStatistics } from '../api/parser';
+import { getUnassignedOrders } from '../api/scheduler';
 
 interface StatCardProps {
   title: string;
@@ -22,9 +31,9 @@ interface StatCardProps {
   iconBg?: string;
   trend?: 'up' | 'down';
   loading?: boolean;
+  linkTo?: string;
 }
 
-// Stat Card Component
 const StatCard: React.FC<StatCardProps> = ({ 
   title, 
   value, 
@@ -33,10 +42,18 @@ const StatCard: React.FC<StatCardProps> = ({
   icon: Icon, 
   iconBg,
   trend,
-  loading 
+  loading,
+  linkTo
 }) => {
+  const navigate = useNavigate();
   return (
-    <div className="bg-card rounded-lg border border-border p-3 md:p-4 lg:p-6 shadow-sm hover-lift transition-smooth">
+    <div 
+      className={cn(
+        "bg-card rounded-lg border border-border p-3 md:p-4 lg:p-6 shadow-sm hover-lift transition-smooth",
+        linkTo && "cursor-pointer"
+      )}
+      onClick={linkTo ? () => navigate(linkTo) : undefined}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <p className="text-xs md:text-sm font-medium text-muted-foreground mb-2">{title}</p>
@@ -78,9 +95,150 @@ const StatCard: React.FC<StatCardProps> = ({
             iconBg?.includes('amber') ? "text-amber-600" :
             iconBg?.includes('red') ? "text-red-600" :
             iconBg?.includes('blue') ? "text-blue-600" :
+            iconBg?.includes('purple') ? "text-purple-600" :
             "text-primary"
           )} />
         </div>
+      </div>
+    </div>
+  );
+};
+
+interface SummaryCardProps {
+  title: string;
+  icon: LucideIcon;
+  iconBg: string;
+  items: Array<{ label: string; value: string | number; linkTo?: string; severity?: 'normal' | 'warning' | 'critical' }>;
+  loading?: boolean;
+}
+
+const SummaryCard: React.FC<SummaryCardProps> = ({ title, icon: Icon, iconBg, items, loading }) => {
+  const navigate = useNavigate();
+  return (
+    <div className="bg-card rounded-lg border border-border shadow-sm">
+      <div className="flex items-center gap-3 p-4 border-b border-border">
+        <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0", iconBg)}>
+          <Icon className="h-4 w-4 text-white" />
+        </div>
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      </div>
+      <div className="divide-y divide-border">
+        {loading ? (
+          [...Array(3)].map((_, i) => (
+            <div key={i} className="flex items-center justify-between px-4 py-3">
+              <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+              <div className="h-5 w-8 bg-muted animate-pulse rounded" />
+            </div>
+          ))
+        ) : items.length === 0 ? (
+          <div className="px-4 py-6 text-center text-sm text-muted-foreground">No items to display</div>
+        ) : (
+          items.map((item, idx) => (
+            <div
+              key={idx}
+              className={cn(
+                "flex items-center justify-between px-4 py-3 text-sm",
+                item.linkTo && "cursor-pointer hover:bg-muted/50 transition-colors"
+              )}
+              onClick={item.linkTo ? () => navigate(item.linkTo!) : undefined}
+            >
+              <span className="text-muted-foreground">{item.label}</span>
+              <div className="flex items-center gap-2">
+                <span className={cn(
+                  "font-semibold",
+                  item.severity === 'critical' && "text-destructive",
+                  item.severity === 'warning' && "text-amber-600",
+                  item.severity === 'normal' && "text-foreground",
+                  !item.severity && "text-foreground"
+                )}>
+                  {item.value}
+                </span>
+                {item.linkTo && <ExternalLink className="h-3 w-3 text-muted-foreground" />}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
+interface AlertItem {
+  id: string;
+  message: string;
+  severity: 'info' | 'warning' | 'critical';
+  linkTo?: string;
+  linkLabel?: string;
+  module: string;
+}
+
+interface AlertsSectionProps {
+  alerts: AlertItem[];
+  loading?: boolean;
+}
+
+const AlertsSection: React.FC<AlertsSectionProps> = ({ alerts, loading }) => {
+  const navigate = useNavigate();
+
+  if (loading) {
+    return (
+      <div className="bg-card rounded-lg border border-border shadow-sm p-4">
+        <div className="flex items-center gap-2 mb-4">
+          <ShieldAlert className="h-5 w-5 text-amber-500" />
+          <h3 className="text-sm font-semibold text-foreground">Alerts & Action Items</h3>
+        </div>
+        <div className="space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-12 bg-muted animate-pulse rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (alerts.length === 0) return null;
+
+  const severityConfig = {
+    critical: { bg: 'bg-red-50 dark:bg-red-950/30', border: 'border-red-200 dark:border-red-800', icon: AlertCircle, iconColor: 'text-red-500' },
+    warning: { bg: 'bg-amber-50 dark:bg-amber-950/30', border: 'border-amber-200 dark:border-amber-800', icon: AlertTriangle, iconColor: 'text-amber-500' },
+    info: { bg: 'bg-blue-50 dark:bg-blue-950/30', border: 'border-blue-200 dark:border-blue-800', icon: Inbox, iconColor: 'text-blue-500' },
+  };
+
+  return (
+    <div className="bg-card rounded-lg border border-border shadow-sm p-4">
+      <div className="flex items-center gap-2 mb-4">
+        <ShieldAlert className="h-5 w-5 text-amber-500" />
+        <h3 className="text-sm font-semibold text-foreground">Alerts & Action Items</h3>
+        <span className="ml-auto text-xs text-muted-foreground">{alerts.length} active</span>
+      </div>
+      <div className="space-y-2">
+        {alerts.map((alert) => {
+          const config = severityConfig[alert.severity];
+          const AlertIcon = config.icon;
+          return (
+            <div
+              key={alert.id}
+              className={cn(
+                "flex items-center gap-3 p-3 rounded-lg border",
+                config.bg, config.border,
+                alert.linkTo && "cursor-pointer hover:opacity-90 transition-opacity"
+              )}
+              onClick={alert.linkTo ? () => navigate(alert.linkTo!) : undefined}
+            >
+              <AlertIcon className={cn("h-4 w-4 flex-shrink-0", config.iconColor)} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-foreground">{alert.message}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{alert.module}</p>
+              </div>
+              {alert.linkTo && (
+                <Button variant="ghost" size="sm" className="flex-shrink-0 h-7 text-xs gap-1">
+                  {alert.linkLabel || 'View'}
+                  <ArrowRight className="h-3 w-3" />
+                </Button>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -90,7 +248,6 @@ interface OrderStatusBadgeProps {
   status: string;
 }
 
-// Order Status Badge
 const OrderStatusBadge: React.FC<OrderStatusBadgeProps> = ({ status }) => {
   const statusConfig: Record<string, { bg: string; text: string }> = {
     'New': { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-400' },
@@ -119,7 +276,6 @@ interface DateRangeFilterProps {
   onChange: (value: string) => void;
 }
 
-// Date Filter Component
 const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ value, onChange }) => {
   const options = [
     { value: 'today', label: 'Today' },
@@ -153,7 +309,6 @@ interface StatusFilterProps {
   onChange: (value: string) => void;
 }
 
-// Status Filter Component  
 const StatusFilter: React.FC<StatusFilterProps> = ({ value, onChange }) => {
   const options = [
     { value: '', label: 'All Statuses' },
@@ -189,7 +344,6 @@ interface DashboardStats {
   overdueCWO: number;
 }
 
-// Sample orders data for demo
 const SAMPLE_ORDERS: Partial<Order>[] = [
   { id: '1', orderNumber: 'NWO-2024-0001', customerName: 'Ahmad bin Hassan', addressLine1: '12 Jalan Ampang, KL', status: 'InProgress', assignedSiName: 'Mohd Rizal', appointmentDate: '2024-01-15', orderType: 'New Installation' },
   { id: '2', orderNumber: 'CWO-2024-0042', customerName: 'Sarah Tan Wei Ling', addressLine1: '45 Persiaran KLCC', status: 'Pending', assignedSiName: 'Kumar Rajan', appointmentDate: '2024-01-15', orderType: 'Change Order' },
@@ -201,6 +355,7 @@ const SAMPLE_ORDERS: Partial<Order>[] = [
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const { hasPermission, isAdmin, isSuperAdmin, isFinance, isOperations, isWarehouse } = usePermissions();
   const [loading, setLoading] = useState<boolean>(true);
   const [orders, setOrders] = useState<Order[]>([]);
   const [dateRange, setDateRange] = useState<string>('today');
@@ -212,81 +367,137 @@ const DashboardPage: React.FC = () => {
     overdueCWO: 0
   });
 
-  // Load data
+  const [billingData, setBillingData] = useState<{ overdue: number; pending: number; totalRevenue: string }>({ overdue: 0, pending: 0, totalRevenue: '-' });
+  const [inventoryData, setInventoryData] = useState<{ lowStock: number }>({ lowStock: 0 });
+  const [parserData, setParserData] = useState<{ newDrafts: number; lowConfidence: number; pendingReview: number }>({ newDrafts: 0, lowConfidence: 0, pendingReview: 0 });
+  const [schedulerData, setSchedulerData] = useState<{ unassignedCount: number }>({ unassignedCount: 0 });
+
+  const canViewOrders = hasPermission('orders.view');
+  const canViewScheduler = hasPermission('scheduler.view');
+  const canViewBilling = hasPermission('billing.view');
+  const canViewInventory = hasPermission('inventory.view');
+  const canViewKpi = hasPermission('kpi.view');
+  const showOrderWidgets = isAdmin || canViewOrders;
+  const showSchedulerWidgets = isAdmin || canViewScheduler;
+  const showBillingWidgets = isAdmin || isFinance || canViewBilling;
+  const showInventoryWidgets = isAdmin || isWarehouse || canViewInventory;
+  const showParserWidgets = isAdmin || canViewOrders;
+
   useEffect(() => {
     const loadData = async (): Promise<void> => {
       setLoading(true);
-      try {
-        // Try to fetch real orders
-        const ordersData = await getOrders({ 
-          status: statusFilter || undefined 
-        });
-        
-        // Backend returns array directly, ensure we have an array
-        const ordersArray = Array.isArray(ordersData) ? ordersData : [];
-        
-        if (ordersArray.length > 0) {
-          // Show most recent orders first (sorted by createdAt descending)
-          const sortedOrders = [...ordersArray].sort((a, b) => {
-            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            return dateB - dateA; // Most recent first
-          });
-          
-          setOrders(sortedOrders.slice(0, 10));
-          
-          // Calculate stats from real data
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const todayOrders = ordersArray.filter(o => {
-            if (!o.createdAt) return false;
-            const orderDate = new Date(o.createdAt);
-            orderDate.setHours(0, 0, 0, 0);
-            return orderDate.getTime() === today.getTime();
-          });
-          
-          setStats({
-            todaysOrders: todayOrders.length,
-            activeInstallers: new Set(ordersArray.map(o => o.assignedSiId).filter(Boolean)).size,
-            pendingNWO: ordersArray.filter(o => o.status === 'Pending' || o.status === 'New').length,
-            overdueCWO: ordersArray.filter(o => o.status === 'OnHold' || o.status === 'Cancelled').length
-          });
-        } else {
-          // Use sample data if no real data
-          setOrders(SAMPLE_ORDERS as Order[]);
-          setStats({
-            todaysOrders: 24,
-            activeInstallers: 12,
-            pendingNWO: 8,
-            overdueCWO: 3
-          });
-        }
-      } catch (error) {
-        console.error('Failed to load orders from database:', error);
-        // Fallback to sample data only on error
-        setOrders(SAMPLE_ORDERS as Order[]);
-        setStats({
-          todaysOrders: 24,
-          activeInstallers: 12,
-          pendingNWO: 8,
-          overdueCWO: 3
-        });
-      } finally {
-        setLoading(false);
+
+      const fetchPromises: Promise<void>[] = [];
+
+      if (showOrderWidgets) {
+        fetchPromises.push(
+          getOrders({})
+            .then(ordersData => {
+              const allOrders = Array.isArray(ordersData) ? ordersData : [];
+              if (allOrders.length > 0) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const todayOrders = allOrders.filter(o => {
+                  if (!o.createdAt) return false;
+                  const orderDate = new Date(o.createdAt);
+                  orderDate.setHours(0, 0, 0, 0);
+                  return orderDate.getTime() === today.getTime();
+                });
+                setStats({
+                  todaysOrders: todayOrders.length,
+                  activeInstallers: new Set(allOrders.map(o => o.assignedSiId).filter(Boolean)).size,
+                  pendingNWO: allOrders.filter(o => o.status === 'Pending' || o.status === 'New').length,
+                  overdueCWO: allOrders.filter(o => o.status === 'OnHold' || o.status === 'Cancelled').length
+                });
+
+                const displayOrders = statusFilter
+                  ? allOrders.filter(o => o.status === statusFilter)
+                  : allOrders;
+                const sortedOrders = [...displayOrders].sort((a, b) => {
+                  const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                  const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                  return dateB - dateA;
+                });
+                setOrders(sortedOrders.slice(0, 10));
+              } else {
+                setOrders([]);
+                setStats({ todaysOrders: 0, activeInstallers: 0, pendingNWO: 0, overdueCWO: 0 });
+              }
+            })
+            .catch(() => {
+              setOrders([]);
+              setStats({ todaysOrders: 0, activeInstallers: 0, pendingNWO: 0, overdueCWO: 0 });
+            })
+        );
       }
+
+      if (showBillingWidgets) {
+        fetchPromises.push(
+          getInvoices({})
+            .then((invoices: Invoice[]) => {
+              const arr = Array.isArray(invoices) ? invoices : [];
+              const overdue = arr.filter(inv => inv.status === 'Overdue' || inv.status === 'PastDue').length;
+              const pending = arr.filter(inv => inv.status === 'Draft' || inv.status === 'Pending').length;
+              const paidTotal = arr
+                .filter(inv => inv.status === 'Paid' || inv.status === 'Completed')
+                .reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
+              setBillingData({
+                overdue,
+                pending,
+                totalRevenue: paidTotal > 0 ? `RM ${paidTotal.toLocaleString()}` : '-',
+              });
+            })
+            .catch(() => setBillingData({ overdue: 0, pending: 0, totalRevenue: '-' }))
+        );
+      }
+
+      if (showInventoryWidgets) {
+        fetchPromises.push(
+          getStockByLocation({})
+            .then((stockData: StockBalance[]) => {
+              const arr = Array.isArray(stockData) ? stockData : [];
+              const lowStock = arr.filter(s => s.availableQuantity <= 0).length;
+              setInventoryData({ lowStock });
+            })
+            .catch(() => setInventoryData({ lowStock: 0 }))
+        );
+      }
+
+      if (showParserWidgets) {
+        fetchPromises.push(
+          getParserStatistics()
+            .then(parserStats => {
+              setParserData({
+                newDrafts: parserStats.pendingDrafts || 0,
+                lowConfidence: parserStats.needsReviewDrafts || 0,
+                pendingReview: parserStats.validDrafts || 0,
+              });
+            })
+            .catch(() => setParserData({ newDrafts: 0, lowConfidence: 0, pendingReview: 0 }))
+        );
+      }
+
+      if (showSchedulerWidgets) {
+        fetchPromises.push(
+          getUnassignedOrders({})
+            .then(unassigned => {
+              const arr = Array.isArray(unassigned) ? unassigned : [];
+              setSchedulerData({ unassignedCount: arr.length });
+            })
+            .catch(() => setSchedulerData({ unassignedCount: 0 }))
+        );
+      }
+
+      await Promise.allSettled(fetchPromises);
+      setLoading(false);
     };
 
     loadData();
-  }, [statusFilter, dateRange]);
+  }, [statusFilter, dateRange, showOrderWidgets, showBillingWidgets, showInventoryWidgets, showParserWidgets, showSchedulerWidgets]);
 
-  // Filter orders by status
-  const filteredOrders = statusFilter 
-    ? orders.filter(o => o.status === statusFilter)
-    : orders;
+  const filteredOrders = orders;
 
-  // Generate chart data
   const trendData = useMemo(() => {
-    // Generate last 30 days trend
     const days = 30;
     const today = new Date();
     const trend = [];
@@ -296,7 +507,6 @@ const DashboardPage: React.FC = () => {
       date.setDate(date.getDate() - i);
       const dateStr = date.toLocaleDateString('en-MY', { day: 'numeric', month: 'short' });
       
-      // Count orders for this date
       const dayOrders = orders.filter(o => {
         if (!o.createdAt) return false;
         const orderDate = new Date(o.createdAt);
@@ -310,7 +520,6 @@ const DashboardPage: React.FC = () => {
   }, [orders]);
 
   const partnerData = useMemo(() => {
-    // Group orders by partner
     const partnerCounts = new Map<string, number>();
     
     orders.forEach(order => {
@@ -323,9 +532,98 @@ const DashboardPage: React.FC = () => {
       .sort((a, b) => b.count - a.count);
   }, [orders]);
 
+  const alerts = useMemo<AlertItem[]>(() => {
+    const items: AlertItem[] = [];
+
+    if (showOrderWidgets && stats.overdueCWO > 0) {
+      items.push({
+        id: 'overdue-cwo',
+        message: `${stats.overdueCWO} overdue change work orders need immediate attention`,
+        severity: 'critical',
+        linkTo: '/orders?status=OnHold',
+        linkLabel: 'View Orders',
+        module: 'Operations',
+      });
+    }
+
+    if (showOrderWidgets && stats.pendingNWO > 5) {
+      items.push({
+        id: 'high-pending',
+        message: `${stats.pendingNWO} pending new work orders awaiting assignment`,
+        severity: 'warning',
+        linkTo: '/orders?status=New',
+        linkLabel: 'Assign Orders',
+        module: 'Operations',
+      });
+    }
+
+    if (showSchedulerWidgets && schedulerData.unassignedCount > 0) {
+      items.push({
+        id: 'unassigned-orders',
+        message: `${schedulerData.unassignedCount} order${schedulerData.unassignedCount > 1 ? 's are' : ' is'} unassigned and need${schedulerData.unassignedCount === 1 ? 's' : ''} scheduling`,
+        severity: 'warning',
+        linkTo: '/scheduler',
+        linkLabel: 'Open Scheduler',
+        module: 'Scheduler',
+      });
+    }
+
+    if (showBillingWidgets && billingData.overdue > 0) {
+      items.push({
+        id: 'billing-overdue',
+        message: `${billingData.overdue} overdue invoice${billingData.overdue > 1 ? 's' : ''} require${billingData.overdue === 1 ? 's' : ''} follow-up`,
+        severity: 'critical',
+        linkTo: '/billing/invoices',
+        linkLabel: 'View Invoices',
+        module: 'Billing',
+      });
+    }
+
+    if (showBillingWidgets && billingData.pending > 0) {
+      items.push({
+        id: 'billing-pending',
+        message: `${billingData.pending} pending invoice submission${billingData.pending > 1 ? 's' : ''} awaiting review`,
+        severity: 'warning',
+        linkTo: '/billing/invoices',
+        linkLabel: 'Review',
+        module: 'Billing',
+      });
+    }
+
+    if (showInventoryWidgets && inventoryData.lowStock > 0) {
+      items.push({
+        id: 'inventory-low-stock',
+        message: `${inventoryData.lowStock} material${inventoryData.lowStock > 1 ? 's' : ''} at or below minimum stock level`,
+        severity: 'warning',
+        linkTo: '/inventory/stock-summary',
+        linkLabel: 'Stock Summary',
+        module: 'Inventory',
+      });
+    }
+
+    if (showParserWidgets && parserData.lowConfidence > 0) {
+      items.push({
+        id: 'parser-low-confidence',
+        message: `${parserData.lowConfidence} parsed order${parserData.lowConfidence > 1 ? 's' : ''} flagged for manual review (low confidence)`,
+        severity: 'warning',
+        linkTo: '/orders/parser',
+        linkLabel: 'Review',
+        module: 'Parser',
+      });
+    }
+
+    return items;
+  }, [showOrderWidgets, showSchedulerWidgets, showBillingWidgets, showInventoryWidgets, showParserWidgets, stats, orders, billingData, inventoryData, parserData, schedulerData]);
+
+  const dashboardTitle = isSuperAdmin ? 'Admin Dashboard' :
+    isAdmin ? 'Admin Dashboard' :
+    isFinance && !isOperations ? 'Finance Dashboard' :
+    isWarehouse && !isOperations ? 'Warehouse Dashboard' :
+    'Operations Dashboard';
+
   return (
     <PageShell
-      title="Operations Dashboard"
+      title={dashboardTitle}
       breadcrumbs={[{ label: 'Dashboard' }]}
       actions={
         <Button
@@ -341,198 +639,265 @@ const DashboardPage: React.FC = () => {
     >
       <div className="space-y-3 md:space-y-4 lg:space-y-6">
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <StatCard
-          title="Today's Orders"
-          value={stats.todaysOrders}
-          change="+12%"
-          changeLabel="vs yesterday"
-          trend="up"
-          icon={FileText}
-          iconBg="bg-blue-100 dark:bg-blue-900/30"
-          loading={loading}
-        />
-        <StatCard
-          title="Active Installers"
-          value={stats.activeInstallers}
-          change="+2"
-          changeLabel="from last week"
-          trend="up"
-          icon={Users}
-          iconBg="bg-emerald-100 dark:bg-emerald-900/30"
-          loading={loading}
-        />
-        <StatCard
-          title="Pending NWO"
-          value={stats.pendingNWO}
-          change="-3"
-          changeLabel="from yesterday"
-          trend="down"
-          icon={Clock}
-          iconBg="bg-amber-100 dark:bg-amber-900/30"
-          loading={loading}
-        />
-        <StatCard
-          title="Overdue CWO"
-          value={stats.overdueCWO}
-          change="+1"
-          changeLabel="needs attention"
-          trend="up"
-          icon={AlertTriangle}
-          iconBg="bg-red-100 dark:bg-red-900/30"
-          loading={loading}
-        />
+      {showOrderWidgets && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          <StatCard
+            title="Today's Orders"
+            value={stats.todaysOrders}
+            change="+12%"
+            changeLabel="vs yesterday"
+            trend="up"
+            icon={FileText}
+            iconBg="bg-blue-100 dark:bg-blue-900/30"
+            loading={loading}
+            linkTo="/orders"
+          />
+          <StatCard
+            title="Active Installers"
+            value={stats.activeInstallers}
+            change="+2"
+            changeLabel="from last week"
+            trend="up"
+            icon={Users}
+            iconBg="bg-emerald-100 dark:bg-emerald-900/30"
+            loading={loading}
+          />
+          <StatCard
+            title="Pending NWO"
+            value={stats.pendingNWO}
+            change="-3"
+            changeLabel="from yesterday"
+            trend="down"
+            icon={Clock}
+            iconBg="bg-amber-100 dark:bg-amber-900/30"
+            loading={loading}
+            linkTo="/orders?status=Pending"
+          />
+          <StatCard
+            title="Overdue CWO"
+            value={stats.overdueCWO}
+            change="+1"
+            changeLabel="needs attention"
+            trend="up"
+            icon={AlertTriangle}
+            iconBg="bg-red-100 dark:bg-red-900/30"
+            loading={loading}
+            linkTo="/orders?status=OnHold"
+          />
+        </div>
+      )}
+
+      <AlertsSection alerts={alerts} loading={loading} />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        {showSchedulerWidgets && (
+          <SummaryCard
+            title="Scheduler"
+            icon={Calendar}
+            iconBg="bg-blue-600"
+            loading={loading}
+            items={[
+              { label: 'Unassigned Orders', value: schedulerData.unassignedCount, linkTo: '/scheduler', severity: schedulerData.unassignedCount > 0 ? 'warning' : 'normal' },
+              { label: 'Active Installers', value: stats.activeInstallers, linkTo: '/scheduler' },
+            ]}
+          />
+        )}
+
+        {showBillingWidgets && (
+          <SummaryCard
+            title="Billing"
+            icon={Receipt}
+            iconBg="bg-emerald-600"
+            loading={loading}
+            items={[
+              { label: 'Overdue Invoices', value: billingData.overdue, linkTo: '/billing/invoices', severity: billingData.overdue > 0 ? 'critical' : 'normal' },
+              { label: 'Pending Submissions', value: billingData.pending, linkTo: '/billing/invoices', severity: billingData.pending > 0 ? 'warning' : 'normal' },
+              { label: 'This Month Revenue', value: billingData.totalRevenue, linkTo: '/pnl/summary' },
+            ]}
+          />
+        )}
+
+        {showInventoryWidgets && (
+          <SummaryCard
+            title="Inventory"
+            icon={Package}
+            iconBg="bg-amber-600"
+            loading={loading}
+            items={[
+              { label: 'Low / Out of Stock', value: inventoryData.lowStock, linkTo: '/inventory/stock-summary', severity: inventoryData.lowStock > 0 ? 'warning' : 'normal' },
+              { label: 'Total Tracked Items', value: '-', linkTo: '/inventory/stock-summary' },
+            ]}
+          />
+        )}
+
+        {showParserWidgets && (
+          <SummaryCard
+            title="Parser Intake"
+            icon={ArrowDownToLine}
+            iconBg="bg-purple-600"
+            loading={loading}
+            items={[
+              { label: 'New Drafts', value: parserData.newDrafts, linkTo: '/orders/parser', severity: parserData.newDrafts > 0 ? 'warning' : 'normal' },
+              { label: 'Low Confidence Items', value: parserData.lowConfidence, linkTo: '/orders/parser', severity: parserData.lowConfidence > 0 ? 'warning' : 'normal' },
+              { label: 'Pending Review', value: parserData.pendingReview, linkTo: '/orders/parser' },
+            ]}
+          />
+        )}
       </div>
 
-      {/* Charts Section */}
-      {!loading && orders.length > 0 && (
+      {showOrderWidgets && !loading && orders.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           <OrdersTrendChart data={trendData} />
           <OrdersByPartnerChart data={partnerData} />
         </div>
       )}
 
-      {/* Recent Orders Table */}
-      <div className="bg-card rounded-xl border border-border shadow-sm">
-        {/* Table Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4 p-3 md:p-4 lg:p-6 border-b border-border">
-          <div>
-            <h2 className="text-base md:text-lg font-semibold text-foreground">Recent Orders</h2>
-            <p className="text-xs md:text-sm text-muted-foreground mt-1">Track and manage incoming orders</p>
+      {showOrderWidgets && (
+        <div className="bg-card rounded-xl border border-border shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 md:gap-4 p-3 md:p-4 lg:p-6 border-b border-border">
+            <div>
+              <h2 className="text-base md:text-lg font-semibold text-foreground">Recent Orders</h2>
+              <p className="text-xs md:text-sm text-muted-foreground mt-1">Track and manage incoming orders</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <DateRangeFilter value={dateRange} onChange={setDateRange} />
+              <StatusFilter value={statusFilter} onChange={setStatusFilter} />
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <DateRangeFilter value={dateRange} onChange={setDateRange} />
-            <StatusFilter value={statusFilter} onChange={setStatusFilter} />
-          </div>
-        </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border bg-muted/30">
-                <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Order #</th>
-                <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Customer</th>
-                <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Type</th>
-                <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-                <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Installer</th>
-                <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Scheduled</th>
-                <th className="text-right py-2 md:py-3 px-2 md:px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {loading ? (
-                // Loading skeleton
-                [...Array(5)].map((_, i) => (
-                  <tr key={i}>
-                    <td className="py-2 md:py-3 px-2 md:px-4"><div className="h-4 w-24 bg-muted animate-pulse rounded" /></td>
-                    <td className="py-2 md:py-3 px-2 md:px-4"><div className="h-4 w-32 bg-muted animate-pulse rounded" /></td>
-                    <td className="py-2 md:py-3 px-2 md:px-4 hidden md:table-cell"><div className="h-4 w-20 bg-muted animate-pulse rounded" /></td>
-                    <td className="py-2 md:py-3 px-2 md:px-4"><div className="h-5 w-20 bg-muted animate-pulse rounded-full" /></td>
-                    <td className="py-2 md:py-3 px-2 md:px-4 hidden lg:table-cell"><div className="h-4 w-24 bg-muted animate-pulse rounded" /></td>
-                    <td className="py-2 md:py-3 px-2 md:px-4 hidden sm:table-cell"><div className="h-4 w-20 bg-muted animate-pulse rounded" /></td>
-                    <td className="py-2 md:py-3 px-2 md:px-4"><div className="h-4 w-16 bg-muted animate-pulse rounded ml-auto" /></td>
-                  </tr>
-                ))
-              ) : filteredOrders.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-12 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <FileText className="h-10 w-10 text-muted-foreground/50" />
-                      <p className="text-sm text-muted-foreground">No orders found</p>
-                      <Button variant="outline" size="sm" onClick={() => setStatusFilter('')}>
-                        Clear filters
-                      </Button>
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Order #</th>
+                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Customer</th>
+                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Type</th>
+                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Installer</th>
+                  <th className="text-left py-2 md:py-3 px-2 md:px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Scheduled</th>
+                  <th className="text-right py-2 md:py-3 px-2 md:px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
                 </tr>
-              ) : (
-                filteredOrders.map((order) => (
-                  <tr 
-                    key={order.id} 
-                    className="hover:bg-muted/50 transition-colors cursor-pointer"
-                    onClick={() => navigate(`/orders/${order.id}`)}
-                  >
-                    <td className="py-2 md:py-3 px-2 md:px-4">
-                      <span className="text-xs md:text-sm font-medium text-foreground">
-                        {order.orderNumber || `ORD-${order.id}`}
-                      </span>
-                    </td>
-                    <td className="py-2 md:py-3 px-2 md:px-4">
-                      <div>
-                        <p className="text-xs md:text-sm font-medium text-foreground">{order.customerName || 'Unknown'}</p>
-                        <p className="text-xs text-muted-foreground truncate max-w-[200px]">{order.addressLine1 || order.buildingAddress || '-'}</p>
-                      </div>
-                    </td>
-                    <td className="py-2 md:py-3 px-2 md:px-4 hidden md:table-cell">
-                      <span className="text-xs md:text-sm text-muted-foreground">{order.orderType || order.orderTypeName || '-'}</span>
-                    </td>
-                    <td className="py-2 md:py-3 px-2 md:px-4">
-                      <OrderStatusBadge status={order.status || 'Pending'} />
-                    </td>
-                    <td className="py-2 md:py-3 px-2 md:px-4 hidden lg:table-cell">
-                      <span className="text-xs md:text-sm text-muted-foreground">{order.assignedSiName || 'Unassigned'}</span>
-                    </td>
-                    <td className="py-2 md:py-3 px-2 md:px-4 hidden sm:table-cell">
-                      <span className="text-xs md:text-sm text-muted-foreground">
-                        {order.appointmentDate 
-                          ? new Date(order.appointmentDate).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })
-                          : '-'
-                        }
-                      </span>
-                    </td>
-                    <td className="py-2 md:py-3 px-2 md:px-4">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/orders/${order.id}`);
-                          }}
-                          className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-                          title="View details"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/orders/${order.id}?edit=true`);
-                          }}
-                          className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-                          title="Edit order"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {loading ? (
+                  [...Array(5)].map((_, i) => (
+                    <tr key={i}>
+                      <td className="py-2 md:py-3 px-2 md:px-4"><div className="h-4 w-24 bg-muted animate-pulse rounded" /></td>
+                      <td className="py-2 md:py-3 px-2 md:px-4"><div className="h-4 w-32 bg-muted animate-pulse rounded" /></td>
+                      <td className="py-2 md:py-3 px-2 md:px-4 hidden md:table-cell"><div className="h-4 w-20 bg-muted animate-pulse rounded" /></td>
+                      <td className="py-2 md:py-3 px-2 md:px-4"><div className="h-5 w-20 bg-muted animate-pulse rounded-full" /></td>
+                      <td className="py-2 md:py-3 px-2 md:px-4 hidden lg:table-cell"><div className="h-4 w-24 bg-muted animate-pulse rounded" /></td>
+                      <td className="py-2 md:py-3 px-2 md:px-4 hidden sm:table-cell"><div className="h-4 w-20 bg-muted animate-pulse rounded" /></td>
+                      <td className="py-2 md:py-3 px-2 md:px-4"><div className="h-4 w-16 bg-muted animate-pulse rounded ml-auto" /></td>
+                    </tr>
+                  ))
+                ) : filteredOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <FileText className="h-10 w-10 text-muted-foreground/50" />
+                        <p className="text-sm text-muted-foreground">No orders found</p>
+                        <Button variant="outline" size="sm" onClick={() => setStatusFilter('')}>
+                          Clear filters
+                        </Button>
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  filteredOrders.map((order) => (
+                    <tr 
+                      key={order.id} 
+                      className="hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => navigate(`/orders/${order.id}`)}
+                    >
+                      <td className="py-2 md:py-3 px-2 md:px-4">
+                        <span className="text-xs md:text-sm font-medium text-foreground">
+                          {order.orderNumber || `ORD-${order.id}`}
+                        </span>
+                      </td>
+                      <td className="py-2 md:py-3 px-2 md:px-4">
+                        <div>
+                          <p className="text-xs md:text-sm font-medium text-foreground">{order.customerName || 'Unknown'}</p>
+                          <p className="text-xs text-muted-foreground truncate max-w-[200px]">{order.addressLine1 || order.buildingAddress || '-'}</p>
+                        </div>
+                      </td>
+                      <td className="py-2 md:py-3 px-2 md:px-4 hidden md:table-cell">
+                        <span className="text-xs md:text-sm text-muted-foreground">{order.orderType || order.orderTypeName || '-'}</span>
+                      </td>
+                      <td className="py-2 md:py-3 px-2 md:px-4">
+                        <OrderStatusBadge status={order.status || 'Pending'} />
+                      </td>
+                      <td className="py-2 md:py-3 px-2 md:px-4 hidden lg:table-cell">
+                        <span className="text-xs md:text-sm text-muted-foreground">{order.assignedSiName || 'Unassigned'}</span>
+                      </td>
+                      <td className="py-2 md:py-3 px-2 md:px-4 hidden sm:table-cell">
+                        <span className="text-xs md:text-sm text-muted-foreground">
+                          {order.appointmentDate 
+                            ? new Date(order.appointmentDate).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })
+                            : '-'
+                          }
+                        </span>
+                      </td>
+                      <td className="py-2 md:py-3 px-2 md:px-4">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/orders/${order.id}`);
+                            }}
+                            className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                            title="View details"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/orders/${order.id}?edit=true`);
+                            }}
+                            className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                            title="Edit order"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
-        {/* Table Footer */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/20">
-          <p className="text-sm text-muted-foreground">
-            Showing <span className="font-medium">{filteredOrders.length}</span> of <span className="font-medium">{orders.length}</span> orders
-          </p>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/orders')}
-            className="gap-1"
-          >
-            View all orders
-            <ArrowRight className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/20">
+            <p className="text-sm text-muted-foreground">
+              Showing <span className="font-medium">{filteredOrders.length}</span> of <span className="font-medium">{orders.length}</span> orders
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/orders')}
+              className="gap-1"
+            >
+              View all orders
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {!showOrderWidgets && !showBillingWidgets && !showInventoryWidgets && !showSchedulerWidgets && (
+        <div className="bg-card rounded-lg border border-border shadow-sm p-8 text-center">
+          <BarChart3 className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">Welcome to CephasOps</h3>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">
+            Your dashboard will show relevant operational data based on your role and permissions. Contact your administrator if you need access to additional modules.
+          </p>
+        </div>
+      )}
       </div>
     </PageShell>
   );
 };
 
 export default DashboardPage;
-

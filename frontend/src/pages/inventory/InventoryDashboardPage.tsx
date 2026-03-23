@@ -270,7 +270,7 @@ const InventoryDashboardPage: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/inventory/warehouses')}
+              onClick={() => navigate('/inventory/warehouse-layout')}
               className="gap-1"
             >
               View All
@@ -282,7 +282,7 @@ const InventoryDashboardPage: React.FC = () => {
               <div
                 key={warehouse.id}
                 className="p-3 bg-slate-800/50 rounded-lg border border-slate-700 hover:border-emerald-500/50 transition-colors cursor-pointer"
-                onClick={() => navigate(`/inventory/warehouses`)}
+                onClick={() => navigate(`/inventory/warehouse-layout`)}
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">

@@ -444,34 +444,39 @@ const ParserDashboardPage: React.FC = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card className="p-6">
                   <h4 className="text-sm font-semibold mb-3">Confidence distribution</h4>
-                  <div className="space-y-2">
-                    {analytics.confidenceDistribution.map((b) => (
-                      <div key={b.label} className="flex items-center gap-3">
-                        <span className="text-sm text-muted-foreground w-16">{b.label}</span>
-                        <div className="flex-1 h-6 bg-muted rounded overflow-hidden">
-                          <div
-                            className="h-full bg-primary/70 rounded"
-                            style={{ width: `${analytics.totalDrafts ? (100 * b.count) / analytics.totalDrafts : 0}%` }}
-                          />
+                  {analytics.confidenceDistribution.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center">No confidence data available for this period.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {analytics.confidenceDistribution.map((b) => (
+                        <div key={b.label} className="flex items-center gap-3">
+                          <span className="text-sm text-muted-foreground w-16">{b.label}</span>
+                          <div className="flex-1 h-6 bg-muted rounded overflow-hidden">
+                            <div
+                              className="h-full bg-primary/70 rounded"
+                              style={{ width: `${analytics.totalDrafts ? (100 * b.count) / analytics.totalDrafts : 0}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-medium w-8">{b.count}</span>
                         </div>
-                        <span className="text-sm font-medium w-8">{b.count}</span>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </Card>
                 <Card className="p-6">
-                  <h4 className="text-sm font-semibold mb-3">Orders created per day (sample)</h4>
-                  <div className="max-h-48 overflow-y-auto space-y-1">
-                    {analytics.ordersCreatedPerDay.slice(-14).reverse().map((d) => (
-                      <div key={d.date} className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">{d.date}</span>
-                        <span className="font-medium">{d.count}</span>
-                      </div>
-                    ))}
-                    {analytics.ordersCreatedPerDay.length === 0 && (
-                      <p className="text-sm text-muted-foreground">No orders created from parser in this period.</p>
-                    )}
-                  </div>
+                  <h4 className="text-sm font-semibold mb-3">Orders created per day</h4>
+                  {analytics.ordersCreatedPerDay.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center">No orders created from parser in this period.</p>
+                  ) : (
+                    <div className="max-h-48 overflow-y-auto space-y-1">
+                      {analytics.ordersCreatedPerDay.slice(-14).reverse().map((d) => (
+                        <div key={d.date} className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">{d.date}</span>
+                          <span className="font-medium">{d.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </Card>
               </div>
               {analytics.commonErrors.length > 0 && (

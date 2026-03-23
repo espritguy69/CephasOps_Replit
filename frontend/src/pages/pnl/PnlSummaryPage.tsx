@@ -117,11 +117,11 @@ const PnlSummaryPage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
             <PnlWaterfallChart
               revenue={summary.totalRevenue || 0}
-              siCosts={(summary.totalCosts || 0) * 0.5} // Placeholder: 50% SI costs
-              materialCosts={(summary.totalCosts || 0) * 0.3} // Placeholder: 30% materials
-              overheads={(summary.totalCosts || 0) * 0.2} // Placeholder: 20% overhead
+              siCosts={0}
+              materialCosts={summary.totalCost || summary.totalCosts || 0}
+              overheads={summary.totalOverhead || 0}
             />
-            <PnlTrendChart data={trendData} />
+            <PnlTrendChart data={trendData} title="P&L Summary - Selected Period" />
           </div>
         </>
       )}
@@ -130,22 +130,17 @@ const PnlSummaryPage: React.FC = () => {
   );
 };
 
-// Generate trend data for last 12 months
 function generateTrendData(summary: PnlSummary | null): any[] {
   if (!summary) return [];
-  
-  // Placeholder: Generate sample trend data
-  // In production, this would come from API
+
+  const currentMonth = new Date().getMonth();
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return months.map((month, index) => {
-    const factor = 0.7 + (Math.random() * 0.6); // Vary between 70-130%
-    return {
-      month,
-      revenue: (summary.totalRevenue || 0) * factor / 12,
-      costs: (summary.totalCosts || 0) * factor / 12,
-      profit: (summary.netProfit || 0) * factor / 12
-    };
-  });
+  return [{
+    month: months[currentMonth],
+    revenue: summary.totalRevenue || 0,
+    costs: summary.totalCost || summary.totalCosts || 0,
+    profit: summary.netProfit || 0
+  }];
 }
 
 export default PnlSummaryPage;
