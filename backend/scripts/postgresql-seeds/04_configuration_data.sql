@@ -5,32 +5,23 @@
 -- Dependencies: Companies
 -- ============================================
 
+-- ============================================
+-- Block 1: ParserTemplates (isolated so failure doesn't cascade)
+-- ============================================
 DO $$
 DECLARE
-    v_company_id UUID;
     v_admin_user_id UUID;
 BEGIN
-    -- Get company ID
-    SELECT "Id" INTO v_company_id FROM "Companies" ORDER BY "CreatedAt" LIMIT 1;
-    
-    -- Get admin user ID for CreatedByUserId
     SELECT "Id" INTO v_admin_user_id FROM "Users" WHERE "Email" = 'simon@cephas.com.my' LIMIT 1;
     IF v_admin_user_id IS NULL THEN
         v_admin_user_id := '00000000-0000-0000-0000-000000000000'::uuid;
     END IF;
-    
-    IF v_company_id IS NULL THEN
-        RAISE WARNING 'No company found. Some configuration data requires company ID.';
-    END IF;
-    
-    -- ============================================
-    -- 1. ParserTemplates
-    -- ============================================
+
     INSERT INTO "ParserTemplates" (
         "Id", "CompanyId", "Name", "Code", "Description", "PartnerPattern", 
-        "SubjectPattern", "OrderTypeCode", "Priority", "IsActive", "AutoApprove", "CreatedByUserId", "CreatedAt"
+        "SubjectPattern", "OrderTypeCode", "Priority", "IsActive", "AutoApprove", "CreatedByUserId", "CreatedAt", "IsDeleted"
     )
-    SELECT gen_random_uuid(), NULL, v.name, v.code, v.description, v.partner_pattern, v.subject_pattern, v.order_type_code, v.priority, true, false, v_admin_user_id, NOW()
+    SELECT gen_random_uuid(), NULL, v.name, v.code, v.description, v.partner_pattern, v.subject_pattern, v.order_type_code, v.priority, true, false, v_admin_user_id, NOW(), false
     FROM (VALUES
         ('TIME Activation', 'TIME_ACTIVATION', 'Parses TIME FTTH/HSBB activation work orders', '*@time.com.my', '*Activation*', 'ACTIVATION', 100),
         ('TIME Modification (Indoor)', 'TIME_MOD_INDOOR', 'Parses TIME indoor modification work orders', '*@time.com.my', '*Modification*Indoor*', 'MODIFICATION_INDOOR', 95),
@@ -45,53 +36,61 @@ BEGIN
     WHERE NOT EXISTS (
         SELECT 1 FROM "ParserTemplates" pt WHERE pt."Code" = v.code
     );
-    
+
     RAISE NOTICE 'Seeded ParserTemplates (9 records)';
-    
-    -- ============================================
-    -- 2. GuardConditionDefinitions
-    -- ============================================
-    IF v_company_id IS NOT NULL THEN
-        INSERT INTO "GuardConditionDefinitions" (
-            "Id", "CompanyId", "Key", "Name", "Description", "EntityType", 
-            "ValidatorType", "ValidatorConfigJson", "IsActive", "DisplayOrder", "CreatedAt", "UpdatedAt", "IsDeleted"
-        ) VALUES
-            (gen_random_uuid(), v_company_id, 'photosRequired', 'Photos Required', 'Checks if photos are uploaded for the order', 'Order', 'PhotosRequiredValidator', '{"checkFlag":true,"checkFiles":true}', true, 1, NOW(), NOW(), false),
-            (gen_random_uuid(), v_company_id, 'docketUploaded', 'Docket Uploaded', 'Checks if docket is uploaded for the order', 'Order', 'DocketUploadedValidator', '{"checkFlag":true,"checkDockets":true}', true, 2, NOW(), NOW(), false),
-            (gen_random_uuid(), v_company_id, 'splitterAssigned', 'Splitter Assigned', 'Checks if splitter port is assigned to the order', 'Order', 'SplitterAssignedValidator', NULL, true, 3, NOW(), NOW(), false),
-            (gen_random_uuid(), v_company_id, 'serialNumbersValidated', 'Serial Numbers Validated', 'Checks if serial numbers are validated for the order', 'Order', 'SerialsValidatedValidator', NULL, true, 4, NOW(), NOW(), false),
-            (gen_random_uuid(), v_company_id, 'materialsSpecified', 'Materials Specified', 'Checks if materials are specified for the order', 'Order', 'MaterialsSpecifiedValidator', NULL, true, 5, NOW(), NOW(), false),
-            (gen_random_uuid(), v_company_id, 'siaAssigned', 'SI Assigned', 'Checks if Service Installer (SI) is assigned to the order', 'Order', 'SiAssignedValidator', NULL, true, 6, NOW(), NOW(), false),
-            (gen_random_uuid(), v_company_id, 'appointmentDateSet', 'Appointment Date Set', 'Checks if appointment date is set for the order', 'Order', 'AppointmentDateSetValidator', NULL, true, 7, NOW(), NOW(), false),
-            (gen_random_uuid(), v_company_id, 'buildingSelected', 'Building Selected', 'Checks if building is selected for the order', 'Order', 'BuildingSelectedValidator', NULL, true, 8, NOW(), NOW(), false),
-            (gen_random_uuid(), v_company_id, 'customerContactProvided', 'Customer Contact Provided', 'Checks if customer contact (phone or email) is provided for the order', 'Order', 'CustomerContactProvidedValidator', NULL, true, 9, NOW(), NOW(), false),
-            (gen_random_uuid(), v_company_id, 'noBlockersActive', 'No Active Blockers', 'Checks if there are no active blockers for the order', 'Order', 'NoActiveBlockersValidator', NULL, true, 10, NOW(), NOW(), false)
-        ON CONFLICT ("CompanyId", "Key", "EntityType") WHERE "IsDeleted" = false DO NOTHING;
-        
-        RAISE NOTICE 'Seeded GuardConditionDefinitions (10 records)';
+END $$;
+
+-- ============================================
+-- Block 2: GuardConditionDefinitions + SideEffectDefinitions
+-- ============================================
+DO $$
+DECLARE
+    v_company_id UUID;
+BEGIN
+    SELECT "Id" INTO v_company_id FROM "Companies" ORDER BY "CreatedAt" LIMIT 1;
+
+    IF v_company_id IS NULL THEN
+        RAISE WARNING 'No company found. Skipping GuardConditionDefinitions and SideEffectDefinitions.';
+        RETURN;
     END IF;
-    
-    -- ============================================
-    -- 3. SideEffectDefinitions
-    -- ============================================
-    IF v_company_id IS NOT NULL THEN
-        INSERT INTO "SideEffectDefinitions" (
-            "Id", "CompanyId", "Key", "Name", "Description", "EntityType", 
-            "ExecutorType", "ExecutorConfigJson", "IsActive", "DisplayOrder", "CreatedAt", "UpdatedAt", "IsDeleted"
-        ) VALUES
-            (gen_random_uuid(), v_company_id, 'notify', 'Send Notification', 'Sends a notification to relevant users when workflow transition occurs', 'Order', 'NotifySideEffectExecutor', '{"template":"OrderStatusChange"}', true, 1, NOW(), NOW(), false),
-            (gen_random_uuid(), v_company_id, 'createStockMovement', 'Create Stock Movement', 'Creates stock movement records when workflow transition occurs', 'Order', 'CreateStockMovementSideEffectExecutor', NULL, true, 2, NOW(), NOW(), false),
-            (gen_random_uuid(), v_company_id, 'createOrderStatusLog', 'Create Order Status Log', 'Creates an order status log entry when workflow transition occurs', 'Order', 'CreateOrderStatusLogSideEffectExecutor', NULL, true, 3, NOW(), NOW(), false),
-            (gen_random_uuid(), v_company_id, 'updateOrderFlags', 'Update Order Flags', 'Updates order flags (DocketUploaded, PhotosUploaded, etc.) when workflow transition occurs', 'Order', 'UpdateOrderFlagsSideEffectExecutor', NULL, true, 4, NOW(), NOW(), false),
-            (gen_random_uuid(), v_company_id, 'triggerInvoiceEligibility', 'Trigger Invoice Eligibility', 'Checks and updates invoice eligibility flag when workflow transition occurs', 'Order', 'TriggerInvoiceEligibilitySideEffectExecutor', '{"requireDocket":true,"requirePhotos":true,"requireSerials":true}', true, 5, NOW(), NOW(), false)
-        ON CONFLICT ("CompanyId", "Key", "EntityType") WHERE "IsDeleted" = false DO NOTHING;
-        
-        RAISE NOTICE 'Seeded SideEffectDefinitions (5 records)';
-    END IF;
-    
-    -- ============================================
-    -- 4. GlobalSettings
-    -- ============================================
+
+    INSERT INTO "GuardConditionDefinitions" (
+        "Id", "CompanyId", "Key", "Name", "Description", "EntityType", 
+        "ValidatorType", "ValidatorConfigJson", "IsActive", "DisplayOrder", "CreatedAt", "UpdatedAt", "IsDeleted"
+    ) VALUES
+        (gen_random_uuid(), v_company_id, 'photosRequired', 'Photos Required', 'Checks if photos are uploaded for the order', 'Order', 'PhotosRequiredValidator', '{"checkFlag":true,"checkFiles":true}', true, 1, NOW(), NOW(), false),
+        (gen_random_uuid(), v_company_id, 'docketUploaded', 'Docket Uploaded', 'Checks if docket is uploaded for the order', 'Order', 'DocketUploadedValidator', '{"checkFlag":true,"checkDockets":true}', true, 2, NOW(), NOW(), false),
+        (gen_random_uuid(), v_company_id, 'splitterAssigned', 'Splitter Assigned', 'Checks if splitter port is assigned to the order', 'Order', 'SplitterAssignedValidator', NULL, true, 3, NOW(), NOW(), false),
+        (gen_random_uuid(), v_company_id, 'serialNumbersValidated', 'Serial Numbers Validated', 'Checks if serial numbers are validated for the order', 'Order', 'SerialsValidatedValidator', NULL, true, 4, NOW(), NOW(), false),
+        (gen_random_uuid(), v_company_id, 'materialsSpecified', 'Materials Specified', 'Checks if materials are specified for the order', 'Order', 'MaterialsSpecifiedValidator', NULL, true, 5, NOW(), NOW(), false),
+        (gen_random_uuid(), v_company_id, 'siaAssigned', 'SI Assigned', 'Checks if Service Installer (SI) is assigned to the order', 'Order', 'SiAssignedValidator', NULL, true, 6, NOW(), NOW(), false),
+        (gen_random_uuid(), v_company_id, 'appointmentDateSet', 'Appointment Date Set', 'Checks if appointment date is set for the order', 'Order', 'AppointmentDateSetValidator', NULL, true, 7, NOW(), NOW(), false),
+        (gen_random_uuid(), v_company_id, 'buildingSelected', 'Building Selected', 'Checks if building is selected for the order', 'Order', 'BuildingSelectedValidator', NULL, true, 8, NOW(), NOW(), false),
+        (gen_random_uuid(), v_company_id, 'customerContactProvided', 'Customer Contact Provided', 'Checks if customer contact (phone or email) is provided for the order', 'Order', 'CustomerContactProvidedValidator', NULL, true, 9, NOW(), NOW(), false),
+        (gen_random_uuid(), v_company_id, 'noBlockersActive', 'No Active Blockers', 'Checks if there are no active blockers for the order', 'Order', 'NoActiveBlockersValidator', NULL, true, 10, NOW(), NOW(), false)
+    ON CONFLICT ("CompanyId", "Key", "EntityType") WHERE "IsDeleted" = false DO NOTHING;
+
+    RAISE NOTICE 'Seeded GuardConditionDefinitions (10 records)';
+
+    INSERT INTO "SideEffectDefinitions" (
+        "Id", "CompanyId", "Key", "Name", "Description", "EntityType", 
+        "ExecutorType", "ExecutorConfigJson", "IsActive", "DisplayOrder", "CreatedAt", "UpdatedAt", "IsDeleted"
+    ) VALUES
+        (gen_random_uuid(), v_company_id, 'notify', 'Send Notification', 'Sends a notification to relevant users when workflow transition occurs', 'Order', 'NotifySideEffectExecutor', '{"template":"OrderStatusChange"}', true, 1, NOW(), NOW(), false),
+        (gen_random_uuid(), v_company_id, 'createStockMovement', 'Create Stock Movement', 'Creates stock movement records when workflow transition occurs', 'Order', 'CreateStockMovementSideEffectExecutor', NULL, true, 2, NOW(), NOW(), false),
+        (gen_random_uuid(), v_company_id, 'createOrderStatusLog', 'Create Order Status Log', 'Creates an order status log entry when workflow transition occurs', 'Order', 'CreateOrderStatusLogSideEffectExecutor', NULL, true, 3, NOW(), NOW(), false),
+        (gen_random_uuid(), v_company_id, 'updateOrderFlags', 'Update Order Flags', 'Updates order flags (DocketUploaded, PhotosUploaded, etc.) when workflow transition occurs', 'Order', 'UpdateOrderFlagsSideEffectExecutor', NULL, true, 4, NOW(), NOW(), false),
+        (gen_random_uuid(), v_company_id, 'triggerInvoiceEligibility', 'Trigger Invoice Eligibility', 'Checks and updates invoice eligibility flag when workflow transition occurs', 'Order', 'TriggerInvoiceEligibilitySideEffectExecutor', '{"requireDocket":true,"requirePhotos":true,"requireSerials":true}', true, 5, NOW(), NOW(), false)
+    ON CONFLICT ("CompanyId", "Key", "EntityType") WHERE "IsDeleted" = false DO NOTHING;
+
+    RAISE NOTICE 'Seeded SideEffectDefinitions (5 records)';
+END $$;
+
+-- ============================================
+-- Block 3: GlobalSettings (isolated so it always runs)
+-- ============================================
+DO $$
+BEGIN
     INSERT INTO "GlobalSettings" (
         "Id", "Key", "Value", "ValueType", "Description", "Module", "CreatedAt", "UpdatedAt"
     ) VALUES
