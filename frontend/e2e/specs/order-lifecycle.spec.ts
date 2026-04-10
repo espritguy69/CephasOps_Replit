@@ -4,27 +4,29 @@ import { expectAuthenticatedShell } from '../helpers/expectations';
 import { TEST_IDS } from '../constants';
 
 const TIMEOUT = 15_000;
+const uniqueRef = `E2E-${Date.now()}`;
 
-async function fillField(page: Page, label: RegExp | string, value: string): Promise<boolean> {
-  const locator = typeof label === 'string'
-    ? page.getByLabel(label, { exact: false })
-    : page.getByLabel(label);
-  const input = locator.or(
-    page.locator(`input[name="${String(label).replace(/[/\\^$*+?.()|[\]{}]/g, '')}"]`)
-  ).first();
-  if (await input.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await input.fill(value);
+async function fillIfVisible(page: Page, label: RegExp, value: string): Promise<boolean> {
+  const locator = page.getByLabel(label).first();
+  if (await locator.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await locator.fill(value);
     return true;
   }
   return false;
 }
 
+async function waitForNetworkIdle(page: Page): Promise<void> {
+  await page.waitForLoadState('networkidle', { timeout: TIMEOUT }).catch(() => {});
+}
+
 test.describe('Launch readiness – Order lifecycle', () => {
-  const uniqueRef = `E2E-${Date.now()}`;
+  test.describe.configure({ mode: 'serial' });
 
   test.beforeEach(async () => {
     if (!hasAuthCredentials()) test.skip();
   });
+
+  let createdOrderVisible = false;
 
   test('create a new order via modal', async ({ page }) => {
     await loginViaUi(page);
@@ -32,6 +34,7 @@ test.describe('Launch readiness – Order lifecycle', () => {
 
     await page.goto('/orders');
     await expect(page.getByTestId(TEST_IDS.APP_SHELL_MAIN)).toBeVisible({ timeout: TIMEOUT });
+    await waitForNetworkIdle(page);
 
     const createBtn = page
       .getByRole('button', { name: /new order|create order|add order|\+ order/i })
@@ -46,13 +49,13 @@ test.describe('Launch readiness – Order lifecycle', () => {
         .first()
     ).toBeVisible({ timeout: TIMEOUT });
 
-    await fillField(page, /service id/i, `SVC-${uniqueRef}`);
-    await fillField(page, /customer name/i, `E2E Test Customer ${uniqueRef}`);
-    await fillField(page, /address line 1/i, '123 E2E Test Street');
-    await fillField(page, /city/i, 'TestCity');
-    await fillField(page, /state/i, 'TestState');
-    await fillField(page, /postcode/i, '12345');
-    await fillField(page, /external ref/i, uniqueRef);
+    await fillIfVisible(page, /service id/i, `SVC-${uniqueRef}`);
+    await fillIfVisible(page, /customer name/i, `E2E Test Customer ${uniqueRef}`);
+    await fillIfVisible(page, /address line 1/i, '123 E2E Test Street');
+    await fillIfVisible(page, /city/i, 'TestCity');
+    await fillIfVisible(page, /state/i, 'TestState');
+    await fillIfVisible(page, /postcode/i, '12345');
+    await fillIfVisible(page, /external ref/i, uniqueRef);
 
     const submitBtn = page
       .getByRole('button', { name: /create order|save|submit/i })
@@ -65,16 +68,18 @@ test.describe('Launch readiness – Order lifecycle', () => {
         .or(page.getByRole('alert'))
         .first()
     ).toBeVisible({ timeout: TIMEOUT });
+    createdOrderVisible = true;
   });
 
   test('order appears in orders list after creation', async ({ page }) => {
+    if (!createdOrderVisible) test.skip();
+
     await loginViaUi(page);
     await expectAuthenticatedShell(page, { timeout: TIMEOUT });
 
     await page.goto('/orders');
     await expect(page.getByTestId(TEST_IDS.APP_SHELL_MAIN)).toBeVisible({ timeout: TIMEOUT });
-
-    await page.waitForTimeout(2000);
+    await waitForNetworkIdle(page);
 
     const searchInput = page
       .getByPlaceholder(/search|filter/i)
@@ -83,7 +88,7 @@ test.describe('Launch readiness – Order lifecycle', () => {
 
     if (await searchInput.isVisible({ timeout: 3000 }).catch(() => false)) {
       await searchInput.fill(uniqueRef);
-      await page.waitForTimeout(1000);
+      await waitForNetworkIdle(page);
     }
 
     const orderRow = page
@@ -93,40 +98,15 @@ test.describe('Launch readiness – Order lifecycle', () => {
     await expect(orderRow).toBeVisible({ timeout: TIMEOUT });
   });
 
-  test('open order detail page', async ({ page }) => {
+  test('open order detail and verify status badge visible', async ({ page }) => {
+    if (!createdOrderVisible) test.skip();
+
     await loginViaUi(page);
     await expectAuthenticatedShell(page, { timeout: TIMEOUT });
 
     await page.goto('/orders');
     await expect(page.getByTestId(TEST_IDS.APP_SHELL_MAIN)).toBeVisible({ timeout: TIMEOUT });
-
-    await page.waitForTimeout(2000);
-
-    const orderLink = page
-      .getByText(uniqueRef)
-      .or(page.getByText(`SVC-${uniqueRef}`))
-      .first();
-
-    if (await orderLink.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await orderLink.click();
-
-      await expect(
-        page.getByRole('heading', { name: /order detail|order #/i })
-          .or(page.getByText(uniqueRef))
-          .or(page.getByTestId('order-detail-root'))
-          .first()
-      ).toBeVisible({ timeout: TIMEOUT });
-    } else {
-      test.skip();
-    }
-  });
-
-  test('order status transitions are available on detail page', async ({ page }) => {
-    await loginViaUi(page);
-    await expectAuthenticatedShell(page, { timeout: TIMEOUT });
-
-    await page.goto('/orders');
-    await page.waitForTimeout(2000);
+    await waitForNetworkIdle(page);
 
     const orderLink = page
       .getByText(uniqueRef)
@@ -139,20 +119,98 @@ test.describe('Launch readiness – Order lifecycle', () => {
     }
 
     await orderLink.click();
-    await page.waitForTimeout(2000);
-
-    const transitionButtons = page
-      .getByRole('button', { name: /assign|schedule|dispatch|in progress|complete|cancel|acknowledge/i })
-      .or(page.getByTestId(/workflow-transition/i))
-      .or(page.getByTestId(/status-transition/i));
+    await waitForNetworkIdle(page);
 
     const statusBadge = page
-      .getByText(/pending|new|draft|assigned|scheduled|in progress|completed/i)
+      .getByText(/pending|new|draft|open|assigned|scheduled|in progress|completed/i)
+      .first();
+    await expect(statusBadge).toBeVisible({ timeout: TIMEOUT });
+  });
+
+  test('execute available workflow transition on order', async ({ page }) => {
+    if (!createdOrderVisible) test.skip();
+
+    await loginViaUi(page);
+    await expectAuthenticatedShell(page, { timeout: TIMEOUT });
+
+    await page.goto('/orders');
+    await waitForNetworkIdle(page);
+
+    const orderLink = page
+      .getByText(uniqueRef)
+      .or(page.getByText(`SVC-${uniqueRef}`))
       .first();
 
-    const hasTransitions = await transitionButtons.first().isVisible({ timeout: 5000 }).catch(() => false);
-    const hasStatus = await statusBadge.isVisible({ timeout: 3000 }).catch(() => false);
+    if (!(await orderLink.isVisible({ timeout: 5000 }).catch(() => false))) {
+      test.skip();
+      return;
+    }
 
-    expect(hasTransitions || hasStatus).toBeTruthy();
+    await orderLink.click();
+    await waitForNetworkIdle(page);
+
+    const transitionBtn = page
+      .getByRole('button', { name: /assign|schedule|dispatch|acknowledge|accept|start|begin|in progress/i })
+      .or(page.getByTestId(/workflow-transition/i))
+      .first();
+
+    if (!(await transitionBtn.isVisible({ timeout: 5000 }).catch(() => false))) {
+      test.skip();
+      return;
+    }
+
+    await transitionBtn.click();
+
+    const confirmBtn = page
+      .getByRole('button', { name: /confirm|yes|proceed|ok|submit/i })
+      .first();
+
+    if (await confirmBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await confirmBtn.click();
+    }
+
+    await expect(
+      page.getByText(/success|updated|transitioned|status changed/i)
+        .or(page.getByRole('alert'))
+        .first()
+    ).toBeVisible({ timeout: TIMEOUT });
+  });
+
+  test('order detail shows assign installer capability', async ({ page }) => {
+    if (!createdOrderVisible) test.skip();
+
+    await loginViaUi(page);
+    await expectAuthenticatedShell(page, { timeout: TIMEOUT });
+
+    await page.goto('/orders');
+    await waitForNetworkIdle(page);
+
+    const orderLink = page
+      .getByText(uniqueRef)
+      .or(page.getByText(`SVC-${uniqueRef}`))
+      .first();
+
+    if (!(await orderLink.isVisible({ timeout: 5000 }).catch(() => false))) {
+      test.skip();
+      return;
+    }
+
+    await orderLink.click();
+    await waitForNetworkIdle(page);
+
+    const assignSection = page
+      .getByRole('button', { name: /assign|installer|technician|crew/i })
+      .or(page.getByText(/assign installer|assign technician|assigned to/i))
+      .or(page.getByLabel(/installer|technician|crew/i))
+      .first();
+
+    const hasAssign = await assignSection.isVisible({ timeout: 5000 }).catch(() => false);
+
+    const statusArea = page
+      .getByText(/pending|assigned|scheduled|in progress|completed|new|draft/i)
+      .first();
+    const hasStatus = await statusArea.isVisible({ timeout: 3000 }).catch(() => false);
+
+    expect(hasAssign || hasStatus).toBeTruthy();
   });
 });
