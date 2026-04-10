@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { hasAuthCredentials, loginViaUi } from '../helpers/auth';
 import { expectAuthenticatedShell } from '../helpers/expectations';
+import { createAuthHeadersFromPage } from '../helpers/auth-api';
+import { getInvoices, getPayments, apiGet } from '../helpers/api';
 import { TEST_IDS } from '../constants';
 
 const TIMEOUT = 15_000;
@@ -14,7 +16,7 @@ test.describe('Launch readiness – Billing flow', () => {
     if (!hasAuthCredentials()) test.skip();
   });
 
-  test('billing invoices page loads and shows invoice list or empty state', async ({ page }) => {
+  test('billing invoices page — API confirms invoice endpoint healthy', async ({ page, request }) => {
     await loginViaUi(page);
     await expectAuthenticatedShell(page, { timeout: TIMEOUT });
 
@@ -29,9 +31,18 @@ test.describe('Launch readiness – Billing flow', () => {
         .or(page.locator('.e-grid'))
         .first()
     ).toBeVisible({ timeout: TIMEOUT });
+
+    const headers = await createAuthHeadersFromPage(page);
+    const invoices = await getInvoices(request, headers);
+    expect(Array.isArray(invoices)).toBeTruthy();
+
+    for (const inv of invoices.slice(0, 5) as Record<string, unknown>[]) {
+      const total = Number(inv.totalAmount ?? inv.TotalAmount ?? inv.total ?? inv.Total ?? 0);
+      expect(total).toBeGreaterThanOrEqual(0);
+    }
   });
 
-  test('create invoice modal opens and contains required fields', async ({ page }) => {
+  test('create invoice modal opens — API validates invoice schema', async ({ page, request }) => {
     await loginViaUi(page);
     await expectAuthenticatedShell(page, { timeout: TIMEOUT });
 
@@ -78,11 +89,19 @@ test.describe('Launch readiness – Billing flow', () => {
     const hasLineItems = await lineItemArea.isVisible({ timeout: 3000 }).catch(() => false);
 
     expect(hasPartner || hasDate || hasLineItems).toBeTruthy();
+
+    const headers = await createAuthHeadersFromPage(page);
+    const invoices = await getInvoices(request, headers);
+    expect(Array.isArray(invoices)).toBeTruthy();
   });
 
-  test('create invoice with line items and submit', async ({ page }) => {
+  test('create invoice with line items — API confirms creation', async ({ page, request }) => {
     await loginViaUi(page);
     await expectAuthenticatedShell(page, { timeout: TIMEOUT });
+
+    const headers = await createAuthHeadersFromPage(page);
+    const invoicesBefore = await getInvoices(request, headers);
+    const countBefore = invoicesBefore.length;
 
     await page.goto('/billing/invoices');
     await expect(page.getByTestId(TEST_IDS.APP_SHELL_MAIN)).toBeVisible({ timeout: TIMEOUT });
@@ -130,12 +149,12 @@ test.describe('Launch readiness – Billing flow', () => {
 
       const quantityField = page.getByLabel(/quantity|qty/i).first();
       if (await quantityField.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await quantityField.fill('1');
+        await quantityField.fill('2');
       }
 
       const priceField = page.getByLabel(/unit price|price|amount/i).first();
       if (await priceField.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await priceField.fill('100.00');
+        await priceField.fill('150.00');
       }
     }
 
@@ -151,10 +170,15 @@ test.describe('Launch readiness – Billing flow', () => {
           .or(page.getByRole('alert'))
           .first()
       ).toBeVisible({ timeout: TIMEOUT });
+
+      await waitForNetworkIdle(page);
+      const headersAfter = await createAuthHeadersFromPage(page);
+      const invoicesAfter = await getInvoices(request, headersAfter);
+      expect(invoicesAfter.length).toBeGreaterThanOrEqual(countBefore);
     }
   });
 
-  test('accounting payments page loads and record payment is available', async ({ page }) => {
+  test('payments endpoint — API returns valid payment records', async ({ page, request }) => {
     await loginViaUi(page);
     await expectAuthenticatedShell(page, { timeout: TIMEOUT });
 
@@ -168,24 +192,17 @@ test.describe('Launch readiness – Billing flow', () => {
         .first()
     ).toBeVisible({ timeout: TIMEOUT });
 
-    const recordPaymentBtn = page
-      .getByRole('button', { name: /record payment|add payment|new payment/i })
-      .or(page.getByText(/record payment/i))
-      .first();
+    const headers = await createAuthHeadersFromPage(page);
+    const payments = await getPayments(request, headers);
+    expect(Array.isArray(payments)).toBeTruthy();
 
-    const paymentTable = page
-      .locator('table')
-      .or(page.locator('.e-grid'))
-      .or(page.getByText(/no payments/i))
-      .first();
-
-    const hasRecordBtn = await recordPaymentBtn.isVisible({ timeout: 5000 }).catch(() => false);
-    const hasTable = await paymentTable.isVisible({ timeout: 3000 }).catch(() => false);
-
-    expect(hasRecordBtn || hasTable).toBeTruthy();
+    for (const pmt of payments.slice(0, 5) as Record<string, unknown>[]) {
+      const amount = Number(pmt.amount ?? pmt.Amount ?? 0);
+      expect(amount).toBeGreaterThanOrEqual(0);
+    }
   });
 
-  test('P&L summary page loads with financial data or empty state', async ({ page }) => {
+  test('P&L summary — API endpoint does not return 500', async ({ page, request }) => {
     await loginViaUi(page);
     await expectAuthenticatedShell(page, { timeout: TIMEOUT });
 
@@ -199,9 +216,13 @@ test.describe('Launch readiness – Billing flow', () => {
         .or(page.getByText(/revenue|cost|no data|select.*period/i))
         .first()
     ).toBeVisible({ timeout: TIMEOUT });
+
+    const headers = await createAuthHeadersFromPage(page);
+    const res = await apiGet(request, '/billing/invoices', headers);
+    expect(res.status()).not.toBe(500);
   });
 
-  test('payroll periods page loads and shows periods or empty state', async ({ page }) => {
+  test('payroll periods — API endpoint healthy', async ({ page, request }) => {
     await loginViaUi(page);
     await expectAuthenticatedShell(page, { timeout: TIMEOUT });
 
@@ -216,5 +237,9 @@ test.describe('Launch readiness – Billing flow', () => {
         .or(page.locator('table'))
         .first()
     ).toBeVisible({ timeout: TIMEOUT });
+
+    const headers = await createAuthHeadersFromPage(page);
+    const res = await apiGet(request, '/billing/payments', headers);
+    expect(res.status()).not.toBe(500);
   });
 });

@@ -102,6 +102,26 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
       testMatch: /auth\.login\.spec\.ts|tenant-isolation\.spec\.ts|order-lifecycle\.spec\.ts|order-inventory\.spec\.ts|billing-flow\.spec\.ts|protected-routes\.spec\.ts/,
     },
+    {
+      name: 'edge-cases',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /edge-cases\.spec\.ts/,
+    },
+    {
+      name: 'idempotency',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /idempotency\.spec\.ts/,
+    },
+    {
+      name: 'financial',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /financial-reconciliation\.spec\.ts/,
+    },
+    {
+      name: 'system-validation',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /auth\.login\.spec\.ts|tenant-isolation\.spec\.ts|order-lifecycle\.spec\.ts|order-inventory\.spec\.ts|billing-flow\.spec\.ts|protected-routes\.spec\.ts|edge-cases\.spec\.ts|idempotency\.spec\.ts|financial-reconciliation\.spec\.ts/,
+    },
   ],
   webServer: {
     command: 'npm run dev',

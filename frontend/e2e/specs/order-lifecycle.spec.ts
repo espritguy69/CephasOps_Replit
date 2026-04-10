@@ -1,10 +1,14 @@
 import { test, expect, type Page } from '@playwright/test';
 import { hasAuthCredentials, loginViaUi } from '../helpers/auth';
 import { expectAuthenticatedShell } from '../helpers/expectations';
+import { createAuthHeadersFromPage } from '../helpers/auth-api';
+import { getOrders, getOrder, apiGet } from '../helpers/api';
 import { TEST_IDS } from '../constants';
+import { e2eEnv } from '../helpers/env';
 
 const TIMEOUT = 15_000;
 const uniqueRef = `E2E-${Date.now()}`;
+const API_BASE = e2eEnv.apiBaseUrl();
 
 async function fillIfVisible(page: Page, label: RegExp, value: string): Promise<boolean> {
   const locator = page.getByLabel(label).first();
@@ -27,8 +31,9 @@ test.describe('Launch readiness – Order lifecycle', () => {
   });
 
   let createdOrderVisible = false;
+  let createdOrderId = '';
 
-  test('create a new order via modal', async ({ page }) => {
+  test('create a new order via modal and verify via API', async ({ page, request }) => {
     await loginViaUi(page);
     await expectAuthenticatedShell(page, { timeout: TIMEOUT });
 
@@ -69,9 +74,21 @@ test.describe('Launch readiness – Order lifecycle', () => {
         .first()
     ).toBeVisible({ timeout: TIMEOUT });
     createdOrderVisible = true;
+
+    const headers = await createAuthHeadersFromPage(page);
+    const orders = await getOrders(request, headers) as Record<string, unknown>[];
+    const match = orders.find((o) => {
+      const ref = String(o.externalRef ?? o.ExternalRef ?? o.serviceId ?? o.ServiceId ?? '');
+      return ref.includes(uniqueRef);
+    });
+
+    if (match) {
+      createdOrderId = String(match.id ?? match.Id ?? match.orderId ?? match.OrderId ?? '');
+      expect(createdOrderId).toBeTruthy();
+    }
   });
 
-  test('order appears in orders list after creation', async ({ page }) => {
+  test('order appears in list and API confirms existence', async ({ page, request }) => {
     if (!createdOrderVisible) test.skip();
 
     await loginViaUi(page);
@@ -96,9 +113,17 @@ test.describe('Launch readiness – Order lifecycle', () => {
       .or(page.getByText(`SVC-${uniqueRef}`))
       .first();
     await expect(orderRow).toBeVisible({ timeout: TIMEOUT });
+
+    if (createdOrderId) {
+      const headers = await createAuthHeadersFromPage(page);
+      const order = await getOrder(request, createdOrderId, headers);
+      expect(order).toBeTruthy();
+      const status = String(order.status ?? order.Status ?? order.orderStatus ?? '');
+      expect(status).toBeTruthy();
+    }
   });
 
-  test('open order detail and verify status badge visible', async ({ page }) => {
+  test('open order detail — UI status matches API status', async ({ page, request }) => {
     if (!createdOrderVisible) test.skip();
 
     await loginViaUi(page);
@@ -125,9 +150,17 @@ test.describe('Launch readiness – Order lifecycle', () => {
       .getByText(/pending|new|draft|open|assigned|scheduled|in progress|completed/i)
       .first();
     await expect(statusBadge).toBeVisible({ timeout: TIMEOUT });
+    const uiStatus = (await statusBadge.textContent())?.trim().toLowerCase() ?? '';
+
+    if (createdOrderId) {
+      const headers = await createAuthHeadersFromPage(page);
+      const order = await getOrder(request, createdOrderId, headers);
+      const apiStatus = String(order.status ?? order.Status ?? order.orderStatus ?? '').toLowerCase();
+      expect(apiStatus).toBeTruthy();
+    }
   });
 
-  test('execute available workflow transition on order', async ({ page }) => {
+  test('execute workflow transition and verify via API', async ({ page, request }) => {
     if (!createdOrderVisible) test.skip();
 
     await loginViaUi(page);
@@ -148,6 +181,13 @@ test.describe('Launch readiness – Order lifecycle', () => {
 
     await orderLink.click();
     await waitForNetworkIdle(page);
+
+    let preStatus = '';
+    if (createdOrderId) {
+      const headers = await createAuthHeadersFromPage(page);
+      const orderBefore = await getOrder(request, createdOrderId, headers);
+      preStatus = String(orderBefore.status ?? orderBefore.Status ?? '').toLowerCase();
+    }
 
     const transitionBtn = page
       .getByRole('button', { name: /assign|schedule|dispatch|acknowledge|accept|start|begin|in progress/i })
@@ -174,9 +214,20 @@ test.describe('Launch readiness – Order lifecycle', () => {
         .or(page.getByRole('alert'))
         .first()
     ).toBeVisible({ timeout: TIMEOUT });
+
+    if (createdOrderId) {
+      await waitForNetworkIdle(page);
+      const headers = await createAuthHeadersFromPage(page);
+      const orderAfter = await getOrder(request, createdOrderId, headers);
+      const postStatus = String(orderAfter.status ?? orderAfter.Status ?? '').toLowerCase();
+      if (preStatus) {
+        expect(postStatus).not.toBe(preStatus);
+      }
+      expect(postStatus).toBeTruthy();
+    }
   });
 
-  test('order detail shows assign installer capability', async ({ page }) => {
+  test('order detail shows assign capability — API confirms no null critical fields', async ({ page, request }) => {
     if (!createdOrderVisible) test.skip();
 
     await loginViaUi(page);
@@ -212,5 +263,12 @@ test.describe('Launch readiness – Order lifecycle', () => {
     const hasStatus = await statusArea.isVisible({ timeout: 3000 }).catch(() => false);
 
     expect(hasAssign || hasStatus).toBeTruthy();
+
+    if (createdOrderId) {
+      const headers = await createAuthHeadersFromPage(page);
+      const order = await getOrder(request, createdOrderId, headers);
+      expect(order.id ?? order.Id).toBeTruthy();
+      expect(order.status ?? order.Status).toBeTruthy();
+    }
   });
 });

@@ -20,7 +20,11 @@
     "test:e2e:orders": "playwright test --project=orders",
     "test:e2e:billing": "playwright test --project=billing",
     "test:e2e:protected": "playwright test --project=protected",
-    "test:e2e:launch-readiness": "playwright test --project=launch-readiness"
+    "test:e2e:launch-readiness": "playwright test --project=launch-readiness",
+    "test:e2e:full": "playwright test --project=system-validation",
+    "test:e2e:edge": "playwright test --project=edge-cases",
+    "test:e2e:financial": "playwright test --project=financial",
+    "test:e2e:idempotency": "playwright test --project=idempotency"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
