@@ -1,10 +1,8 @@
-import { test, expect } from '@playwright/test';
-import { hasAuthCredentials } from '../helpers/auth';
-import { createAuthHeadersFromPage, extractToken, authHeaders } from '../helpers/auth-api';
-import { loginViaUi } from '../helpers/auth';
+import { test, expect } from '../helpers/fixtures';
+import { hasAuthCredentials, loginViaUi } from '../helpers/auth';
+import { createAuthHeadersFromPage } from '../helpers/auth-api';
 import { expectAuthenticatedShell } from '../helpers/expectations';
 import { apiGet, apiPost, getOrders, getStock } from '../helpers/api';
-import { ApiTimingCollector } from '../helpers/diagnostics';
 
 const TIMEOUT = 15_000;
 const RESPONSE_THRESHOLD_MS = 5000;
@@ -14,12 +12,11 @@ test.describe('System validation – Load simulation', () => {
     if (!hasAuthCredentials()) test.skip();
   });
 
-  test('concurrent API reads — no 500 errors, all under 5s', async ({ page, request }) => {
+  test('concurrent API reads — no 500 errors, all under 5s', async ({ page, request, diagnostics, apiTiming }) => {
     await loginViaUi(page);
     await expectAuthenticatedShell(page, { timeout: TIMEOUT });
 
     const headers = await createAuthHeadersFromPage(page);
-    const timing = new ApiTimingCollector(page);
 
     const endpoints = [
       '/orders',
@@ -30,11 +27,11 @@ test.describe('System validation – Load simulation', () => {
       '/auth/me',
     ];
 
-    const startTime = Date.now();
     const results = await Promise.all(
       endpoints.map(async (ep) => {
+        const start = Date.now();
         const res = await apiGet(request, ep, headers);
-        return { endpoint: ep, status: res.status(), durationMs: Date.now() - startTime };
+        return { endpoint: ep, status: res.status(), durationMs: Date.now() - start };
       })
     );
 
@@ -44,7 +41,7 @@ test.describe('System validation – Load simulation', () => {
     }
   });
 
-  test('parallel order listing — no duplicates in response', async ({ page, request }) => {
+  test('parallel order listing — no duplicates within response', async ({ page, request, diagnostics }) => {
     await loginViaUi(page);
     await expectAuthenticatedShell(page, { timeout: TIMEOUT });
 
@@ -56,15 +53,17 @@ test.describe('System validation – Load simulation', () => {
       getOrders(request, headers) as Promise<Record<string, unknown>[]>,
     ]);
 
+    for (const orders of [orders1, orders2, orders3]) {
+      const ids = orders.map(o => String(o.id ?? o.Id));
+      const uniqueIds = new Set(ids);
+      expect(uniqueIds.size, `Duplicate IDs detected within single response: expected ${ids.length} unique but got ${uniqueIds.size}`).toBe(ids.length);
+    }
+
     expect(orders1.length).toBe(orders2.length);
     expect(orders2.length).toBe(orders3.length);
-
-    const ids1 = new Set(orders1.map(o => String(o.id ?? o.Id)));
-    const ids2 = new Set(orders2.map(o => String(o.id ?? o.Id)));
-    expect(ids1.size).toBe(ids2.size);
   });
 
-  test('parallel invoice + payment reads — no negative stock', async ({ page, request }) => {
+  test('parallel stock reads — no negative stock balances', async ({ page, request, diagnostics }) => {
     await loginViaUi(page);
     await expectAuthenticatedShell(page, { timeout: TIMEOUT });
 
@@ -83,7 +82,7 @@ test.describe('System validation – Load simulation', () => {
     expect(stock1.length).toBe(stock2.length);
   });
 
-  test('rapid sequential order creations — system remains stable', async ({ page, request }) => {
+  test('rapid sequential order creations — system remains stable', async ({ page, request, diagnostics }) => {
     await loginViaUi(page);
     await expectAuthenticatedShell(page, { timeout: TIMEOUT });
 
@@ -111,11 +110,10 @@ test.describe('System validation – Load simulation', () => {
       expect(status).not.toBe(500);
     }
 
-    const successCount = results.filter(s => s >= 200 && s < 300).length;
-    expect(successCount).toBeGreaterThan(0);
+    expect(diagnostics.hasErrors(), `System errors during load: ${diagnostics.getSummary()}`).toBeFalsy();
   });
 
-  test('UI + API under concurrent load — dashboard loads while API queries run', async ({ page, request }) => {
+  test('UI + API under concurrent load — dashboard loads while API queries run', async ({ page, request, diagnostics }) => {
     await loginViaUi(page);
     await expectAuthenticatedShell(page, { timeout: TIMEOUT });
 
@@ -128,5 +126,6 @@ test.describe('System validation – Load simulation', () => {
 
     await expect(page.getByTestId('app-shell-main')).toBeVisible({ timeout: TIMEOUT });
     expect(Array.isArray(orders)).toBeTruthy();
+    expect(diagnostics.hasErrors(), `Errors during concurrent load: ${diagnostics.getSummary()}`).toBeFalsy();
   });
 });

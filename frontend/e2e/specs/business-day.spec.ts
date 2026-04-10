@@ -1,11 +1,11 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/fixtures';
 import { hasAuthCredentials, loginViaUi } from '../helpers/auth';
 import { expectAuthenticatedShell } from '../helpers/expectations';
 import { createAuthHeadersFromPage } from '../helpers/auth-api';
 import {
-  apiPost, getOrders, getInvoices, getPayments, getStock,
+  apiGet, apiPost, getOrders, getInvoices, getPayments, getStock,
 } from '../helpers/api';
-import { captureSnapshot, diffSnapshots } from '../helpers/snapshot';
+import { captureSnapshot, diffSnapshots, type DataSnapshot } from '../helpers/snapshot';
 
 const TIMEOUT = 15_000;
 
@@ -18,16 +18,17 @@ test.describe('System validation – Business day simulation', () => {
 
   const batchRef = `BIZDAY-${Date.now()}`;
   let createdOrderIds: string[] = [];
+  let baselineSnapshot: DataSnapshot | null = null;
 
   test('capture baseline snapshot', async ({ page, request }) => {
     await loginViaUi(page);
     await expectAuthenticatedShell(page, { timeout: TIMEOUT });
 
     const headers = await createAuthHeadersFromPage(page);
-    const baseline = await captureSnapshot(request, headers);
+    baselineSnapshot = await captureSnapshot(request, headers);
 
-    expect(baseline.capturedAt).toBeGreaterThan(0);
-    expect(baseline.orderCount).toBeGreaterThanOrEqual(0);
+    expect(baselineSnapshot.capturedAt).toBeGreaterThan(0);
+    expect(baselineSnapshot.orderCount).toBeGreaterThanOrEqual(0);
   });
 
   test('create batch of orders — simulating morning intake', async ({ page, request }) => {
@@ -86,12 +87,23 @@ test.describe('System validation – Business day simulation', () => {
 
     for (const inv of invoices) {
       const total = Number(inv.totalAmount ?? inv.TotalAmount ?? inv.total ?? inv.Total ?? 0);
-      expect(total).toBeGreaterThanOrEqual(0);
+      expect(total, `Invoice ${inv.id ?? inv.Id} has negative total`).toBeGreaterThanOrEqual(0);
     }
 
     for (const pmt of payments) {
       const amount = Number(pmt.amount ?? pmt.Amount ?? 0);
-      expect(amount).toBeGreaterThanOrEqual(0);
+      expect(amount, `Payment ${pmt.id ?? pmt.Id} has negative amount`).toBeGreaterThanOrEqual(0);
+    }
+
+    const paidInvoiceIds = new Set(
+      payments
+        .map(p => String((p as Record<string, unknown>).invoiceId ?? (p as Record<string, unknown>).InvoiceId ?? ''))
+        .filter(id => id && id !== 'undefined')
+    );
+
+    for (const invId of paidInvoiceIds) {
+      const invoiceExists = invoices.find(i => String(i.id ?? i.Id) === invId);
+      expect(invoiceExists, `Payment references invoice ${invId} that does not exist — orphan record`).toBeTruthy();
     }
   });
 
@@ -113,10 +125,21 @@ test.describe('System validation – Business day simulation', () => {
     await expectAuthenticatedShell(page, { timeout: TIMEOUT });
 
     const headers = await createAuthHeadersFromPage(page);
-    const snapshot = await captureSnapshot(request, headers);
+    const endSnapshot = await captureSnapshot(request, headers);
 
-    expect(snapshot.orderCount).toBeGreaterThanOrEqual(createdOrderIds.length);
-    expect(snapshot.unexpectedDeletions ?? []).toEqual(undefined);
+    if (baselineSnapshot) {
+      const diff = diffSnapshots(baselineSnapshot, endSnapshot);
+
+      expect(diff.unexpectedDeletions.length, `Unexpected deletions detected: ${diff.unexpectedDeletions.join(', ')}`).toBe(0);
+
+      expect(diff.ordersAdded).toBeGreaterThanOrEqual(createdOrderIds.length);
+
+      expect(diff.ordersRemoved, 'Orders were unexpectedly removed during business day').toBe(0);
+      expect(diff.invoicesRemoved, 'Invoices were unexpectedly removed during business day').toBe(0);
+      expect(diff.paymentsRemoved, 'Payments were unexpectedly removed during business day').toBe(0);
+    } else {
+      expect(endSnapshot.orderCount).toBeGreaterThanOrEqual(createdOrderIds.length);
+    }
   });
 
   test('system stability — all API endpoints respond after business day', async ({ page, request }) => {
@@ -127,7 +150,7 @@ test.describe('System validation – Business day simulation', () => {
 
     const endpoints = ['/orders', '/billing/invoices', '/billing/payments', '/inventory/stock', '/auth/me'];
     for (const ep of endpoints) {
-      const res = await (await import('../helpers/api')).apiGet(request, ep, headers);
+      const res = await apiGet(request, ep, headers);
       expect(res.status(), `${ep} returned ${res.status()} — system unstable`).not.toBe(500);
     }
   });

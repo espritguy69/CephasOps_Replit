@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/fixtures';
 import { hasAuthCredentials, loginViaUi } from '../helpers/auth';
 import { expectAuthenticatedShell } from '../helpers/expectations';
 import { extractToken, authHeaders } from '../helpers/auth-api';
