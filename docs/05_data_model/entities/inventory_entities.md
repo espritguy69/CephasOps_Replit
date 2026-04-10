@@ -20,9 +20,9 @@ This file defines the core entities for the \*\*Inventory \& RMA\*\* domain:
 
 \- StockMovement
 
-\- RmaTicket
+\- RmaRequest (code entity name; some docs may reference as RmaTicket)
 
-\- RmaItem
+\- RmaRequestItem (code entity name; some docs may reference as RmaItem)
 
 
 

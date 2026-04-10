@@ -1,8 +1,8 @@
 # CephasOps – Technical Architecture Overview
 
-**Version:** 1.0  
-**Date:** December 2025  
-**Status:** Production System
+**Version:** 2.0  
+**Date:** April 2026  
+**Status:** Production System (Audited & Updated)
 
 ---
 
@@ -39,7 +39,7 @@ CephasOps follows **Clean Architecture** principles with clear separation of con
 
 **Dependency Rule:**
 - **Domain** → No dependencies (pure business logic)
-- **Application** → Depends on Domain only
+- **Application** → Depends on Domain (and Infrastructure — see Known Gaps below)
 - **Infrastructure** → Depends on Domain only
 - **API** → Depends on Application, Infrastructure, and Domain
 
@@ -309,17 +309,23 @@ Future: SMS/WhatsApp (infrastructure ready)
 
 ### 7.1 Multi-Tenant SaaS Architecture
 
-**Decision:** Operate as a multi-tenant SaaS platform with per-company data isolation.
+**Decision:** Operate as a multi-tenant SaaS platform with hierarchical data isolation.
 
 **Rationale:**
 - Enables onboarding multiple companies without code changes
-- Per-company data isolation via CompanyId scoping on all entities
-- Department-based filtering within each tenant
+- Hierarchical isolation: **Tenant → Company → Department**
+- Department-based filtering within each company
 
 **Implementation:**
-- All queries scoped by CompanyId via EF Core global query filters
+- All queries scoped by CompanyId via EF Core global query filters on `CompanyScopedEntity`
+- `Tenant` entity owns one or more `Company` entities
+- `Department` provides sub-scoping within a Company
 - Company-aware RBAC controls module visibility per tenant
 - Shared infrastructure with logical data separation
+- Custom Roslyn analyzers (`CEPHAS001`–`CEPHAS004`) enforce tenant safety at build time
+- CI pipeline (`tenant-safety.yml`) blocks PRs that violate tenant boundaries
+
+> **Known Gap:** The Application layer directly references Infrastructure (for `ApplicationDbContext`). This is documented as a pragmatic choice but violates strict Clean Architecture. See `docs/11_known_gaps/ARCHITECTURE_GAPS.md`.
 
 ### 7.2 Settings-Driven Configuration
 
@@ -413,7 +419,7 @@ Future: SMS/WhatsApp (infrastructure ready)
                         │
                         ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                  PostgreSQL (Supabase)                      │
+│              PostgreSQL 16 (Self-hosted)                    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -455,5 +461,7 @@ Payroll Module
 
 ---
 
-**Document Status:** This architecture overview reflects the current production system as of December 2025.
+**Document Status:** This architecture overview reflects the current production system as of April 2026. Audited and corrected for accuracy.
+
+> **Known Gaps:** See `docs/11_known_gaps/ARCHITECTURE_GAPS.md` for unresolved architecture risks including missing .sln file, broken analyzer reference, and Application→Infrastructure dependency violation.
 

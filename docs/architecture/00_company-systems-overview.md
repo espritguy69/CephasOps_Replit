@@ -26,7 +26,7 @@ flowchart TB
     end
     
     subgraph Databases["💾 Data Storage"]
-        PostgreSQL["🐘 PostgreSQL<br/>(Supabase)"]
+        PostgreSQL["🐘 PostgreSQL 16<br/>(Self-hosted VPS)"]
         FileStorage["📁 File Storage<br/>(Snapshots, Docs)"]
     end
     
@@ -108,7 +108,7 @@ flowchart TB
 - **Payment Gateways**: Future integration for automated payments
 
 ### Data Storage
-- **PostgreSQL**: Primary database (via Supabase)
+- **PostgreSQL 16**: Primary database (self-hosted on Debian 13 VPS)
 - **File Storage**: Object storage for snapshots, documents, photos
 
 ---

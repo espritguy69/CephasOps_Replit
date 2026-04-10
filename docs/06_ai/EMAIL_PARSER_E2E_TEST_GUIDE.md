@@ -22,7 +22,7 @@
 ### Backend Status
 - [ ] Backend restarted successfully
 - [ ] Listening on http://localhost:5000
-- [ ] Database connected (Supabase PostgreSQL)
+- [ ] Database connected (PostgreSQL — self-hosted or local)
 - [ ] Background worker running
 - [ ] Carbone enabled
 - [ ] Health check endpoint accessible

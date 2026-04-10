@@ -387,7 +387,7 @@ Serial Numbers Scanned → Serialized Items Tracked
 - **Payment Gateways:** Future integration for payment processing
 
 ### 7.2 Infrastructure
-- **Database:** PostgreSQL (Supabase)
+- **Database:** PostgreSQL 16 (Self-hosted on Debian 13 VPS)
 - **File Storage:** Local file system (future: cloud storage)
 - **Authentication:** JWT-based (HS256)
 

@@ -42,7 +42,7 @@ The goal is to give installers a \*\*fast, offline-first, low-friction\*\* exper
 
 
 
-1\. \*\*Offline-first\*\* – App must continue working with weak or no network.
+1\. \*\*Offline-first (ROADMAP)\*\* – App should eventually work with weak or no network. **Status: NOT YET IMPLEMENTED.** Currently requires active network connection. See SI_APP_OVERVIEW.md for current implementation state.
 
 2\. \*\*Three-tap rule\*\* – Status updates should take at most three taps.
 

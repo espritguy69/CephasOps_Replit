@@ -106,11 +106,13 @@ dotnet ef database update
 dotnet ef migrations add MigrationName --project ../CephasOps.Infrastructure
 ```
 
-### **Apply SQL Script to Supabase:**
+### **Apply SQL Script to Database:**
 ```powershell
-$env:PGPASSWORD="J@saw007"
-psql "host=db.jgahsbfoydwdgipcjvxe.supabase.co port=5432 dbname=postgres user=postgres sslmode=require" -f "script.sql"
+# IMPORTANT: Use environment variables, never hardcode credentials
+# For VPS: source /opt/cephasops/.env first
+psql "host=localhost port=5432 dbname=cephasops user=cephasops_app sslmode=prefer" -f "script.sql"
 ```
+> **Note:** The project has migrated from Supabase to self-hosted PostgreSQL 16. Do not use old Supabase connection strings.
 
 ---
 

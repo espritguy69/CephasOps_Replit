@@ -1,8 +1,8 @@
 # CephasOps – Technology Stack Summary
 
-**Version:** 1.0  
-**Date:** December 2025  
-**Status:** Production System
+**Version:** 2.0  
+**Date:** April 2026  
+**Status:** Production System (Audited & Updated)
 
 ---
 
@@ -20,7 +20,7 @@
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **PostgreSQL** | Latest (Supabase) | Primary database |
+| **PostgreSQL** | 16 (Self-hosted on Debian 13 VPS) | Primary database |
 | **Entity Framework Core** | 10.0 | ORM |
 | **Npgsql.EntityFrameworkCore.PostgreSQL** | 10.0 | PostgreSQL provider |
 
@@ -46,8 +46,8 @@
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **MailKit** | 4.7.1 | POP3/IMAP/SMTP client |
-| **MimeKit** | 4.7.1 | MIME message handling |
+| **MailKit** | 4.15.1 | POP3/IMAP/SMTP client |
+| **MimeKit** | 4.15.1 | MIME message handling |
 
 ### 1.6 File Processing
 
@@ -55,7 +55,7 @@
 |------------|---------|---------|
 | **PdfPig** | 0.1.8 | PDF parsing |
 | **MSGReader** | 5.5.1 | Outlook MSG file parsing |
-| **ExcelDataReader** | (Removed) | Excel parsing (using Syncfusion instead) |
+| **ExcelDataReader** | 3.6.0 | Excel parsing (still in CephasOps.Api.csproj for admin test parse-excel; Syncfusion used for primary parsing) |
 
 ### 1.7 Data Import/Export
 
@@ -99,7 +99,7 @@
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | **shadcn/ui** | Latest | Component library |
-| **Tailwind CSS** | 3.4.18 | Utility-first CSS |
+| **Tailwind CSS** | 4.1.17 | Utility-first CSS (migrated from v3 to v4) |
 | **lucide-react** | 0.344.0 | Icon library |
 | **class-variance-authority** | 0.7.1 | Component variants |
 | **clsx** | 2.1.1 | Conditional class names |
@@ -198,7 +198,7 @@
 
 | Service | Purpose |
 |---------|---------|
-| **Supabase (PostgreSQL)** | Managed PostgreSQL database |
+| **PostgreSQL 16 (Self-hosted)** | Self-hosted on Hostinger Debian 13 VPS via deploy-vps-native.sh |
 
 ### 4.2 File Storage
 
@@ -211,7 +211,7 @@
 
 | Tool | Purpose |
 |------|---------|
-| **Cursor** | AI-powered IDE |
+| **Cursor / Replit** | AI-powered IDE |
 | **Git** | Version control |
 | **PowerShell** | Scripting (Windows) |
 
@@ -222,12 +222,12 @@
 ### 5.1 Version Control
 
 - **Git:** Source control
-- **GitHub:** Repository hosting (assumed)
+- **GitHub:** Repository hosting (espritguy69/CephasOps_Replit)
 
 ### 5.2 Build & Deployment
 
 - **Local Development:** `dotnet watch run` for backend, `vite dev` for frontend
-- **Production:** Manual deployment (future: automated CI/CD)
+- **Production:** Native VPS deployment via `infra/scripts/deploy-vps-native.sh` (Debian 13, systemd, Nginx reverse proxy)
 
 ### 5.3 Scripts
 
@@ -333,5 +333,10 @@
 
 ---
 
-**Document Status:** This tech stack summary reflects the current production system as of December 2025.
+**Document Status:** This tech stack summary reflects the current production system as of April 2026. Audited and corrected against actual package.json and .csproj files.
+
+> **Known Version Inconsistencies:**  
+> - Syncfusion backend: `Syncfusion.Licensing` is 31.2.15 in Api, while Application/Infrastructure use 31.1.17  
+> - ExcelDataReader: Api/Application use 3.6.0, ParserPlayground uses 3.7.0  
+> - See `docs/11_known_gaps/ARCHITECTURE_GAPS.md` for details
 

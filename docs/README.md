@@ -1,6 +1,6 @@
 # 📘 CephasOps Documentation – Master Index
 
-**Status:** Active. **Last doc reorg:** March 2026. See [DOCUMENTATION_REORGANIZATION_REPORT.md](./DOCUMENTATION_REORGANIZATION_REPORT.md) and [DOCUMENTATION_AUDIT.md](./DOCUMENTATION_AUDIT.md).
+**Status:** Active. **Last doc reorg:** April 2026. See [DOCUMENTATION_AUDIT_REPORT.md](./DOCUMENTATION_AUDIT_REPORT.md) for the latest audit and remediation status.
 
 Welcome to the complete documentation library for **CephasOps**, covering:
 
@@ -18,7 +18,7 @@ Welcome to the complete documentation library for **CephasOps**, covering:
 
 This folder is the *single source of truth* for everything related to CephasOps.
 
-**Navigation:** [00_QUICK_NAVIGATION.md](./00_QUICK_NAVIGATION.md) (quick links by topic) · [\_INDEX.md](./_INDEX.md) (full index) · [DOCS_MAP.md](./DOCS_MAP.md) (required doc set) · [DOCS_STATUS.md](./DOCS_STATUS.md) (status & link fixes) · [ARCHITECTURE_AUDIT_REPORT.md](./ARCHITECTURE_AUDIT_REPORT.md) (architecture vs code audit) · [architecture/CODEBASE_INTELLIGENCE_MAP.md](./architecture/CODEBASE_INTELLIGENCE_MAP.md) (architecture intelligence hub) · [CODEBASE_INTELLIGENCE_REPORT.md](./CODEBASE_INTELLIGENCE_REPORT.md) (intelligence layer report) · [REFACTOR_SAFETY_REPORT.md](./REFACTOR_SAFETY_REPORT.md) (refactor safety audit) · [ARCHITECTURE_WATCHDOG_REPORT.md](./ARCHITECTURE_WATCHDOG_REPORT.md) (architecture watchdog) · [architecture/architecture_watchdog_summary.md](./architecture/architecture_watchdog_summary.md) (engineering maturity & watchdog index) · [architecture/ARCHITECTURE_GOVERNANCE_SYSTEMS.md](./architecture/ARCHITECTURE_GOVERNANCE_SYSTEMS.md) (governance systems index).
+**Navigation:** [00_QUICK_NAVIGATION.md](./00_QUICK_NAVIGATION.md) (quick links by topic) · [DOCUMENTATION_AUDIT_REPORT.md](./DOCUMENTATION_AUDIT_REPORT.md) (audit findings) · [11_known_gaps/](./11_known_gaps/) (known architecture & database risks) · [architecture/CODEBASE_INTELLIGENCE_MAP.md](./architecture/CODEBASE_INTELLIGENCE_MAP.md) (architecture intelligence hub) · [architecture/ARCHITECTURE_WATCHDOG_REPORT.md](./architecture/ARCHITECTURE_WATCHDOG_REPORT.md) (architecture watchdog) · [architecture/architecture_watchdog_summary.md](./architecture/architecture_watchdog_summary.md) (engineering maturity index).
 
 ---
 
@@ -155,9 +155,9 @@ System infrastructure & devops:
 - e-Invoice integration flows  
 - Logging & monitoring  
 
-**Operational Replay:** See [OPERATIONAL_REPLAY_ENGINE_PHASE1.md](./OPERATIONAL_REPLAY_ENGINE_PHASE1.md) and [OPERATIONAL_REPLAY_ENGINE_PHASE2.md](./OPERATIONAL_REPLAY_ENGINE_PHASE2.md) for the replay engine, target registry, checkpoint/resume, and runbook.
+**Operational Replay:** See [archive/OPERATIONAL_REPLAY_ENGINE_PHASE1.md](./archive/OPERATIONAL_REPLAY_ENGINE_PHASE1.md) and [archive/OPERATIONAL_REPLAY_ENGINE_PHASE2.md](./archive/OPERATIONAL_REPLAY_ENGINE_PHASE2.md) for the replay engine documentation.
 
-**Source-of-truth aligned:** Consolidated views live in [overview/](./overview/), [business/](./business/), [operations/](./operations/), [integrations/](./integrations/), [dev/](./dev/), and [architecture/](./architecture/) — see [\_INDEX.md](./_INDEX.md) and [DOCS_MAP.md](./DOCS_MAP.md).
+**Source-of-truth aligned:** Consolidated views live in [overview/](./overview/), [business/](./business/), [operations/](./operations/), [integrations/](./integrations/), [dev/](./dev/), and [architecture/](./architecture/).
 
 **Archive:** Superseded or one-time deliverable docs are in [archive/](./archive/) (see [archive/README.md](./archive/README.md)). Use numbered folders (01–08) and `architecture/` for current specs.
 
