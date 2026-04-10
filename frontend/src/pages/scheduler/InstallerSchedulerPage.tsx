@@ -48,6 +48,7 @@ import {
   type JobContext,
   type ScoringResult,
   type AutoAssignResult,
+  type AutoAssignment,
 } from '../../lib/scheduler/scoringEngine';
 import { useAuth } from '../../contexts/AuthContext';
 import type { CalendarSlot, CreateSlotRequest, ScheduleConflict } from '../../types/scheduler';
@@ -65,6 +66,8 @@ interface UnassignedOrderItem {
   orderType?: string;
   address?: string;
   appointmentDate?: string;
+  windowFrom?: string;
+  windowTo?: string;
   status?: string;
 }
 
@@ -151,6 +154,8 @@ const InstallerSchedulerPage: React.FC = () => {
           orderType: o.orderType,
           address: o.address || o.fullAddress,
           appointmentDate: o.appointmentDate,
+          windowFrom: o.windowFrom || o.appointmentWindowFrom,
+          windowTo: o.windowTo || o.appointmentWindowTo,
           status: o.status,
         }))
       );
@@ -417,6 +422,8 @@ const InstallerSchedulerPage: React.FC = () => {
             address: order?.address,
             appointmentDate: order?.appointmentDate,
             customerName: order?.customerName,
+            windowFrom: order?.windowFrom,
+            windowTo: order?.windowTo,
           };
         });
 
@@ -426,9 +433,9 @@ const InstallerSchedulerPage: React.FC = () => {
           await createSlot({
             orderId: assignment.orderId,
             serviceInstallerId: assignment.installerId,
-            date: dateStr,
-            windowFrom: '09:00:00',
-            windowTo: '11:00:00',
+            date: assignment.date,
+            windowFrom: assignment.windowFrom,
+            windowTo: assignment.windowTo,
           });
           await updateOrder(assignment.orderId, { status: 'Assigned', assignedSiId: assignment.installerId });
         }
@@ -465,6 +472,8 @@ const InstallerSchedulerPage: React.FC = () => {
           address: o.address,
           appointmentDate: o.appointmentDate,
           customerName: o.customerName,
+          windowFrom: o.windowFrom,
+          windowTo: o.windowTo,
         }));
 
         const result = autoAssignJobs(jobs, filteredInstallers, slotsForDay, dateStr);
@@ -473,9 +482,9 @@ const InstallerSchedulerPage: React.FC = () => {
           await createSlot({
             orderId: assignment.orderId,
             serviceInstallerId: assignment.installerId,
-            date: dateStr,
-            windowFrom: '09:00:00',
-            windowTo: '11:00:00',
+            date: assignment.date,
+            windowFrom: assignment.windowFrom,
+            windowTo: assignment.windowTo,
           });
           await updateOrder(assignment.orderId, { status: 'Assigned', assignedSiId: assignment.installerId });
         }

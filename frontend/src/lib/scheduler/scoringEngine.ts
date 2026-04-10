@@ -38,19 +38,6 @@ export interface JobContext {
   requiredSkills?: string[];
 }
 
-export interface AutoAssignResult {
-  assignments: Array<{
-    orderId: string;
-    installerId: string;
-    installerName: string;
-    score: number;
-    reasons: string[];
-  }>;
-  unassignable: Array<{
-    orderId: string;
-    reason: string;
-  }>;
-}
 
 const WEIGHTS = {
   availability: 40,
@@ -358,13 +345,68 @@ export function checkConflict(
   return { hasConflict: false };
 }
 
+export interface AutoAssignment {
+  orderId: string;
+  installerId: string;
+  installerName: string;
+  score: number;
+  reasons: string[];
+  date: string;
+  windowFrom: string;
+  windowTo: string;
+}
+
+export interface AutoAssignResult {
+  assignments: AutoAssignment[];
+  unassignable: Array<{
+    orderId: string;
+    reason: string;
+  }>;
+}
+
+const TIME_WINDOWS = [
+  { from: '08:00:00', to: '10:00:00' },
+  { from: '10:00:00', to: '12:00:00' },
+  { from: '12:00:00', to: '14:00:00' },
+  { from: '14:00:00', to: '16:00:00' },
+  { from: '16:00:00', to: '18:00:00' },
+];
+
+function findAvailableWindow(
+  installerId: string,
+  date: string,
+  dynamicSlots: CalendarSlot[],
+  preferredFrom?: string,
+  preferredTo?: string
+): { windowFrom: string; windowTo: string } | null {
+  if (preferredFrom && preferredTo) {
+    const conflict = hasTimeOverlap(
+      dynamicSlots.filter((s) => (s.serviceInstallerId || s.siId) === installerId && s.date === date),
+      preferredFrom,
+      preferredTo
+    );
+    if (!conflict) return { windowFrom: preferredFrom, windowTo: preferredTo };
+  }
+
+  for (const tw of TIME_WINDOWS) {
+    const conflict = hasTimeOverlap(
+      dynamicSlots.filter((s) => (s.serviceInstallerId || s.siId) === installerId && s.date === date),
+      tw.from,
+      tw.to
+    );
+    if (!conflict) return { windowFrom: tw.from, windowTo: tw.to };
+  }
+
+  return null;
+}
+
 export function autoAssignJobs(
   jobs: JobContext[],
   installers: ServiceInstaller[],
   allSlots: CalendarSlot[],
-  date: string
+  fallbackDate: string
 ): AutoAssignResult {
-  const assignments: AutoAssignResult['assignments'] = [];
+  const assignments: AutoAssignment[] = [];
   const unassignable: AutoAssignResult['unassignable'] = [];
 
   let dynamicSlots = [...allSlots];
@@ -376,43 +418,69 @@ export function autoAssignJobs(
   });
 
   for (const job of sortedJobs) {
-    const workloads = computeWorkloads(installers, dynamicSlots);
-    const ranked = rankInstallers(installers, job, dynamicSlots, workloads, date);
-    const best = ranked.find((r) => !r.blocked && r.score > 0);
+    const jobDate = job.appointmentDate || fallbackDate;
+    const jobWithWindow = {
+      ...job,
+      windowFrom: job.windowFrom || undefined,
+      windowTo: job.windowTo || undefined,
+    };
 
-    if (!best) {
-      unassignable.push({
+    const workloads = computeWorkloads(installers, dynamicSlots);
+    const ranked = rankInstallers(installers, jobWithWindow, dynamicSlots, workloads, jobDate);
+
+    let assigned = false;
+
+    for (const candidate of ranked) {
+      if (candidate.blocked || candidate.score <= 0) continue;
+
+      const window = findAvailableWindow(
+        candidate.installerId,
+        jobDate,
+        dynamicSlots,
+        job.windowFrom,
+        job.windowTo
+      );
+
+      if (!window) continue;
+
+      const installer = installers.find((i) => i.id === candidate.installerId)!;
+      assignments.push({
         orderId: job.orderId,
-        reason: ranked[0]?.blockReason || 'No suitable installer found',
+        installerId: candidate.installerId,
+        installerName: installer.name,
+        score: candidate.score,
+        reasons: candidate.reasons,
+        date: jobDate,
+        windowFrom: window.windowFrom,
+        windowTo: window.windowTo,
       });
-      continue;
+
+      const syntheticSlot: CalendarSlot = {
+        id: `auto-${job.orderId}`,
+        orderId: job.orderId,
+        serviceInstallerId: candidate.installerId,
+        date: jobDate,
+        windowFrom: window.windowFrom,
+        windowTo: window.windowTo,
+        sequenceIndex: 0,
+        status: 'Draft',
+        createdByUserId: '',
+        createdAt: new Date().toISOString(),
+        serviceType: job.serviceType || job.orderType,
+        customerName: job.customerName,
+        buildingName: job.buildingName,
+      };
+      dynamicSlots.push(syntheticSlot);
+      assigned = true;
+      break;
     }
 
-    const installer = installers.find((i) => i.id === best.installerId)!;
-    assignments.push({
-      orderId: job.orderId,
-      installerId: best.installerId,
-      installerName: installer.name,
-      score: best.score,
-      reasons: best.reasons,
-    });
-
-    const syntheticSlot: CalendarSlot = {
-      id: `auto-${job.orderId}`,
-      orderId: job.orderId,
-      serviceInstallerId: best.installerId,
-      date,
-      windowFrom: job.windowFrom || '09:00:00',
-      windowTo: job.windowTo || '11:00:00',
-      sequenceIndex: 0,
-      status: 'Draft',
-      createdByUserId: '',
-      createdAt: new Date().toISOString(),
-      serviceType: job.serviceType || job.orderType,
-      customerName: job.customerName,
-      buildingName: job.buildingName,
-    };
-    dynamicSlots.push(syntheticSlot);
+    if (!assigned) {
+      unassignable.push({
+        orderId: job.orderId,
+        reason: ranked[0]?.blockReason || 'No available time slot for any installer',
+      });
+    }
   }
 
   return { assignments, unassignable };
@@ -422,7 +490,7 @@ export function smartDistribute(
   jobs: JobContext[],
   installers: ServiceInstaller[],
   allSlots: CalendarSlot[],
-  date: string
+  fallbackDate: string
 ): AutoAssignResult {
-  return autoAssignJobs(jobs, installers, allSlots, date);
+  return autoAssignJobs(jobs, installers, allSlots, fallbackDate);
 }
