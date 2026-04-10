@@ -157,6 +157,12 @@ test.describe('Launch readiness – Order lifecycle', () => {
       const order = await getOrder(request, createdOrderId, headers);
       const apiStatus = String(order.status ?? order.Status ?? order.orderStatus ?? '').toLowerCase();
       expect(apiStatus).toBeTruthy();
+      if (uiStatus && apiStatus) {
+        expect(
+          uiStatus.includes(apiStatus) || apiStatus.includes(uiStatus),
+          `UI status "${uiStatus}" does not match API status "${apiStatus}"`
+        ).toBeTruthy();
+      }
     }
   });
 

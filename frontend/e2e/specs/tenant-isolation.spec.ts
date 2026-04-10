@@ -33,9 +33,9 @@ test.describe('Launch readiness – Tenant isolation', () => {
       const body = await res.json();
       const data = body.Data ?? body.data ?? body;
       const items = Array.isArray(data) ? data : (data?.items ?? data?.Items ?? []);
-      expect(items.length).toBe(0);
+      expect(items.length, 'Forged department returned data — tenant isolation breach').toBe(0);
     } else {
-      expect([400, 401, 403, 404]).toContain(status);
+      expect([400, 401, 403, 404], `Unexpected status ${status} for forged department`).toContain(status);
     }
   });
 

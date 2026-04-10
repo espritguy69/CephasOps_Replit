@@ -135,18 +135,23 @@ test.describe('System validation – Idempotency & duplication protection', () =
     const res1 = await apiPost(request, '/orders', orderPayload, headers);
     const res2 = await apiPost(request, '/orders', orderPayload, headers);
 
-    if (res1.ok() && res2.ok()) {
+    expect(res1.ok(), `First order creation failed: ${res1.status()}`).toBeTruthy();
+
+    if (res2.ok()) {
       const ordersAfter = await getOrders(request, headers) as Record<string, unknown>[];
       const matching = ordersAfter.filter((o) => {
         const ref = String(o.externalRef ?? o.ExternalRef ?? '');
         return ref === uniqueRef;
       });
-      expect(matching.length).toBeLessThanOrEqual(2);
+      expect(
+        matching.length,
+        `Duplicate protection failed: ${matching.length} orders with ref ${uniqueRef}`
+      ).toBeLessThanOrEqual(1);
     } else {
-      expect(res1.ok() || res2.ok()).toBeTruthy();
-      if (!res2.ok()) {
-        expect([400, 409, 422]).toContain(res2.status());
-      }
+      expect(
+        [400, 409, 422].includes(res2.status()),
+        `Second creation returned ${res2.status()} — expected rejection`
+      ).toBeTruthy();
     }
   });
 
@@ -170,5 +175,18 @@ test.describe('System validation – Idempotency & duplication protection', () =
 
     expect(res1.status()).not.toBe(500);
     expect(res2.status()).not.toBe(500);
+
+    if (res1.ok() && res2.ok()) {
+      const { getPayments } = await import('../helpers/api');
+      const allPayments = await getPayments(request, headers) as Record<string, unknown>[];
+      const matching = allPayments.filter(p => {
+        const ref = String(p.bankReference ?? p.BankReference ?? '');
+        return ref === paymentPayload.bankReference;
+      });
+      expect(
+        matching.length,
+        `Duplicate payment detected: ${matching.length} payments with same bankReference`
+      ).toBeLessThanOrEqual(1);
+    }
   });
 });

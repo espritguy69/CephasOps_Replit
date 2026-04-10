@@ -2,11 +2,16 @@ import type { APIRequestContext, APIResponse } from '@playwright/test';
 import { expect } from '@playwright/test';
 import { e2eEnv } from './env';
 
-const API_BASE = e2eEnv.apiBaseUrl();
+function getApiBase(): string {
+  const raw = e2eEnv.apiBaseUrl();
+  return raw.replace(/\/+$/, '');
+}
 
 function fullUrl(path: string): string {
+  const base = getApiBase();
   const clean = path.startsWith('/') ? path : `/${path}`;
-  return `${API_BASE}/api${clean}`;
+  const prefix = base.endsWith('/api') ? '' : '/api';
+  return `${base}${prefix}${clean}`;
 }
 
 export async function apiGet(

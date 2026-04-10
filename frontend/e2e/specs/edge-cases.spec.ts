@@ -124,6 +124,42 @@ test.describe('System validation – Edge cases & negative tests', () => {
     expect([400, 404]).toContain(res.status());
   });
 
+  test('use material beyond available stock — API rejects with error', async ({ page, request }) => {
+    await loginViaUi(page);
+    await expectAuthenticatedShell(page, { timeout: TIMEOUT });
+
+    const headers = await createAuthHeadersFromPage(page);
+
+    const res = await apiPost(request, '/inventory/stock/movements', {
+      materialId: '00000000-0000-0000-0000-000000000000',
+      locationId: '00000000-0000-0000-0000-000000000000',
+      movementType: 'Issue',
+      quantity: 999999,
+      remarks: 'E2E: attempt to issue beyond stock',
+    }, headers);
+
+    expect(res.status()).not.toBe(201);
+    expect(res.status()).not.toBe(200);
+  });
+
+  test('stock movement with negative quantity — API rejects', async ({ page, request }) => {
+    await loginViaUi(page);
+    await expectAuthenticatedShell(page, { timeout: TIMEOUT });
+
+    const headers = await createAuthHeadersFromPage(page);
+
+    const res = await apiPost(request, '/inventory/stock/movements', {
+      materialId: '00000000-0000-0000-0000-000000000000',
+      locationId: '00000000-0000-0000-0000-000000000000',
+      movementType: 'Issue',
+      quantity: -10,
+      remarks: 'E2E: negative quantity test',
+    }, headers);
+
+    expect(res.status()).not.toBe(200);
+    expect(res.status()).not.toBe(201);
+  });
+
   test('UI — submit order form without required fields shows validation error', async ({ page }) => {
     await loginViaUi(page);
     await expectAuthenticatedShell(page, { timeout: TIMEOUT });
