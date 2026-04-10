@@ -48,10 +48,19 @@ const WEIGHTS = {
 } as const;
 
 const MAX_WORKING_MINUTES = 480;
+const WORKING_HOURS = { start: '08:00:00', end: '18:00:00' };
+const DEFAULT_JOB_DURATION_MINUTES = 120;
+const MAX_JOBS_PER_INSTALLER_PER_DAY = 5;
 
 function parseTimeToMinutes(timeStr: string): number {
   const parts = timeStr.split(':').map(Number);
   return (parts[0] ?? 0) * 60 + (parts[1] ?? 0);
+}
+
+function minutesToTime(minutes: number): string {
+  const h = Math.floor(minutes / 60).toString().padStart(2, '0');
+  const m = (minutes % 60).toString().padStart(2, '0');
+  return `${h}:${m}:00`;
 }
 
 function getSlotDuration(slot: CalendarSlot): number {
@@ -83,22 +92,58 @@ function scoreAvailability(
   job: JobContext,
   date: string
 ): { score: number; blocked: boolean; blockReason?: string; conflictSlot?: CalendarSlot } {
-  const windowFrom = job.windowFrom || job.appointmentTime || '09:00:00';
-  const windowTo = job.windowTo || '11:00:00';
-
   const dateSlotsRaw = installerSlots.filter((s) => s.date === date);
-  const conflictSlot = hasTimeOverlap(dateSlotsRaw, windowFrom, windowTo);
 
-  if (conflictSlot) {
+  if (dateSlotsRaw.length >= MAX_JOBS_PER_INSTALLER_PER_DAY) {
     return {
       score: -100,
       blocked: true,
-      blockReason: `Time conflict with ${conflictSlot.customerName || conflictSlot.serviceId || 'existing job'} (${conflictSlot.windowFrom?.slice(0, 5)}–${conflictSlot.windowTo?.slice(0, 5)})`,
-      conflictSlot,
+      blockReason: `Max ${MAX_JOBS_PER_INSTALLER_PER_DAY} jobs per day reached`,
+    };
+  }
+
+  if (job.windowFrom && job.windowTo) {
+    const conflictSlot = hasTimeOverlap(dateSlotsRaw, job.windowFrom, job.windowTo);
+    if (conflictSlot) {
+      const hasAnyFreeSlot = checkAnyWindowAvailable(dateSlotsRaw);
+      if (!hasAnyFreeSlot) {
+        return {
+          score: -100,
+          blocked: true,
+          blockReason: `No available time slots today`,
+        };
+      }
+      return {
+        score: WEIGHTS.availability * 0.5,
+        blocked: false,
+        blockReason: undefined,
+      };
+    }
+    return { score: WEIGHTS.availability, blocked: false };
+  }
+
+  const hasAnyFreeSlot = checkAnyWindowAvailable(dateSlotsRaw);
+  if (!hasAnyFreeSlot) {
+    return {
+      score: -100,
+      blocked: true,
+      blockReason: 'No available time slots today',
     };
   }
 
   return { score: WEIGHTS.availability, blocked: false };
+}
+
+function checkAnyWindowAvailable(dateSlotsRaw: CalendarSlot[]): boolean {
+  const startMin = parseTimeToMinutes(WORKING_HOURS.start);
+  const endMin = parseTimeToMinutes(WORKING_HOURS.end);
+  for (let t = startMin; t + 60 <= endMin; t += 30) {
+    const from = minutesToTime(t);
+    const to = minutesToTime(t + DEFAULT_JOB_DURATION_MINUTES);
+    if (parseTimeToMinutes(to) > endMin) continue;
+    if (!hasTimeOverlap(dateSlotsRaw, from, to)) return true;
+  }
+  return false;
 }
 
 function scoreWorkload(
@@ -354,6 +399,7 @@ export interface AutoAssignment {
   date: string;
   windowFrom: string;
   windowTo: string;
+  windowReason: string;
 }
 
 export interface AutoAssignResult {
@@ -364,40 +410,358 @@ export interface AutoAssignResult {
   }>;
 }
 
-const TIME_WINDOWS = [
-  { from: '08:00:00', to: '10:00:00' },
-  { from: '10:00:00', to: '12:00:00' },
-  { from: '12:00:00', to: '14:00:00' },
-  { from: '14:00:00', to: '16:00:00' },
-  { from: '16:00:00', to: '18:00:00' },
-];
+export interface WindowScore {
+  windowFrom: string;
+  windowTo: string;
+  score: number;
+  reasons: string[];
+  isPreferred: boolean;
+}
 
-function findAvailableWindow(
+export type WindowStatus = 'PREFERRED' | 'BEST_FIT' | 'NO_SLOT';
+
+export interface BestWindowResult {
+  status: WindowStatus;
+  windowFrom: string;
+  windowTo: string;
+  score: number;
+  reason: string;
+}
+
+export interface NoSlotResult {
+  status: 'NO_SLOT';
+  reason: string;
+}
+
+const WINDOW_WEIGHTS = {
+  gapFit: 30,
+  travelClustering: 20,
+  timePreference: 20,
+  utilizationBalance: 15,
+  idleTimeReduction: 15,
+} as const;
+
+function generateCandidateWindows(
+  preferredFrom?: string,
+  preferredTo?: string,
+  durationMinutes: number = DEFAULT_JOB_DURATION_MINUTES
+): Array<{ from: string; to: string; isPreferred: boolean }> {
+  const candidates: Array<{ from: string; to: string; isPreferred: boolean }> = [];
+  const seen = new Set<string>();
+
+  if (preferredFrom && preferredTo) {
+    const key = `${preferredFrom}-${preferredTo}`;
+    candidates.push({ from: preferredFrom, to: preferredTo, isPreferred: true });
+    seen.add(key);
+  }
+
+  const startMin = parseTimeToMinutes(WORKING_HOURS.start);
+  const endMin = parseTimeToMinutes(WORKING_HOURS.end);
+
+  for (let t = startMin; t + durationMinutes <= endMin; t += 30) {
+    const from = minutesToTime(t);
+    const to = minutesToTime(t + durationMinutes);
+    const key = `${from}-${to}`;
+    if (!seen.has(key)) {
+      candidates.push({ from, to, isPreferred: false });
+      seen.add(key);
+    }
+  }
+
+  return candidates;
+}
+
+function scoreGapFit(
+  windowFrom: string,
+  windowTo: string,
+  existingSlots: CalendarSlot[]
+): { score: number; reason: string } {
+  if (existingSlots.length === 0) {
+    return { score: WINDOW_WEIGHTS.gapFit * 0.8, reason: 'First job of the day' };
+  }
+
+  const wFrom = parseTimeToMinutes(windowFrom);
+  const wTo = parseTimeToMinutes(windowTo);
+
+  const sorted = existingSlots
+    .map((s) => ({
+      from: parseTimeToMinutes(s.windowFrom || s.startTime || '00:00'),
+      to: parseTimeToMinutes(s.windowTo || s.endTime || '00:00'),
+    }))
+    .sort((a, b) => a.from - b.from);
+
+  let bestGapBefore = Infinity;
+  let bestGapAfter = Infinity;
+  let fitsCleanly = false;
+
+  for (const slot of sorted) {
+    if (slot.to <= wFrom) {
+      bestGapBefore = Math.min(bestGapBefore, wFrom - slot.to);
+    }
+    if (slot.from >= wTo) {
+      bestGapAfter = Math.min(bestGapAfter, slot.from - wTo);
+    }
+  }
+
+  if (bestGapBefore === 0 || bestGapAfter === 0) {
+    fitsCleanly = true;
+  }
+
+  if (fitsCleanly) {
+    return { score: WINDOW_WEIGHTS.gapFit, reason: 'Fits cleanly between jobs' };
+  }
+
+  const smallestGap = Math.min(
+    bestGapBefore === Infinity ? 999 : bestGapBefore,
+    bestGapAfter === Infinity ? 999 : bestGapAfter
+  );
+
+  if (smallestGap <= 30) {
+    return { score: WINDOW_WEIGHTS.gapFit * 0.85, reason: 'Near adjacent job' };
+  }
+  if (smallestGap <= 60) {
+    return { score: WINDOW_WEIGHTS.gapFit * 0.6, reason: 'Small gap to next job' };
+  }
+  return { score: WINDOW_WEIGHTS.gapFit * 0.3, reason: 'Creates idle gap' };
+}
+
+function scoreTravelClustering(
+  windowFrom: string,
+  existingSlots: CalendarSlot[],
+  job: JobContext
+): { score: number; reason: string } {
+  if (existingSlots.length === 0 || !job.address) {
+    return { score: WINDOW_WEIGHTS.travelClustering * 0.5, reason: 'No clustering data' };
+  }
+
+  const wFrom = parseTimeToMinutes(windowFrom);
+  const jobAddr = (job.address || '').toLowerCase();
+  const jobBuilding = (job.buildingName || '').toLowerCase();
+
+  let nearestSlot: CalendarSlot | null = null;
+  let nearestDist = Infinity;
+
+  for (const slot of existingSlots) {
+    const slotEnd = parseTimeToMinutes(slot.windowTo || slot.endTime || '00:00');
+    const slotStart = parseTimeToMinutes(slot.windowFrom || slot.startTime || '00:00');
+    const dist = Math.min(Math.abs(wFrom - slotEnd), Math.abs(wFrom - slotStart));
+    if (dist < nearestDist) {
+      nearestDist = dist;
+      nearestSlot = slot;
+    }
+  }
+
+  if (!nearestSlot) {
+    return { score: WINDOW_WEIGHTS.travelClustering * 0.5, reason: 'No adjacent jobs' };
+  }
+
+  const slotAddr = (nearestSlot.buildingName || '').toLowerCase();
+  const addrWords = new Set(jobAddr.split(/[\s,]+/).filter((w) => w.length > 2));
+  const buildWords = new Set(jobBuilding.split(/[\s,]+/).filter((w) => w.length > 2));
+  const slotWords = new Set(slotAddr.split(/[\s,]+/).filter((w) => w.length > 2));
+  const allJobWords = new Set([...addrWords, ...buildWords]);
+
+  let matchCount = 0;
+  for (const w of allJobWords) {
+    if (slotWords.has(w)) matchCount++;
+  }
+
+  if (allJobWords.size > 0 && matchCount / allJobWords.size >= 0.4) {
+    return { score: WINDOW_WEIGHTS.travelClustering, reason: 'Near previous job location' };
+  }
+  if (matchCount > 0) {
+    return { score: WINDOW_WEIGHTS.travelClustering * 0.6, reason: 'Partial area match' };
+  }
+  return { score: WINDOW_WEIGHTS.travelClustering * 0.3, reason: 'Different area' };
+}
+
+function scoreTimePreference(
+  windowFrom: string,
+  windowTo: string,
+  preferredFrom?: string,
+  preferredTo?: string
+): { score: number; reason: string } {
+  if (!preferredFrom || !preferredTo) {
+    return { score: WINDOW_WEIGHTS.timePreference * 0.7, reason: 'No preference specified' };
+  }
+
+  if (windowFrom === preferredFrom && windowTo === preferredTo) {
+    return { score: WINDOW_WEIGHTS.timePreference, reason: 'Scheduled as requested' };
+  }
+
+  const prefStart = parseTimeToMinutes(preferredFrom);
+  const actStart = parseTimeToMinutes(windowFrom);
+  const diff = Math.abs(prefStart - actStart);
+
+  if (diff <= 30) return { score: WINDOW_WEIGHTS.timePreference * 0.9, reason: 'Close to requested time' };
+  if (diff <= 60) return { score: WINDOW_WEIGHTS.timePreference * 0.7, reason: 'Within 1 hour of preference' };
+  if (diff <= 120) return { score: WINDOW_WEIGHTS.timePreference * 0.4, reason: '1-2 hours from preference' };
+  return { score: WINDOW_WEIGHTS.timePreference * 0.1, reason: 'Far from preferred time' };
+}
+
+function scoreUtilizationBalance(
+  windowFrom: string,
+  windowTo: string,
+  existingSlots: CalendarSlot[]
+): { score: number; reason: string } {
+  const totalExisting = existingSlots.reduce((sum, s) => sum + getSlotDuration(s), 0);
+  const newDuration = parseTimeToMinutes(windowTo) - parseTimeToMinutes(windowFrom);
+  const totalAfter = totalExisting + newDuration;
+  const utilizationAfter = totalAfter / MAX_WORKING_MINUTES;
+
+  if (utilizationAfter <= 0.6) {
+    return { score: WINDOW_WEIGHTS.utilizationBalance, reason: 'Balanced workload' };
+  }
+  if (utilizationAfter <= 0.8) {
+    return { score: WINDOW_WEIGHTS.utilizationBalance * 0.7, reason: 'Moderate workload' };
+  }
+  if (utilizationAfter <= 0.95) {
+    return { score: WINDOW_WEIGHTS.utilizationBalance * 0.3, reason: 'Heavy workload' };
+  }
+  return { score: 0, reason: 'Would exceed capacity' };
+}
+
+function scoreIdleTimeReduction(
+  windowFrom: string,
+  windowTo: string,
+  existingSlots: CalendarSlot[]
+): { score: number; reason: string } {
+  if (existingSlots.length === 0) {
+    return { score: WINDOW_WEIGHTS.idleTimeReduction * 0.5, reason: 'First assignment' };
+  }
+
+  const allTimes = existingSlots
+    .map((s) => ({
+      from: parseTimeToMinutes(s.windowFrom || s.startTime || '00:00'),
+      to: parseTimeToMinutes(s.windowTo || s.endTime || '00:00'),
+    }))
+    .concat([{ from: parseTimeToMinutes(windowFrom), to: parseTimeToMinutes(windowTo) }])
+    .sort((a, b) => a.from - b.from);
+
+  let totalIdle = 0;
+  for (let i = 1; i < allTimes.length; i++) {
+    const gap = allTimes[i].from - allTimes[i - 1].to;
+    if (gap > 0) totalIdle += gap;
+  }
+
+  const allTimesWithout = existingSlots
+    .map((s) => ({
+      from: parseTimeToMinutes(s.windowFrom || s.startTime || '00:00'),
+      to: parseTimeToMinutes(s.windowTo || s.endTime || '00:00'),
+    }))
+    .sort((a, b) => a.from - b.from);
+
+  let idleBefore = 0;
+  for (let i = 1; i < allTimesWithout.length; i++) {
+    const gap = allTimesWithout[i].from - allTimesWithout[i - 1].to;
+    if (gap > 0) idleBefore += gap;
+  }
+
+  const reduction = idleBefore - totalIdle;
+  if (reduction > 0) {
+    return { score: WINDOW_WEIGHTS.idleTimeReduction, reason: `Reduces idle time by ${reduction}min` };
+  }
+  if (totalIdle <= 60) {
+    return { score: WINDOW_WEIGHTS.idleTimeReduction * 0.7, reason: 'Minimal idle time' };
+  }
+  return { score: WINDOW_WEIGHTS.idleTimeReduction * 0.3, reason: 'Creates idle gaps' };
+}
+
+export function getWindowScore(
+  windowFrom: string,
+  windowTo: string,
+  installerSlots: CalendarSlot[],
+  job: JobContext,
+  preferredFrom?: string,
+  preferredTo?: string,
+  isPreferred: boolean = false
+): WindowScore {
+  const gapFit = scoreGapFit(windowFrom, windowTo, installerSlots);
+  const travel = scoreTravelClustering(windowFrom, installerSlots, job);
+  const timePref = scoreTimePreference(windowFrom, windowTo, preferredFrom, preferredTo);
+  const utilBal = scoreUtilizationBalance(windowFrom, windowTo, installerSlots);
+  const idleRed = scoreIdleTimeReduction(windowFrom, windowTo, installerSlots);
+
+  const total = gapFit.score + travel.score + timePref.score + utilBal.score + idleRed.score;
+  const reasons: string[] = [];
+
+  if (gapFit.score >= WINDOW_WEIGHTS.gapFit * 0.7) reasons.push(gapFit.reason);
+  if (travel.score >= WINDOW_WEIGHTS.travelClustering * 0.6) reasons.push(travel.reason);
+  if (timePref.score >= WINDOW_WEIGHTS.timePreference * 0.8) reasons.push(timePref.reason);
+  if (utilBal.score >= WINDOW_WEIGHTS.utilizationBalance * 0.6) reasons.push(utilBal.reason);
+  if (idleRed.score >= WINDOW_WEIGHTS.idleTimeReduction * 0.6) reasons.push(idleRed.reason);
+
+  return {
+    windowFrom,
+    windowTo,
+    score: Math.round(total * 10) / 10,
+    reasons,
+    isPreferred,
+  };
+}
+
+export function findBestWindow(
   installerId: string,
   date: string,
   dynamicSlots: CalendarSlot[],
+  job: JobContext,
   preferredFrom?: string,
   preferredTo?: string
-): { windowFrom: string; windowTo: string } | null {
-  if (preferredFrom && preferredTo) {
-    const conflict = hasTimeOverlap(
-      dynamicSlots.filter((s) => (s.serviceInstallerId || s.siId) === installerId && s.date === date),
+): BestWindowResult | NoSlotResult {
+  const installerDaySlots = dynamicSlots.filter(
+    (s) => (s.serviceInstallerId || s.siId) === installerId && s.date === date
+  );
+
+  if (installerDaySlots.length >= MAX_JOBS_PER_INSTALLER_PER_DAY) {
+    return { status: 'NO_SLOT', reason: `Max ${MAX_JOBS_PER_INSTALLER_PER_DAY} jobs per day reached` };
+  }
+
+  const duration = preferredFrom && preferredTo
+    ? parseTimeToMinutes(preferredTo) - parseTimeToMinutes(preferredFrom)
+    : DEFAULT_JOB_DURATION_MINUTES;
+
+  const candidates = generateCandidateWindows(preferredFrom, preferredTo, Math.max(duration, 30));
+
+  const validWindows: WindowScore[] = [];
+
+  for (const cand of candidates) {
+    const candFrom = parseTimeToMinutes(cand.from);
+    const candTo = parseTimeToMinutes(cand.to);
+    const workStart = parseTimeToMinutes(WORKING_HOURS.start);
+    const workEnd = parseTimeToMinutes(WORKING_HOURS.end);
+    if (candFrom < workStart || candTo > workEnd) continue;
+
+    const conflict = hasTimeOverlap(installerDaySlots, cand.from, cand.to);
+    if (conflict) continue;
+
+    const scored = getWindowScore(
+      cand.from,
+      cand.to,
+      installerDaySlots,
+      job,
       preferredFrom,
-      preferredTo
+      preferredTo,
+      cand.isPreferred
     );
-    if (!conflict) return { windowFrom: preferredFrom, windowTo: preferredTo };
+    validWindows.push(scored);
   }
 
-  for (const tw of TIME_WINDOWS) {
-    const conflict = hasTimeOverlap(
-      dynamicSlots.filter((s) => (s.serviceInstallerId || s.siId) === installerId && s.date === date),
-      tw.from,
-      tw.to
-    );
-    if (!conflict) return { windowFrom: tw.from, windowTo: tw.to };
+  if (validWindows.length === 0) {
+    return { status: 'NO_SLOT', reason: 'No available time slots today' };
   }
 
-  return null;
+  validWindows.sort((a, b) => b.score - a.score);
+  const best = validWindows[0];
+
+  return {
+    status: best.isPreferred ? 'PREFERRED' : 'BEST_FIT',
+    windowFrom: best.windowFrom,
+    windowTo: best.windowTo,
+    score: best.score,
+    reason: best.isPreferred
+      ? 'Scheduled as requested'
+      : `Suggested: ${best.windowFrom.slice(0, 5)}–${best.windowTo.slice(0, 5)} — ${best.reasons[0] || 'Best available fit'}`,
+  };
 }
 
 export function autoAssignJobs(
@@ -433,26 +797,29 @@ export function autoAssignJobs(
     for (const candidate of ranked) {
       if (candidate.blocked || candidate.score <= 0) continue;
 
-      const window = findAvailableWindow(
+      const windowResult = findBestWindow(
         candidate.installerId,
         jobDate,
         dynamicSlots,
+        job,
         job.windowFrom,
         job.windowTo
       );
 
-      if (!window) continue;
+      if (windowResult.status === 'NO_SLOT') continue;
 
+      const combinedScore = candidate.score + windowResult.score;
       const installer = installers.find((i) => i.id === candidate.installerId)!;
       assignments.push({
         orderId: job.orderId,
         installerId: candidate.installerId,
         installerName: installer.name,
-        score: candidate.score,
-        reasons: candidate.reasons,
+        score: Math.round(combinedScore * 10) / 10,
+        reasons: [...candidate.reasons, windowResult.reason],
         date: jobDate,
-        windowFrom: window.windowFrom,
-        windowTo: window.windowTo,
+        windowFrom: windowResult.windowFrom,
+        windowTo: windowResult.windowTo,
+        windowReason: windowResult.reason,
       });
 
       const syntheticSlot: CalendarSlot = {
@@ -460,8 +827,8 @@ export function autoAssignJobs(
         orderId: job.orderId,
         serviceInstallerId: candidate.installerId,
         date: jobDate,
-        windowFrom: window.windowFrom,
-        windowTo: window.windowTo,
+        windowFrom: windowResult.windowFrom,
+        windowTo: windowResult.windowTo,
         sequenceIndex: 0,
         status: 'Draft',
         createdByUserId: '',

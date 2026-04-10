@@ -44,11 +44,14 @@ import {
   checkConflict,
   autoAssignJobs,
   smartDistribute,
+  findBestWindow,
   type InstallerWorkload,
   type JobContext,
   type ScoringResult,
   type AutoAssignResult,
   type AutoAssignment,
+  type BestWindowResult,
+  type NoSlotResult,
 } from '../../lib/scheduler/scoringEngine';
 import { useAuth } from '../../contexts/AuthContext';
 import type { CalendarSlot, CreateSlotRequest, ScheduleConflict } from '../../types/scheduler';
@@ -364,17 +367,34 @@ const InstallerSchedulerPage: React.FC = () => {
     async (installerId: string) => {
       if (!quickAssignOrderId) return;
 
-      const windowFrom = '09:00:00';
-      const windowTo = '11:00:00';
-      const conflict = checkConflict(installerId, dateStr, windowFrom, windowTo, slotsForDay);
-      if (conflict.hasConflict) {
-        showError(conflict.message || 'Installer is busy at this time');
-        return;
-      }
-
       const score = rankedScores.find((r) => r.installerId === installerId);
       if (score?.blocked) {
         showError(score.blockReason || 'Cannot assign to this installer');
+        return;
+      }
+
+      const order = unassignedOrders.find((o) => o.orderId === quickAssignOrderId);
+      const jobCtx: JobContext = {
+        orderId: quickAssignOrderId,
+        orderType: order?.orderType,
+        buildingName: order?.buildingName,
+        address: order?.address,
+        customerName: order?.customerName,
+        windowFrom: order?.windowFrom,
+        windowTo: order?.windowTo,
+      };
+
+      const windowResult = findBestWindow(
+        installerId,
+        dateStr,
+        slotsForDay,
+        jobCtx,
+        order?.windowFrom,
+        order?.windowTo
+      );
+
+      if (windowResult.status === 'NO_SLOT') {
+        showError(`No available slot for this installer: ${windowResult.reason}`);
         return;
       }
 
@@ -384,12 +404,16 @@ const InstallerSchedulerPage: React.FC = () => {
           orderId: quickAssignOrderId,
           serviceInstallerId: installerId,
           date: dateStr,
-          windowFrom,
-          windowTo,
+          windowFrom: windowResult.windowFrom,
+          windowTo: windowResult.windowTo,
         });
         await updateOrder(quickAssignOrderId, { status: 'Assigned', assignedSiId: installerId });
         const installer = filteredInstallers.find((i) => i.id === installerId);
-        showSuccess(`Assigned to ${installer?.name || 'installer'}${score ? ` (score: ${Math.round(score.score)})` : ''}`);
+        const timeInfo = `${windowResult.windowFrom.slice(0, 5)}–${windowResult.windowTo.slice(0, 5)}`;
+        const windowNote = windowResult.status === 'PREFERRED'
+          ? 'Scheduled as requested'
+          : `Suggested: ${timeInfo} — ${windowResult.reason}`;
+        showSuccess(`Assigned to ${installer?.name || 'installer'} · ${windowNote}${score ? ` (score: ${Math.round(score.score + windowResult.score)})` : ''}`);
         setQuickAssignOrderId(null);
         await loadData();
       } catch (err: any) {
@@ -405,7 +429,7 @@ const InstallerSchedulerPage: React.FC = () => {
         setQuickAssignSubmitting(false);
       }
     },
-    [quickAssignOrderId, dateStr, slotsForDay, rankedScores, filteredInstallers, loadData, showSuccess, showError]
+    [quickAssignOrderId, dateStr, slotsForDay, rankedScores, filteredInstallers, unassignedOrders, loadData, showSuccess, showError]
   );
 
   const handleBulkSmartDistribute = useCallback(
@@ -444,7 +468,9 @@ const InstallerSchedulerPage: React.FC = () => {
           showError(`${result.unassignable.length} job(s) could not be assigned: ${result.unassignable.map((u) => u.reason).join(', ')}`);
         }
         if (result.assignments.length > 0) {
-          showSuccess(`Smart distributed ${result.assignments.length} job(s) across ${new Set(result.assignments.map((a) => a.installerId)).size} installer(s)`);
+          const suggestedCount = result.assignments.filter((a) => a.windowReason && !a.windowReason.includes('as requested')).length;
+          const msg = `Smart distributed ${result.assignments.length} job(s) across ${new Set(result.assignments.map((a) => a.installerId)).size} installer(s)`;
+          showSuccess(suggestedCount > 0 ? `${msg} · ${suggestedCount} time(s) optimized` : msg);
         }
 
         setSelectedOrderIds(new Set());
@@ -493,7 +519,9 @@ const InstallerSchedulerPage: React.FC = () => {
           showError(`${result.unassignable.length} job(s) could not be auto-assigned`);
         }
         if (result.assignments.length > 0) {
-          showSuccess(`Auto-assigned ${result.assignments.length} job(s) across ${new Set(result.assignments.map((a) => a.installerId)).size} installer(s)`);
+          const suggestedCount = result.assignments.filter((a) => a.windowReason && !a.windowReason.includes('as requested')).length;
+          const msg = `Auto-assigned ${result.assignments.length} job(s) across ${new Set(result.assignments.map((a) => a.installerId)).size} installer(s)`;
+          showSuccess(suggestedCount > 0 ? `${msg} · ${suggestedCount} time(s) optimized` : msg);
         }
 
         await loadData();
