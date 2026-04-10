@@ -99,6 +99,7 @@ const InstallerSchedulerPage: React.FC = () => {
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
   const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
   const [bulkAssignSubmitting, setBulkAssignSubmitting] = useState(false);
+  const bulkAssignRef = useRef<HTMLDivElement>(null);
 
   const departmentScope = user?.departmentId ?? null;
 
@@ -473,6 +474,17 @@ const InstallerSchedulerPage: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [quickAssignOrderId]);
 
+  useEffect(() => {
+    if (!bulkAssignOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (bulkAssignRef.current && !bulkAssignRef.current.contains(e.target as Node)) {
+        setBulkAssignOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [bulkAssignOpen]);
+
   if (loading && calendarSlots.length === 0 && unassignedOrders.length === 0) {
     return (
       <PageShell
@@ -517,8 +529,11 @@ const InstallerSchedulerPage: React.FC = () => {
             size="sm"
             variant={bulkMode ? 'default' : 'outline'}
             onClick={() => {
-              setBulkMode(!bulkMode);
-              if (bulkMode) {
+              const entering = !bulkMode;
+              setBulkMode(entering);
+              if (entering) {
+                setQuickAssignOrderId(null);
+              } else {
                 setSelectedOrderIds(new Set());
                 setBulkAssignOpen(false);
               }
@@ -619,7 +634,7 @@ const InstallerSchedulerPage: React.FC = () => {
                         Assign All
                       </Button>
                       {bulkAssignOpen && (
-                        <div className="absolute right-0 top-full mt-1 z-50" ref={quickAssignRef}>
+                        <div className="absolute right-0 top-full mt-1 z-50" ref={bulkAssignRef}>
                           <QuickAssignPanel
                             installers={filteredInstallers}
                             workloads={workloads}
