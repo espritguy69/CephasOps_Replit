@@ -28,7 +28,8 @@
     "test:e2e:load": "playwright test --project=load",
     "test:e2e:business": "playwright test --project=business-day",
     "test:e2e:contracts": "playwright test --project=api-contracts",
-    "test:e2e:security": "playwright test --project=security"
+    "test:e2e:security": "playwright test --project=security",
+    "test:e2e:scheduler": "playwright test --project=scheduler"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

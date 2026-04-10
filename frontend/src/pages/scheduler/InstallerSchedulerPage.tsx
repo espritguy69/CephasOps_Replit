@@ -9,7 +9,7 @@ import {
   useDraggable,
   type DragEndEvent,
 } from '@dnd-kit/core';
-import { Calendar, Clock, CheckCircle2, Users, Wrench, Plus, AlertTriangle, X, Search, CheckSquare, Square } from 'lucide-react';
+import { Calendar, Clock, CheckCircle2, Users, Wrench, Plus, AlertTriangle, X, Search, CheckSquare, Square, Wand2 } from 'lucide-react';
 import {
   getUnassignedOrders,
   getCalendar,
@@ -36,11 +36,19 @@ import StatusFilterBar from '../../components/scheduler/StatusFilterBar';
 import SchedulerToolbar, { type SchedulerViewMode } from '../../components/scheduler/SchedulerToolbar';
 import SchedulerGrid from '../../components/scheduler/SchedulerGrid';
 import SchedulerDetailDrawer from '../../components/scheduler/SchedulerDetailDrawer';
-import QuickAssignPanel, {
+import QuickAssignPanel from '../../components/scheduler/QuickAssignPanel';
+import SchedulerSummaryBar, { computeSummaryStats } from '../../components/scheduler/SchedulerSummaryBar';
+import {
   computeWorkloads,
-  getRecommendedInstaller,
+  rankInstallers,
+  checkConflict,
+  autoAssignJobs,
+  smartDistribute,
   type InstallerWorkload,
-} from '../../components/scheduler/QuickAssignPanel';
+  type JobContext,
+  type ScoringResult,
+  type AutoAssignResult,
+} from '../../lib/scheduler/scoringEngine';
 import { useAuth } from '../../contexts/AuthContext';
 import type { CalendarSlot, CreateSlotRequest, ScheduleConflict } from '../../types/scheduler';
 import type { ServiceInstaller } from '../../types/serviceInstallers';
@@ -222,23 +230,31 @@ const InstallerSchedulerPage: React.FC = () => {
     return map;
   }, [workloads]);
 
-  const recommended = useMemo(
-    () => getRecommendedInstaller(filteredInstallers, workloads),
-    [filteredInstallers, workloads]
+  const activeJobContext = useMemo((): JobContext | null => {
+    if (!quickAssignOrderId) return null;
+    const order = unassignedOrders.find((o) => o.orderId === quickAssignOrderId);
+    if (!order) return null;
+    return {
+      orderId: order.orderId,
+      orderType: order.orderType,
+      buildingName: order.buildingName,
+      address: order.address,
+      appointmentDate: order.appointmentDate,
+      customerName: order.customerName,
+    };
+  }, [quickAssignOrderId, unassignedOrders]);
+
+  const rankedScores = useMemo((): ScoringResult[] => {
+    if (!activeJobContext) return rankInstallers(filteredInstallers, { orderId: '', orderType: '' }, slotsForDay, workloads, dateStr);
+    return rankInstallers(filteredInstallers, activeJobContext, slotsForDay, workloads, dateStr);
+  }, [filteredInstallers, activeJobContext, slotsForDay, workloads, dateStr]);
+
+  const summaryStats = useMemo(
+    () => computeSummaryStats(workloads, slotsForDay.length, unassignedOrders.length),
+    [workloads, slotsForDay, unassignedOrders]
   );
 
-  const stats = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split('T')[0];
-    const todayJobs = calendarSlots.filter((s) => s.date === todayStr).length;
-    return {
-      todayJobs,
-      pending: unassignedOrders.length,
-      completed: calendarSlots.filter((s) => new Date(s.date + 'T00:00:00') < today).length,
-      technicians: serviceInstallers.length,
-    };
-  }, [calendarSlots, unassignedOrders, serviceInstallers]);
+  const [autoAssigning, setAutoAssigning] = useState(false);
 
   const handleSlotClick = useCallback((slot: CalendarSlot) => {
     setDetailSlot(slot);
@@ -250,6 +266,13 @@ const InstallerSchedulerPage: React.FC = () => {
       slot: CalendarSlot,
       target: { installerId: string; date: string; windowFrom: string; windowTo: string }
     ) => {
+      const otherSlots = calendarSlots.filter((s) => s.id !== slot.id);
+      const conflict = checkConflict(target.installerId, target.date, target.windowFrom, target.windowTo, otherSlots);
+      if (conflict.hasConflict) {
+        showError(conflict.message || 'Installer is busy at this time — move rejected');
+        return;
+      }
+
       try {
         await updateSlot(slot.id, {
           serviceInstallerId: target.installerId,
@@ -263,7 +286,7 @@ const InstallerSchedulerPage: React.FC = () => {
         showError(err instanceof Error ? err.message : 'Failed to move appointment');
       }
     },
-    [loadData, showSuccess, showError]
+    [calendarSlots, loadData, showSuccess, showError]
   );
 
   const handleDropUnassigned = useCallback(
@@ -271,6 +294,12 @@ const InstallerSchedulerPage: React.FC = () => {
       orderId: string,
       target: { installerId: string; date: string; windowFrom: string; windowTo: string }
     ) => {
+      const conflict = checkConflict(target.installerId, target.date, target.windowFrom, target.windowTo, calendarSlots);
+      if (conflict.hasConflict) {
+        showError(conflict.message || 'Installer is busy at this time — drop rejected');
+        return;
+      }
+
       try {
         await createSlot({
           orderId,
@@ -286,7 +315,7 @@ const InstallerSchedulerPage: React.FC = () => {
         showError(err instanceof Error ? err.message : 'Failed to assign job');
       }
     },
-    [loadData, showSuccess, showError]
+    [calendarSlots, loadData, showSuccess, showError]
   );
 
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor));
@@ -329,56 +358,143 @@ const InstallerSchedulerPage: React.FC = () => {
   const handleQuickAssign = useCallback(
     async (installerId: string) => {
       if (!quickAssignOrderId) return;
+
+      const windowFrom = '09:00:00';
+      const windowTo = '11:00:00';
+      const conflict = checkConflict(installerId, dateStr, windowFrom, windowTo, slotsForDay);
+      if (conflict.hasConflict) {
+        showError(conflict.message || 'Installer is busy at this time');
+        return;
+      }
+
+      const score = rankedScores.find((r) => r.installerId === installerId);
+      if (score?.blocked) {
+        showError(score.blockReason || 'Cannot assign to this installer');
+        return;
+      }
+
       try {
         setQuickAssignSubmitting(true);
         await createSlot({
           orderId: quickAssignOrderId,
           serviceInstallerId: installerId,
           date: dateStr,
-          windowFrom: '09:00:00',
-          windowTo: '11:00:00',
+          windowFrom,
+          windowTo,
         });
         await updateOrder(quickAssignOrderId, { status: 'Assigned', assignedSiId: installerId });
-        showSuccess('Job assigned');
+        const installer = filteredInstallers.find((i) => i.id === installerId);
+        showSuccess(`Assigned to ${installer?.name || 'installer'}${score ? ` (score: ${Math.round(score.score)})` : ''}`);
         setQuickAssignOrderId(null);
         await loadData();
       } catch (err: any) {
-        showError(err?.message || 'Failed to assign job');
+        const msg = err?.message || 'Failed to assign job';
+        if (msg.includes('conflict') || msg.includes('overlap')) {
+          showError(`Assignment blocked: ${msg}`);
+        } else if (msg.includes('skill') || msg.includes('mismatch')) {
+          showError(`Skill mismatch: ${msg}`);
+        } else {
+          showError(msg);
+        }
       } finally {
         setQuickAssignSubmitting(false);
       }
     },
-    [quickAssignOrderId, dateStr, loadData, showSuccess, showError]
+    [quickAssignOrderId, dateStr, slotsForDay, rankedScores, filteredInstallers, loadData, showSuccess, showError]
   );
 
-  const handleBulkAssign = useCallback(
-    async (installerId: string) => {
+  const handleBulkSmartDistribute = useCallback(
+    async () => {
       if (selectedOrderIds.size === 0) return;
       try {
         setBulkAssignSubmitting(true);
-        const orderIds = Array.from(selectedOrderIds);
-        for (const orderId of orderIds) {
-          await createSlot({
+        const jobs: JobContext[] = Array.from(selectedOrderIds).map((orderId) => {
+          const order = unassignedOrders.find((o) => o.orderId === orderId);
+          return {
             orderId,
-            serviceInstallerId: installerId,
+            orderType: order?.orderType,
+            buildingName: order?.buildingName,
+            address: order?.address,
+            appointmentDate: order?.appointmentDate,
+            customerName: order?.customerName,
+          };
+        });
+
+        const result = smartDistribute(jobs, filteredInstallers, slotsForDay, dateStr);
+
+        for (const assignment of result.assignments) {
+          await createSlot({
+            orderId: assignment.orderId,
+            serviceInstallerId: assignment.installerId,
             date: dateStr,
             windowFrom: '09:00:00',
             windowTo: '11:00:00',
           });
-          await updateOrder(orderId, { status: 'Assigned', assignedSiId: installerId });
+          await updateOrder(assignment.orderId, { status: 'Assigned', assignedSiId: assignment.installerId });
         }
-        showSuccess(`${orderIds.length} job(s) assigned`);
+
+        if (result.unassignable.length > 0) {
+          showError(`${result.unassignable.length} job(s) could not be assigned: ${result.unassignable.map((u) => u.reason).join(', ')}`);
+        }
+        if (result.assignments.length > 0) {
+          showSuccess(`Smart distributed ${result.assignments.length} job(s) across ${new Set(result.assignments.map((a) => a.installerId)).size} installer(s)`);
+        }
+
         setSelectedOrderIds(new Set());
         setBulkMode(false);
         setBulkAssignOpen(false);
         await loadData();
       } catch (err: any) {
-        showError(err?.message || 'Failed to bulk assign');
+        showError(err?.message || 'Failed to distribute jobs');
       } finally {
         setBulkAssignSubmitting(false);
       }
     },
-    [selectedOrderIds, dateStr, loadData, showSuccess, showError]
+    [selectedOrderIds, unassignedOrders, filteredInstallers, slotsForDay, dateStr, loadData, showSuccess, showError]
+  );
+
+  const handleAutoAssignAll = useCallback(
+    async () => {
+      if (unassignedOrders.length === 0) return;
+      try {
+        setAutoAssigning(true);
+        const jobs: JobContext[] = unassignedOrders.map((o) => ({
+          orderId: o.orderId,
+          orderType: o.orderType,
+          buildingName: o.buildingName,
+          address: o.address,
+          appointmentDate: o.appointmentDate,
+          customerName: o.customerName,
+        }));
+
+        const result = autoAssignJobs(jobs, filteredInstallers, slotsForDay, dateStr);
+
+        for (const assignment of result.assignments) {
+          await createSlot({
+            orderId: assignment.orderId,
+            serviceInstallerId: assignment.installerId,
+            date: dateStr,
+            windowFrom: '09:00:00',
+            windowTo: '11:00:00',
+          });
+          await updateOrder(assignment.orderId, { status: 'Assigned', assignedSiId: assignment.installerId });
+        }
+
+        if (result.unassignable.length > 0) {
+          showError(`${result.unassignable.length} job(s) could not be auto-assigned`);
+        }
+        if (result.assignments.length > 0) {
+          showSuccess(`Auto-assigned ${result.assignments.length} job(s) across ${new Set(result.assignments.map((a) => a.installerId)).size} installer(s)`);
+        }
+
+        await loadData();
+      } catch (err: any) {
+        showError(err?.message || 'Auto-assign failed');
+      } finally {
+        setAutoAssigning(false);
+      }
+    },
+    [unassignedOrders, filteredInstallers, slotsForDay, dateStr, loadData, showSuccess, showError]
   );
 
   const toggleOrderSelection = useCallback((orderId: string) => {
@@ -527,6 +643,15 @@ const InstallerSchedulerPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <Button
             size="sm"
+            variant="outline"
+            onClick={handleAutoAssignAll}
+            disabled={autoAssigning || unassignedOrders.length === 0}
+          >
+            <Wand2 className="h-4 w-4 mr-1.5" />
+            {autoAssigning ? 'Assigning...' : 'Auto Assign All'}
+          </Button>
+          <Button
+            size="sm"
             variant={bulkMode ? 'default' : 'outline'}
             onClick={() => {
               const entering = !bulkMode;
@@ -565,6 +690,15 @@ const InstallerSchedulerPage: React.FC = () => {
               </Button>
             </div>
           )}
+
+          <SchedulerSummaryBar
+            totalJobs={summaryStats.totalJobs}
+            unassignedCount={summaryStats.unassignedCount}
+            overloadedInstallers={summaryStats.overloadedInstallers}
+            totalInstallers={summaryStats.totalInstallers}
+            avgUtilization={summaryStats.avgUtilization}
+            className="mb-2"
+          />
 
           <StatusFilterBar
             statusFilter={statusFilter}
@@ -625,26 +759,17 @@ const InstallerSchedulerPage: React.FC = () => {
                     <span className="text-xs font-medium text-primary">
                       {selectedOrderIds.size} selected
                     </span>
-                    <div className="relative">
+                    <div className="flex items-center gap-1.5">
                       <Button
                         size="sm"
+                        variant="outline"
                         className="text-xs h-7"
-                        onClick={() => setBulkAssignOpen(!bulkAssignOpen)}
+                        onClick={handleBulkSmartDistribute}
+                        disabled={bulkAssignSubmitting}
                       >
-                        Assign All
+                        <Wand2 className="h-3 w-3 mr-1" />
+                        {bulkAssignSubmitting ? 'Distributing...' : 'Smart Distribute'}
                       </Button>
-                      {bulkAssignOpen && (
-                        <div className="absolute right-0 top-full mt-1 z-50" ref={bulkAssignRef}>
-                          <QuickAssignPanel
-                            installers={filteredInstallers}
-                            workloads={workloads}
-                            recommended={recommended}
-                            onAssign={handleBulkAssign}
-                            onClose={() => setBulkAssignOpen(false)}
-                            isSubmitting={bulkAssignSubmitting}
-                          />
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -677,7 +802,7 @@ const InstallerSchedulerPage: React.FC = () => {
                             <QuickAssignPanel
                               installers={filteredInstallers}
                               workloads={workloads}
-                              recommended={recommended}
+                              rankedScores={rankedScores}
                               onAssign={handleQuickAssign}
                               onClose={() => setQuickAssignOrderId(null)}
                               isSubmitting={quickAssignSubmitting}
@@ -816,14 +941,14 @@ function UnassignedCard({
               onAssignClick();
             }}
             onPointerDown={(e) => e.stopPropagation()}
-            className={`shrink-0 mt-0.5 p-1.5 rounded-lg transition-colors ${
+            className={`shrink-0 mt-0.5 p-1.5 sm:p-1.5 p-2.5 rounded-lg transition-colors touch-manipulation ${
               isAssignActive
                 ? 'bg-primary text-primary-foreground'
                 : 'hover:bg-primary/10 text-primary'
             }`}
             title="Quick assign"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-3.5 w-3.5 sm:h-3.5 sm:w-3.5 h-5 w-5" />
           </button>
         )}
       </div>

@@ -138,9 +138,14 @@ export default defineConfig({
       testMatch: /security\.spec\.ts/,
     },
     {
+      name: 'scheduler',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /scheduler\.spec\.ts/,
+    },
+    {
       name: 'system-validation',
       use: { ...devices['Desktop Chrome'] },
-      testMatch: /auth\.login\.spec\.ts|tenant-isolation\.spec\.ts|order-lifecycle\.spec\.ts|order-inventory\.spec\.ts|billing-flow\.spec\.ts|protected-routes\.spec\.ts|edge-cases\.spec\.ts|idempotency\.spec\.ts|financial-reconciliation\.spec\.ts|load\.spec\.ts|business-day\.spec\.ts|api-contract\.spec\.ts|security\.spec\.ts/,
+      testMatch: /auth\.login\.spec\.ts|tenant-isolation\.spec\.ts|order-lifecycle\.spec\.ts|order-inventory\.spec\.ts|billing-flow\.spec\.ts|protected-routes\.spec\.ts|edge-cases\.spec\.ts|idempotency\.spec\.ts|financial-reconciliation\.spec\.ts|load\.spec\.ts|business-day\.spec\.ts|api-contract\.spec\.ts|security\.spec\.ts|scheduler\.spec\.ts/,
     },
   ],
   webServer: {

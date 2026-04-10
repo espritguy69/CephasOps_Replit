@@ -1,53 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Search, Star, X, Check, Loader2 } from 'lucide-react';
+import { Search, Star, X, Loader2, ShieldAlert, TrendingUp } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { ServiceInstaller } from '../../types/serviceInstallers';
-import type { CalendarSlot } from '../../types/scheduler';
-
-export interface InstallerWorkload {
-  installerId: string;
-  jobCount: number;
-  level: 'free' | 'medium' | 'overloaded';
-}
-
-export function computeWorkloads(
-  installers: ServiceInstaller[],
-  slots: CalendarSlot[]
-): InstallerWorkload[] {
-  return installers.map((inst) => {
-    const jobCount = slots.filter(
-      (s) => (s.serviceInstallerId || s.siId) === inst.id
-    ).length;
-    let level: 'free' | 'medium' | 'overloaded' = 'free';
-    if (jobCount >= 6) level = 'overloaded';
-    else if (jobCount >= 3) level = 'medium';
-    return { installerId: inst.id, jobCount, level };
-  });
-}
-
-export function getRecommendedInstaller(
-  installers: ServiceInstaller[],
-  workloads: InstallerWorkload[]
-): { installer: ServiceInstaller; reason: string } | null {
-  if (installers.length === 0) return null;
-
-  const sorted = [...installers].sort((a, b) => {
-    const wA = workloads.find((w) => w.installerId === a.id);
-    const wB = workloads.find((w) => w.installerId === b.id);
-    return (wA?.jobCount ?? 0) - (wB?.jobCount ?? 0);
-  });
-
-  const best = sorted[0];
-  const bestWorkload = workloads.find((w) => w.installerId === best.id);
-  const jobCount = bestWorkload?.jobCount ?? 0;
-
-  let reason = 'Available';
-  if (jobCount === 0) reason = 'Available - No jobs today';
-  else if (jobCount <= 2) reason = 'Low workload';
-  else reason = 'Lowest workload';
-
-  return { installer: best, reason };
-}
+import type { InstallerWorkload, ScoringResult } from '../../lib/scheduler/scoringEngine';
 
 const WORKLOAD_COLORS = {
   free: 'bg-emerald-500',
@@ -68,28 +23,31 @@ const WORKLOAD_BG_COLORS = {
 } as const;
 
 interface NavigableItem {
-  type: 'recommended' | 'installer';
+  type: 'top-pick' | 'installer';
   installer: ServiceInstaller;
-  reason?: string;
+  scoringResult?: ScoringResult;
+  rank?: number;
 }
 
 interface QuickAssignPanelProps {
   installers: ServiceInstaller[];
   workloads: InstallerWorkload[];
-  recommended: { installer: ServiceInstaller; reason: string } | null;
+  rankedScores?: ScoringResult[];
   onAssign: (installerId: string) => void;
   onClose: () => void;
   isSubmitting?: boolean;
+  mode?: 'single' | 'bulk-distribute';
   className?: string;
 }
 
 const QuickAssignPanel: React.FC<QuickAssignPanelProps> = ({
   installers,
   workloads,
-  recommended,
+  rankedScores,
   onAssign,
   onClose,
   isSubmitting = false,
+  mode = 'single',
   className,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -118,21 +76,41 @@ const QuickAssignPanel: React.FC<QuickAssignPanelProps> = ({
     );
   }, [installers, debouncedQuery]);
 
+  const scoreMap = useMemo(() => {
+    const map = new Map<string, ScoringResult>();
+    if (rankedScores) {
+      for (const s of rankedScores) map.set(s.installerId, s);
+    }
+    return map;
+  }, [rankedScores]);
+
+  const topPicks = useMemo((): ScoringResult[] => {
+    if (!rankedScores || debouncedQuery.trim()) return [];
+    return rankedScores.filter((r) => !r.blocked && r.score > 0).slice(0, 3);
+  }, [rankedScores, debouncedQuery]);
+
   const navigableItems = useMemo((): NavigableItem[] => {
     const items: NavigableItem[] = [];
     const isSearching = debouncedQuery.trim().length > 0;
-    if (!isSearching && recommended) {
-      items.push({
-        type: 'recommended',
-        installer: recommended.installer,
-        reason: recommended.reason,
+
+    if (!isSearching) {
+      topPicks.forEach((pick, idx) => {
+        const inst = installers.find((i) => i.id === pick.installerId);
+        if (inst) {
+          items.push({ type: 'top-pick', installer: inst, scoringResult: pick, rank: idx + 1 });
+        }
       });
     }
+
     for (const inst of filtered) {
-      items.push({ type: 'installer', installer: inst });
+      items.push({
+        type: 'installer',
+        installer: inst,
+        scoringResult: scoreMap.get(inst.id),
+      });
     }
     return items;
-  }, [filtered, recommended, debouncedQuery]);
+  }, [filtered, topPicks, installers, scoreMap, debouncedQuery]);
 
   useEffect(() => {
     setHighlightIndex(0);
@@ -159,7 +137,7 @@ const QuickAssignPanel: React.FC<QuickAssignPanelProps> = ({
     } else if (e.key === 'Enter') {
       e.preventDefault();
       const item = navigableItems[highlightIndex];
-      if (item) onAssign(item.installer.id);
+      if (item && !(item.scoringResult?.blocked)) onAssign(item.installer.id);
     } else if (e.key === 'Escape') {
       onClose();
     }
@@ -171,11 +149,13 @@ const QuickAssignPanel: React.FC<QuickAssignPanelProps> = ({
   }, [highlightIndex]);
 
   const isSearching = debouncedQuery.trim().length > 0;
+  const topPickIds = new Set(topPicks.map((p) => p.installerId));
 
   return (
     <div
       className={cn(
-        'w-72 bg-popover border rounded-xl shadow-xl overflow-hidden animate-in fade-in-0 slide-in-from-top-2 duration-150',
+        'w-80 bg-popover border rounded-xl shadow-xl overflow-hidden animate-in fade-in-0 slide-in-from-top-2 duration-150',
+        'max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:top-auto max-sm:w-full max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:border-t max-sm:border-x-0 max-sm:border-b-0 max-sm:shadow-2xl max-sm:max-h-[70vh] max-sm:animate-in max-sm:slide-in-from-bottom-4 max-sm:z-[100]',
         className
       )}
       role="listbox"
@@ -205,11 +185,11 @@ const QuickAssignPanel: React.FC<QuickAssignPanelProps> = ({
         </button>
       </div>
 
-      <div ref={listRef} className="max-h-64 overflow-y-auto">
+      <div ref={listRef} className="max-h-72 overflow-y-auto">
         {isSubmitting && (
           <div className="flex items-center justify-center py-6 gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Assigning...
+            {mode === 'bulk-distribute' ? 'Distributing...' : 'Assigning...'}
           </div>
         )}
 
@@ -219,15 +199,28 @@ const QuickAssignPanel: React.FC<QuickAssignPanelProps> = ({
           </div>
         )}
 
+        {!isSubmitting && topPicks.length > 0 && !isSearching && (
+          <div className="px-3 py-1.5 bg-primary/5 border-b">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
+              <TrendingUp className="h-3 w-3" />
+              <span>Smart Recommendations</span>
+            </div>
+          </div>
+        )}
+
         {!isSubmitting &&
           navigableItems.map((item, idx) => {
             const w = getWorkload(item.installer.id);
             const isHighlighted = highlightIndex === idx;
+            const isBlocked = item.scoringResult?.blocked;
+            const isTopPick = item.type === 'top-pick';
+            const isTopPickDuplicate = !isSearching && topPickIds.has(item.installer.id) && item.type === 'installer';
 
-            if (item.type === 'recommended') {
+            if (isTopPick && !isSearching) {
+              const isBest = item.rank === 1;
               return (
                 <button
-                  key={`rec-${item.installer.id}`}
+                  key={`top-${item.installer.id}`}
                   id={`nav-item-${idx}`}
                   data-nav-index={idx}
                   type="button"
@@ -235,27 +228,45 @@ const QuickAssignPanel: React.FC<QuickAssignPanelProps> = ({
                   aria-selected={isHighlighted}
                   onClick={() => onAssign(item.installer.id)}
                   className={cn(
-                    'w-full text-left px-3 py-2.5 flex items-center gap-3 border-b-2 border-primary/20 transition-colors',
-                    'bg-primary/5 hover:bg-primary/10',
-                    isHighlighted && 'ring-2 ring-inset ring-primary/30'
+                    'w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors',
+                    isBest
+                      ? 'bg-primary/5 hover:bg-primary/10 border-b border-primary/10'
+                      : 'hover:bg-accent border-b border-transparent',
+                    isHighlighted && (isBest ? 'ring-2 ring-inset ring-primary/30' : 'bg-accent'),
+                    idx === topPicks.length - 1 && 'border-b-2 border-b-border'
                   )}
                 >
-                  <div className="shrink-0 flex items-center justify-center h-8 w-8 rounded-full bg-primary/15 text-primary">
-                    <Star className="h-4 w-4 fill-current" />
+                  <div className="relative shrink-0">
+                    <div
+                      className={cn(
+                        'flex items-center justify-center rounded-full font-semibold',
+                        isBest
+                          ? 'h-8 w-8 bg-primary/15 text-primary'
+                          : 'h-7 w-7 bg-muted text-muted-foreground text-xs'
+                      )}
+                    >
+                      {isBest ? (
+                        <Star className="h-4 w-4 fill-current" />
+                      ) : (
+                        <span className="text-xs font-bold">#{item.rank}</span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-primary truncate">
+                    <div className={cn('text-sm font-medium truncate', isBest && 'font-semibold text-primary')}>
                       {item.installer.name}
                     </div>
-                    <div className="text-xs text-primary/70">{item.reason}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {item.scoringResult?.reasons.slice(0, 3).join(' · ') || 'Available'}
+                    </div>
                   </div>
-                  {w && <WorkloadBadge workload={w} />}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <ScoreBadge score={item.scoringResult?.score ?? 0} />
+                    {w && <UtilizationMini workload={w} />}
+                  </div>
                 </button>
               );
             }
-
-            const isRecommendedDuplicate =
-              !isSearching && recommended?.installer.id === item.installer.id;
 
             return (
               <button
@@ -265,29 +276,51 @@ const QuickAssignPanel: React.FC<QuickAssignPanelProps> = ({
                 type="button"
                 role="option"
                 aria-selected={isHighlighted}
-                onClick={() => onAssign(item.installer.id)}
+                aria-disabled={isBlocked}
+                onClick={() => !isBlocked && onAssign(item.installer.id)}
                 className={cn(
                   'w-full text-left px-3 py-2 flex items-center gap-3 transition-colors',
-                  'hover:bg-accent',
-                  isHighlighted && 'bg-accent',
-                  isRecommendedDuplicate && 'opacity-50'
+                  isBlocked
+                    ? 'opacity-40 cursor-not-allowed'
+                    : 'hover:bg-accent cursor-pointer',
+                  isHighlighted && !isBlocked && 'bg-accent',
+                  isTopPickDuplicate && 'opacity-40'
                 )}
               >
-                <div className="shrink-0 flex items-center justify-center h-7 w-7 rounded-full bg-muted text-muted-foreground text-xs font-semibold">
-                  {item.installer.name
-                    .split(/\s+/)
-                    .map((s) => s[0])
-                    .join('')
-                    .toUpperCase()
-                    .slice(0, 2)}
-                </div>
+                {isBlocked ? (
+                  <div className="shrink-0 flex items-center justify-center h-7 w-7 rounded-full bg-red-100 dark:bg-red-900/30 text-red-500">
+                    <ShieldAlert className="h-3.5 w-3.5" />
+                  </div>
+                ) : (
+                  <div className="shrink-0 flex items-center justify-center h-7 w-7 rounded-full bg-muted text-muted-foreground text-xs font-semibold">
+                    {item.installer.name
+                      .split(/\s+/)
+                      .map((s) => s[0])
+                      .join('')
+                      .toUpperCase()
+                      .slice(0, 2)}
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{item.installer.name}</div>
-                  {item.installer.siLevel && (
-                    <div className="text-xs text-muted-foreground">{item.installer.siLevel}</div>
+                  {isBlocked ? (
+                    <div className="text-xs text-red-500 truncate">{item.scoringResult?.blockReason}</div>
+                  ) : item.scoringResult ? (
+                    <div className="text-xs text-muted-foreground truncate">
+                      {item.scoringResult.reasons.slice(0, 2).join(' · ')}
+                    </div>
+                  ) : (
+                    item.installer.siLevel && (
+                      <div className="text-xs text-muted-foreground">{item.installer.siLevel}</div>
+                    )
                   )}
                 </div>
-                {w && <WorkloadBadge workload={w} />}
+                <div className="flex items-center gap-2 shrink-0">
+                  {item.scoringResult && !isBlocked && (
+                    <ScoreBadge score={item.scoringResult.score} />
+                  )}
+                  {w && <UtilizationMini workload={w} />}
+                </div>
               </button>
             );
           })}
@@ -308,7 +341,41 @@ const QuickAssignPanel: React.FC<QuickAssignPanelProps> = ({
   );
 };
 
-function WorkloadBadge({ workload }: { workload: InstallerWorkload }) {
+function ScoreBadge({ score }: { score: number }) {
+  const color =
+    score >= 70
+      ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30'
+      : score >= 40
+        ? 'text-amber-600 bg-amber-50 dark:bg-amber-950/30'
+        : 'text-red-600 bg-red-50 dark:bg-red-950/30';
+
+  return (
+    <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded-md tabular-nums', color)}>
+      {Math.round(score)}
+    </span>
+  );
+}
+
+function UtilizationMini({ workload }: { workload: InstallerWorkload }) {
+  return (
+    <div className="flex items-center gap-1">
+      <div className="w-8 h-1.5 bg-muted rounded-full overflow-hidden">
+        <div
+          className={cn(
+            'h-full rounded-full',
+            WORKLOAD_COLORS[workload.level]
+          )}
+          style={{ width: `${Math.min(workload.utilizationPct, 100)}%` }}
+        />
+      </div>
+      <span className={cn('text-[10px] tabular-nums', WORKLOAD_TEXT_COLORS[workload.level])}>
+        {workload.utilizationPct}%
+      </span>
+    </div>
+  );
+}
+
+export function WorkloadBadge({ workload }: { workload: InstallerWorkload }) {
   return (
     <div
       className={cn(
@@ -322,5 +389,4 @@ function WorkloadBadge({ workload }: { workload: InstallerWorkload }) {
   );
 }
 
-export { WorkloadBadge };
 export default QuickAssignPanel;

@@ -13,7 +13,7 @@ import type { CalendarSlot } from '../../types/scheduler';
 import type { SIAvailability, LeaveRequest } from '../../types/scheduler';
 import type { ServiceInstaller } from '../../types/serviceInstallers';
 import { cn } from '../../lib/utils';
-import type { InstallerWorkload } from './QuickAssignPanel';
+import type { InstallerWorkload } from '../../lib/scheduler/scoringEngine';
 
 function parseTimeToMinutes(timeStr: string): number {
   const parts = timeStr.split(':').map(Number);
@@ -86,6 +86,8 @@ const SchedulerGrid: React.FC<SchedulerGridProps> = ({
                 jobCount={slotsByInstaller[inst.id]?.length ?? 0}
                 availabilitySummary={undefined}
                 workloadLevel={workloadMap?.[inst.id]?.level}
+                utilizationPct={workloadMap?.[inst.id]?.utilizationPct ?? 0}
+                totalMinutes={workloadMap?.[inst.id]?.totalMinutes ?? 0}
               />
             </div>
           ))}
@@ -240,7 +242,7 @@ interface DroppableCellProps {
 }
 
 function DroppableCell({ id, installerId, date, windowFrom, windowTo, style, onDropSlot, onDropUnassigned }: DroppableCellProps) {
-  const { setNodeRef, isOver } = useDroppable({
+  const { setNodeRef, isOver, active } = useDroppable({
     id,
     data: {
       type: 'scheduler-cell',
@@ -250,12 +252,14 @@ function DroppableCell({ id, installerId, date, windowFrom, windowTo, style, onD
       windowTo,
     },
   });
+
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        'absolute left-0 right-0 border-b border-dashed border-transparent transition-colors duration-150',
-        isOver && 'bg-primary/15 border-primary/40 shadow-inner'
+        'absolute left-0 right-0 border-b border-dashed border-transparent transition-all duration-150',
+        isOver && 'bg-emerald-500/15 border-emerald-500/40 shadow-inner ring-1 ring-inset ring-emerald-500/20',
+        !isOver && active && 'bg-primary/5 border-primary/10'
       )}
       style={style}
       aria-hidden

@@ -8,6 +8,8 @@ export interface InstallerColumnHeaderProps {
   jobCount: number;
   availabilitySummary?: string;
   workloadLevel?: 'free' | 'medium' | 'overloaded';
+  utilizationPct?: number;
+  totalMinutes?: number;
   isCompact?: boolean;
   className?: string;
 }
@@ -40,16 +42,29 @@ const WORKLOAD_LABEL = {
   overloaded: 'text-red-600 dark:text-red-400',
 } as const;
 
+const UTILIZATION_BAR = {
+  free: 'bg-emerald-500',
+  medium: 'bg-amber-500',
+  overloaded: 'bg-red-500',
+} as const;
+
 const InstallerColumnHeader: React.FC<InstallerColumnHeaderProps> = ({
   installer,
   jobCount,
   availabilitySummary,
   workloadLevel = 'free',
+  utilizationPct = 0,
+  totalMinutes = 0,
   isCompact = false,
   className,
 }) => {
   const initials = getInitials(installer.name);
   const badge = installer.siLevel || (installer.installerType === 'Subcontractor' ? 'Subcon' : undefined);
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = totalMinutes % 60;
+  const timeLabel = totalMinutes > 0
+    ? `${hours}h${mins > 0 ? `${mins}m` : ''}`
+    : '0h';
 
   return (
     <div
@@ -75,7 +90,7 @@ const InstallerColumnHeader: React.FC<InstallerColumnHeaderProps> = ({
               WORKLOAD_DOT[workloadLevel],
               WORKLOAD_RING[workloadLevel]
             )}
-            title={`${workloadLevel} - ${jobCount} jobs`}
+            title={`${workloadLevel} - ${jobCount} jobs - ${utilizationPct}% utilized`}
           />
         </div>
         <div className="min-w-0 flex-1">
@@ -85,17 +100,30 @@ const InstallerColumnHeader: React.FC<InstallerColumnHeaderProps> = ({
           )}
         </div>
       </div>
+
+      <div className="w-full mt-1.5 px-1">
+        <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+          <div
+            className={cn(
+              'h-full rounded-full transition-all duration-500',
+              UTILIZATION_BAR[workloadLevel]
+            )}
+            style={{ width: `${Math.min(utilizationPct, 100)}%` }}
+          />
+        </div>
+      </div>
+
       <div className="mt-1 flex items-center justify-between w-full gap-1 text-xs">
-        <span className="truncate text-muted-foreground" title={availabilitySummary}>
-          {availabilitySummary ?? '—'}
-        </span>
         <span
           className={cn(
             'shrink-0 font-semibold tabular-nums',
             WORKLOAD_LABEL[workloadLevel]
           )}
         >
-          {jobCount} {jobCount === 1 ? 'job' : 'jobs'}
+          {utilizationPct}%
+        </span>
+        <span className="text-muted-foreground tabular-nums">
+          {timeLabel} · {jobCount} {jobCount === 1 ? 'job' : 'jobs'}
         </span>
       </div>
     </div>
