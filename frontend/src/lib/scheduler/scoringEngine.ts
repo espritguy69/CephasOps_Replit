@@ -17,6 +17,7 @@ export type {
   InstallerScoringWeights,
   WindowScoringWeights,
   WorkloadThresholds,
+  ScoringThresholds,
 } from './config/schedulerConfig';
 
 export {
@@ -24,6 +25,9 @@ export {
   getSystemDefaultConfig,
   setTenantConfigOverrides,
   clearTenantConfigOverrides,
+  clearAllTenantConfigs,
+  setActiveTenant,
+  getActiveTenant,
 } from './config/schedulerConfig';
 
 export {
@@ -54,6 +58,7 @@ export {
   logOverride,
   getOverrideLog,
   clearOverrideLog,
+  clearAllOverrideLogs,
   canOverride,
   validateOverride,
 } from './policies/overridePolicy';

@@ -1,7 +1,7 @@
 import type { OverrideRecord } from '../types';
-import { getSchedulerConfig } from '../config/schedulerConfig';
+import { getSchedulerConfig, getActiveTenant } from '../config/schedulerConfig';
 
-const _overrideLog: OverrideRecord[] = [];
+const _overrideStore = new Map<string, OverrideRecord[]>();
 
 export type RuleType = 'hard' | 'soft' | 'override';
 
@@ -12,12 +12,23 @@ export interface SchedulerRule {
   check: (...args: any[]) => { passed: boolean; reason: string };
 }
 
+function getTenantLog(tenantId: string): OverrideRecord[] {
+  let log = _overrideStore.get(tenantId);
+  if (!log) {
+    log = [];
+    _overrideStore.set(tenantId, log);
+  }
+  return log;
+}
+
 export function logOverride(
   userId: string,
   reason: string,
   originalValue?: unknown,
-  overriddenValue?: unknown
+  overriddenValue?: unknown,
+  tenantId?: string
 ): OverrideRecord {
+  const resolvedTenant = tenantId || getActiveTenant() || '__system__';
   const record: OverrideRecord = {
     overridden: true,
     reason,
@@ -27,16 +38,22 @@ export function logOverride(
     overriddenValue,
   };
 
-  _overrideLog.push(record);
+  getTenantLog(resolvedTenant).push(record);
   return record;
 }
 
-export function getOverrideLog(): readonly OverrideRecord[] {
-  return _overrideLog;
+export function getOverrideLog(tenantId?: string): readonly OverrideRecord[] {
+  const resolvedTenant = tenantId || getActiveTenant() || '__system__';
+  return _overrideStore.get(resolvedTenant) || [];
 }
 
-export function clearOverrideLog(): void {
-  _overrideLog.length = 0;
+export function clearOverrideLog(tenantId?: string): void {
+  const resolvedTenant = tenantId || getActiveTenant() || '__system__';
+  _overrideStore.delete(resolvedTenant);
+}
+
+export function clearAllOverrideLogs(): void {
+  _overrideStore.clear();
 }
 
 export function canOverride(): boolean {

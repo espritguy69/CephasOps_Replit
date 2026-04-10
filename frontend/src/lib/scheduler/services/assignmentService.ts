@@ -5,6 +5,7 @@ import type {
   AutoAssignment,
   AutoAssignResult,
 } from '../types';
+import { getSchedulerConfig } from '../config/schedulerConfig';
 import { computeWorkloads, rankInstallers } from './scoringService';
 import { findBestWindow } from './timeSlotService';
 
@@ -14,14 +15,16 @@ export function autoAssignJobs(
   allSlots: CalendarSlot[],
   fallbackDate: string
 ): AutoAssignResult {
+  const cfg = getSchedulerConfig();
+  const th = cfg.scoringThresholds;
   const assignments: AutoAssignment[] = [];
   const unassignable: AutoAssignResult['unassignable'] = [];
 
   let dynamicSlots = [...allSlots];
 
   const sortedJobs = [...jobs].sort((a, b) => {
-    const timeA = a.appointmentTime || a.windowFrom || '23:59';
-    const timeB = b.appointmentTime || b.windowFrom || '23:59';
+    const timeA = a.appointmentTime || a.windowFrom || th.defaultSortTime;
+    const timeB = b.appointmentTime || b.windowFrom || th.defaultSortTime;
     return timeA.localeCompare(timeB);
   });
 
@@ -74,7 +77,7 @@ export function autoAssignJobs(
         windowFrom: windowResult.windowFrom,
         windowTo: windowResult.windowTo,
         sequenceIndex: 0,
-        status: 'Draft',
+        status: th.syntheticSlotStatus,
         createdByUserId: '',
         createdAt: new Date().toISOString(),
         serviceType: job.serviceType || job.orderType,

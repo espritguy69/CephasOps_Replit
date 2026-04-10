@@ -1,4 +1,5 @@
 import type { CalendarSlot } from '../types';
+import { getSchedulerConfig } from '../config/schedulerConfig';
 
 export function parseTimeToMinutes(timeStr: string): number {
   const parts = timeStr.split(':').map(Number);
@@ -12,8 +13,9 @@ export function minutesToTime(minutes: number): string {
 }
 
 export function getSlotDuration(slot: CalendarSlot): number {
-  const from = parseTimeToMinutes(slot.windowFrom || slot.startTime || '09:00');
-  const to = parseTimeToMinutes(slot.windowTo || slot.endTime || '11:00');
+  const cfg = getSchedulerConfig();
+  const from = parseTimeToMinutes(slot.windowFrom || slot.startTime || cfg.scoringThresholds.fallbackStartTime);
+  const to = parseTimeToMinutes(slot.windowTo || slot.endTime || cfg.scoringThresholds.fallbackEndTime);
   return Math.max(to - from, 0);
 }
 

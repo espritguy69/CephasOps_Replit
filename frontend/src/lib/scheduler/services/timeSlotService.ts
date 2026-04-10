@@ -59,7 +59,9 @@ function scoreGapFit(
   windowTo: string,
   existingSlots: CalendarSlot[]
 ): { score: number; reason: string } {
-  const weight = getSchedulerConfig().windowScoringWeights.gapFit;
+  const cfg = getSchedulerConfig();
+  const weight = cfg.windowScoringWeights.gapFit;
+  const th = cfg.scoringThresholds;
 
   if (existingSlots.length === 0) {
     return { score: weight * 0.8, reason: 'First job of the day' };
@@ -83,7 +85,7 @@ function scoreGapFit(
     if (slot.from >= wTo) bestGapAfter = Math.min(bestGapAfter, slot.from - wTo);
   }
 
-  const fitsCleanly = bestGapBefore === 0 || bestGapAfter === 0;
+  const fitsCleanly = bestGapBefore <= th.gapFitCleanMinutes || bestGapAfter <= th.gapFitCleanMinutes;
 
   if (fitsCleanly) return { score: weight, reason: 'Fits cleanly between jobs' };
 
@@ -92,8 +94,8 @@ function scoreGapFit(
     bestGapAfter === Infinity ? 999 : bestGapAfter
   );
 
-  if (smallestGap <= 30) return { score: weight * 0.85, reason: 'Near adjacent job' };
-  if (smallestGap <= 60) return { score: weight * 0.6, reason: 'Small gap to next job' };
+  if (smallestGap <= th.gapFitNearMinutes) return { score: weight * 0.85, reason: 'Near adjacent job' };
+  if (smallestGap <= th.gapFitSmallMinutes) return { score: weight * 0.6, reason: 'Small gap to next job' };
   return { score: weight * 0.3, reason: 'Creates idle gap' };
 }
 
@@ -102,10 +104,12 @@ function scoreTravelClustering(
   existingSlots: CalendarSlot[],
   job: JobContext
 ): { score: number; reason: string } {
-  const weight = getSchedulerConfig().windowScoringWeights.travelClustering;
+  const cfg = getSchedulerConfig();
+  const weight = cfg.windowScoringWeights.travelClustering;
+  const th = cfg.scoringThresholds;
 
   if (existingSlots.length === 0 || !job.address) {
-    return { score: weight * 0.5, reason: 'No clustering data' };
+    return { score: weight * th.noDataFactor, reason: 'No clustering data' };
   }
 
   const wFrom = parseTimeToMinutes(windowFrom);
@@ -125,12 +129,12 @@ function scoreTravelClustering(
     }
   }
 
-  if (!nearestSlot) return { score: weight * 0.5, reason: 'No adjacent jobs' };
+  if (!nearestSlot) return { score: weight * th.noDataFactor, reason: 'No adjacent jobs' };
 
   const slotAddr = (nearestSlot.buildingName || '').toLowerCase();
-  const addrWords = new Set(jobAddr.split(/[\s,]+/).filter((w) => w.length > 2));
-  const buildWords = new Set(jobBuilding.split(/[\s,]+/).filter((w) => w.length > 2));
-  const slotWords = new Set(slotAddr.split(/[\s,]+/).filter((w) => w.length > 2));
+  const addrWords = new Set(jobAddr.split(/[\s,]+/).filter((w) => w.length > th.addressWordMinLength));
+  const buildWords = new Set(jobBuilding.split(/[\s,]+/).filter((w) => w.length > th.addressWordMinLength));
+  const slotWords = new Set(slotAddr.split(/[\s,]+/).filter((w) => w.length > th.addressWordMinLength));
   const allJobWords = new Set([...addrWords, ...buildWords]);
 
   let matchCount = 0;
@@ -138,10 +142,10 @@ function scoreTravelClustering(
     if (slotWords.has(w)) matchCount++;
   }
 
-  if (allJobWords.size > 0 && matchCount / allJobWords.size >= 0.4) {
+  if (allJobWords.size > 0 && matchCount / allJobWords.size >= th.travelClusteringMinSimilarity) {
     return { score: weight, reason: 'Near previous job location' };
   }
-  if (matchCount > 0) return { score: weight * 0.6, reason: 'Partial area match' };
+  if (matchCount > 0) return { score: weight * th.partialMatchFactor, reason: 'Partial area match' };
   return { score: weight * 0.3, reason: 'Different area' };
 }
 
@@ -151,7 +155,9 @@ function scoreTimePreference(
   preferredFrom?: string,
   preferredTo?: string
 ): { score: number; reason: string } {
-  const weight = getSchedulerConfig().windowScoringWeights.timePreference;
+  const cfg = getSchedulerConfig();
+  const weight = cfg.windowScoringWeights.timePreference;
+  const th = cfg.scoringThresholds;
 
   if (!preferredFrom || !preferredTo) {
     return { score: weight * 0.7, reason: 'No preference specified' };
@@ -165,9 +171,9 @@ function scoreTimePreference(
   const actStart = parseTimeToMinutes(windowFrom);
   const diff = Math.abs(prefStart - actStart);
 
-  if (diff <= 30) return { score: weight * 0.9, reason: 'Close to requested time' };
-  if (diff <= 60) return { score: weight * 0.7, reason: 'Within 1 hour of preference' };
-  if (diff <= 120) return { score: weight * 0.4, reason: '1-2 hours from preference' };
+  if (diff <= th.timePreferenceCloseMinutes) return { score: weight * 0.9, reason: 'Close to requested time' };
+  if (diff <= th.timePreferenceNearMinutes) return { score: weight * 0.7, reason: 'Within 1 hour of preference' };
+  if (diff <= th.timePreferenceFarMinutes) return { score: weight * 0.4, reason: '1-2 hours from preference' };
   return { score: weight * 0.1, reason: 'Far from preferred time' };
 }
 
@@ -178,14 +184,15 @@ function scoreUtilizationBalance(
 ): { score: number; reason: string } {
   const cfg = getSchedulerConfig();
   const weight = cfg.windowScoringWeights.utilizationBalance;
+  const th = cfg.scoringThresholds;
   const totalExisting = existingSlots.reduce((sum, s) => sum + getSlotDuration(s), 0);
   const newDuration = parseTimeToMinutes(windowTo) - parseTimeToMinutes(windowFrom);
   const totalAfter = totalExisting + newDuration;
   const utilizationAfter = totalAfter / cfg.maxWorkingMinutesPerDay;
 
-  if (utilizationAfter <= 0.6) return { score: weight, reason: 'Balanced workload' };
-  if (utilizationAfter <= 0.8) return { score: weight * 0.7, reason: 'Moderate workload' };
-  if (utilizationAfter <= 0.95) return { score: weight * 0.3, reason: 'Heavy workload' };
+  if (utilizationAfter <= th.utilizationBalancedMax) return { score: weight, reason: 'Balanced workload' };
+  if (utilizationAfter <= th.utilizationModerateMax) return { score: weight * 0.7, reason: 'Moderate workload' };
+  if (utilizationAfter <= th.utilizationHeavyMax) return { score: weight * 0.3, reason: 'Heavy workload' };
   return { score: 0, reason: 'Would exceed capacity' };
 }
 
@@ -194,10 +201,12 @@ function scoreIdleTimeReduction(
   windowTo: string,
   existingSlots: CalendarSlot[]
 ): { score: number; reason: string } {
-  const weight = getSchedulerConfig().windowScoringWeights.idleTimeReduction;
+  const cfg = getSchedulerConfig();
+  const weight = cfg.windowScoringWeights.idleTimeReduction;
+  const th = cfg.scoringThresholds;
 
   if (existingSlots.length === 0) {
-    return { score: weight * 0.5, reason: 'First assignment' };
+    return { score: weight * th.noDataFactor, reason: 'First assignment' };
   }
 
   const allTimes = existingSlots
@@ -229,7 +238,7 @@ function scoreIdleTimeReduction(
 
   const reduction = idleBefore - totalIdle;
   if (reduction > 0) return { score: weight, reason: `Reduces idle time by ${reduction}min` };
-  if (totalIdle <= 60) return { score: weight * 0.7, reason: 'Minimal idle time' };
+  if (totalIdle <= th.idleTimeLowMinutes) return { score: weight * 0.7, reason: 'Minimal idle time' };
   return { score: weight * 0.3, reason: 'Creates idle gaps' };
 }
 
@@ -277,6 +286,7 @@ export function findBestWindow(
   preferredTo?: string
 ): BestWindowResult | NoSlotResult {
   const cfg = getSchedulerConfig();
+  const th = cfg.scoringThresholds;
   const installerDaySlots = getInstallerDaySlots(dynamicSlots, installerId, date);
 
   if (installerDaySlots.length >= cfg.maxJobsPerInstallerPerDay) {
@@ -287,7 +297,7 @@ export function findBestWindow(
     ? parseTimeToMinutes(preferredTo) - parseTimeToMinutes(preferredFrom)
     : cfg.defaultJobDurationMinutes;
 
-  const candidates = generateCandidateWindows(preferredFrom, preferredTo, Math.max(duration, 30));
+  const candidates = generateCandidateWindows(preferredFrom, preferredTo, Math.max(duration, th.minSlotDurationMinutes));
 
   const validWindows: WindowScore[] = [];
   const workStart = parseTimeToMinutes(cfg.workingHours.start);

@@ -6,7 +6,7 @@ import type {
   ScoringResult,
 } from '../types';
 import { getSchedulerConfig } from '../config/schedulerConfig';
-import { parseTimeToMinutes, getSlotDuration, getInstallerAllSlots, getInstallerDaySlots } from './timeUtils';
+import { parseTimeToMinutes, getSlotDuration, getInstallerAllSlots } from './timeUtils';
 import { hasTimeOverlap } from './conflictService';
 import { checkAnyWindowAvailable } from './timeSlotService';
 
@@ -17,11 +17,12 @@ function scoreAvailability(
 ): { score: number; blocked: boolean; blockReason?: string } {
   const cfg = getSchedulerConfig();
   const weights = cfg.installerScoringWeights;
+  const th = cfg.scoringThresholds;
   const dateSlotsRaw = installerSlots.filter((s) => s.date === date);
 
   if (dateSlotsRaw.length >= cfg.maxJobsPerInstallerPerDay) {
     return {
-      score: -100,
+      score: th.blockedScore,
       blocked: true,
       blockReason: `Max ${cfg.maxJobsPerInstallerPerDay} jobs per day reached`,
     };
@@ -33,13 +34,13 @@ function scoreAvailability(
       const hasAnyFreeSlot = checkAnyWindowAvailable(dateSlotsRaw);
       if (!hasAnyFreeSlot) {
         return {
-          score: -100,
+          score: th.blockedScore,
           blocked: true,
           blockReason: 'No available time slots today',
         };
       }
       return {
-        score: weights.availability * 0.5,
+        score: weights.availability * th.noDataFactor,
         blocked: false,
       };
     }
@@ -49,7 +50,7 @@ function scoreAvailability(
   const hasAnyFreeSlot = checkAnyWindowAvailable(dateSlotsRaw);
   if (!hasAnyFreeSlot) {
     return {
-      score: -100,
+      score: th.blockedScore,
       blocked: true,
       blockReason: 'No available time slots today',
     };
@@ -63,31 +64,34 @@ function scoreWorkload(
 ): { score: number; reason: string } {
   const cfg = getSchedulerConfig();
   const weight = cfg.installerScoringWeights.workload;
+  const th = cfg.scoringThresholds;
   const utilizationFactor = 1 - (workload.utilizationPct / 100);
   const score = weight * Math.max(utilizationFactor, 0);
 
   if (workload.jobCount === 0) return { score, reason: 'No jobs today' };
-  if (workload.level === 'free') return { score, reason: 'Low workload' };
-  if (workload.level === 'medium') return { score: score * 0.6, reason: 'Medium workload' };
-  return { score: score * 0.2, reason: 'Overloaded' };
+  if (workload.level === 'free') return { score: score * th.workloadFreeFactor, reason: 'Low workload' };
+  if (workload.level === 'medium') return { score: score * th.workloadMediumFactor, reason: 'Medium workload' };
+  return { score: score * th.workloadOverloadedFactor, reason: 'Overloaded' };
 }
 
 function scoreDistance(
   installer: ServiceInstaller,
   job: JobContext
 ): { score: number; reason: string } {
-  const weight = getSchedulerConfig().installerScoringWeights.distance;
+  const cfg = getSchedulerConfig();
+  const weight = cfg.installerScoringWeights.distance;
+  const th = cfg.scoringThresholds;
 
   if (!installer.address || !job.address) {
-    return { score: weight * 0.5, reason: 'Distance unknown' };
+    return { score: weight * th.noDataFactor, reason: 'Distance unknown' };
   }
 
   const installerAddr = (installer.address || '').toLowerCase();
   const jobAddr = (job.address || '').toLowerCase();
   const buildingName = (job.buildingName || '').toLowerCase();
 
-  const installerWords = new Set(installerAddr.split(/[\s,]+/).filter(w => w.length > 2));
-  const jobWords = new Set([...jobAddr.split(/[\s,]+/).filter(w => w.length > 2), ...buildingName.split(/[\s,]+/).filter(w => w.length > 2)]);
+  const installerWords = new Set(installerAddr.split(/[\s,]+/).filter(w => w.length > th.addressWordMinLength));
+  const jobWords = new Set([...jobAddr.split(/[\s,]+/).filter(w => w.length > th.addressWordMinLength), ...buildingName.split(/[\s,]+/).filter(w => w.length > th.addressWordMinLength)]);
 
   let matchCount = 0;
   for (const w of installerWords) {
@@ -96,8 +100,8 @@ function scoreDistance(
 
   const similarity = jobWords.size > 0 ? matchCount / jobWords.size : 0;
 
-  if (similarity >= 0.5) return { score: weight, reason: 'Same area' };
-  if (similarity >= 0.2) return { score: weight * 0.7, reason: 'Nearby area' };
+  if (similarity >= th.distanceSameAreaMinSimilarity) return { score: weight, reason: 'Same area' };
+  if (similarity >= th.distanceNearbyMinSimilarity) return { score: weight * 0.7, reason: 'Nearby area' };
   return { score: weight * 0.3, reason: 'Different area' };
 }
 
@@ -107,6 +111,7 @@ function scoreSkillMatch(
 ): { score: number; reason: string; blocked: boolean } {
   const cfg = getSchedulerConfig();
   const weight = cfg.installerScoringWeights.skillMatch;
+  const th = cfg.scoringThresholds;
 
   const installerSkills = (installer.skills || [])
     .filter((s) => s.isActive)
@@ -117,7 +122,7 @@ function scoreSkillMatch(
     }));
 
   if (installerSkills.length === 0) {
-    return { score: weight * 0.5, reason: 'Skills not specified', blocked: false };
+    return { score: weight * th.noDataFactor, reason: 'Skills not specified', blocked: false };
   }
 
   const jobType = (job.orderType || job.serviceType || '').toLowerCase();
@@ -144,9 +149,9 @@ function scoreSkillMatch(
     return false;
   });
 
-  if (categoryMatch) return { score: weight * 0.6, reason: 'Partial skill match', blocked: false };
+  if (categoryMatch) return { score: weight * th.partialMatchFactor, reason: 'Partial skill match', blocked: false };
 
-  return { score: -50, reason: 'Skill mismatch', blocked: cfg.enableSkillBlockOnMismatch };
+  return { score: th.skillMismatchPenalty, reason: 'Skill mismatch', blocked: cfg.enableSkillBlockOnMismatch };
 }
 
 function scoreJobHistory(
@@ -154,12 +159,14 @@ function scoreJobHistory(
   job: JobContext,
   allSlots: CalendarSlot[]
 ): { score: number; reason: string } {
-  const weight = getSchedulerConfig().installerScoringWeights.jobHistory;
+  const cfg = getSchedulerConfig();
+  const weight = cfg.installerScoringWeights.jobHistory;
+  const th = cfg.scoringThresholds;
   const installerSlots = getInstallerAllSlots(allSlots, installer.id);
 
   const jobType = (job.orderType || job.serviceType || '').toLowerCase();
   if (!jobType || installerSlots.length === 0) {
-    return { score: weight * 0.5, reason: 'No history data' };
+    return { score: weight * th.noDataFactor, reason: 'No history data' };
   }
 
   const similarJobs = installerSlots.filter((s) => {
@@ -194,15 +201,16 @@ export function getInstallerScore(
 ): ScoringResult {
   const cfg = getSchedulerConfig();
   const weights = cfg.installerScoringWeights;
+  const th = cfg.scoringThresholds;
   const installerSlots = getInstallerAllSlots(allSlots, installer.id);
 
   const avail = scoreAvailability(installerSlots, job, date);
   if (avail.blocked) {
     return {
       installerId: installer.id,
-      score: -100,
+      score: th.blockedScore,
       reasons: [avail.blockReason || 'Time conflict'],
-      breakdown: { availability: -100, workload: 0, distance: 0, skillMatch: 0, jobHistory: 0 },
+      breakdown: { availability: th.blockedScore, workload: 0, distance: 0, skillMatch: 0, jobHistory: 0 },
       blocked: true,
       blockReason: avail.blockReason,
     };
@@ -217,10 +225,10 @@ export function getInstallerScore(
 
   const reasons: string[] = [];
   if (avail.score === weights.availability) reasons.push('Available');
-  if (wl.score >= weights.workload * 0.6) reasons.push(wl.reason);
+  if (wl.score >= weights.workload * th.partialMatchFactor) reasons.push(wl.reason);
   if (dist.score >= weights.distance * 0.7) reasons.push(dist.reason);
-  if (skill.score >= weights.skillMatch * 0.6) reasons.push(skill.reason);
-  if (history.score >= weights.jobHistory * 0.5) reasons.push(history.reason);
+  if (skill.score >= weights.skillMatch * th.partialMatchFactor) reasons.push(skill.reason);
+  if (history.score >= weights.jobHistory * th.noDataFactor) reasons.push(history.reason);
 
   return {
     installerId: installer.id,
