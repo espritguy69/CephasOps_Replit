@@ -1,12 +1,38 @@
 import { defineConfig, devices } from '@playwright/test';
 import path from 'node:path';
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
 import dotenv from 'dotenv';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, '.env') });
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5173';
+if (process.platform === 'linux' && !process.env.CI) {
+  const cacheFile = path.join(__dirname, '.playwright-libgbm-path');
+  let gbmDir = '';
+  if (fs.existsSync(cacheFile)) {
+    gbmDir = fs.readFileSync(cacheFile, 'utf8').trim();
+    if (!fs.existsSync(path.join(gbmDir, 'libgbm.so.1'))) gbmDir = '';
+  }
+  if (!gbmDir) {
+    try {
+      const result = execSync(
+        'ls /nix/store/*mesa*gbm*/lib/libgbm.so.1 2>/dev/null | head -1',
+        { encoding: 'utf8', timeout: 10000 }
+      ).trim();
+      if (result) {
+        gbmDir = path.dirname(result);
+        fs.writeFileSync(cacheFile, gbmDir);
+      }
+    } catch { /* CI or non-Nix: Chromium deps installed via apt */ }
+  }
+  if (gbmDir) {
+    process.env.LD_LIBRARY_PATH = `${gbmDir}:${process.env.LD_LIBRARY_PATH ?? ''}`;
+  }
+}
+
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:5000';
 const AUTH_STORAGE_PATH = '.auth/user.json';
 
 export default defineConfig({

@@ -6,7 +6,7 @@ function getEnv(key: string): string | undefined {
 }
 
 export const e2eEnv = {
-  baseUrl: () => getEnv('PLAYWRIGHT_BASE_URL') ?? 'http://localhost:5173',
+  baseUrl: () => getEnv('PLAYWRIGHT_BASE_URL') ?? 'http://localhost:5000',
   apiBaseUrl: () => getEnv('PLAYWRIGHT_API_BASE_URL') ?? 'http://localhost:5000',
   /** Email for E2E login (TEST_EMAIL or E2E_TEST_USER_EMAIL) */
   email: () => getEnv('TEST_EMAIL') ?? getEnv('E2E_TEST_USER_EMAIL'),
