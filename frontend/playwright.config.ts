@@ -118,9 +118,29 @@ export default defineConfig({
       testMatch: /financial-reconciliation\.spec\.ts/,
     },
     {
+      name: 'load',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /load\.spec\.ts/,
+    },
+    {
+      name: 'business-day',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /business-day\.spec\.ts/,
+    },
+    {
+      name: 'api-contracts',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /api-contract\.spec\.ts/,
+    },
+    {
+      name: 'security',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /security\.spec\.ts/,
+    },
+    {
       name: 'system-validation',
       use: { ...devices['Desktop Chrome'] },
-      testMatch: /auth\.login\.spec\.ts|tenant-isolation\.spec\.ts|order-lifecycle\.spec\.ts|order-inventory\.spec\.ts|billing-flow\.spec\.ts|protected-routes\.spec\.ts|edge-cases\.spec\.ts|idempotency\.spec\.ts|financial-reconciliation\.spec\.ts/,
+      testMatch: /auth\.login\.spec\.ts|tenant-isolation\.spec\.ts|order-lifecycle\.spec\.ts|order-inventory\.spec\.ts|billing-flow\.spec\.ts|protected-routes\.spec\.ts|edge-cases\.spec\.ts|idempotency\.spec\.ts|financial-reconciliation\.spec\.ts|load\.spec\.ts|business-day\.spec\.ts|api-contract\.spec\.ts|security\.spec\.ts/,
     },
   ],
   webServer: {

@@ -24,7 +24,11 @@
     "test:e2e:full": "playwright test --project=system-validation",
     "test:e2e:edge": "playwright test --project=edge-cases",
     "test:e2e:financial": "playwright test --project=financial",
-    "test:e2e:idempotency": "playwright test --project=idempotency"
+    "test:e2e:idempotency": "playwright test --project=idempotency",
+    "test:e2e:load": "playwright test --project=load",
+    "test:e2e:business": "playwright test --project=business-day",
+    "test:e2e:contracts": "playwright test --project=api-contracts",
+    "test:e2e:security": "playwright test --project=security"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
