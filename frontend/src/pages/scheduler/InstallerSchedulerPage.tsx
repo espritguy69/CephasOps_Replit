@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -9,7 +9,7 @@ import {
   useDraggable,
   type DragEndEvent,
 } from '@dnd-kit/core';
-import { Calendar, Clock, CheckCircle2, Users, Wrench, Plus, AlertTriangle, X } from 'lucide-react';
+import { Calendar, Clock, CheckCircle2, Users, Wrench, Plus, AlertTriangle, X, Search, CheckSquare, Square } from 'lucide-react';
 import {
   getUnassignedOrders,
   getCalendar,
@@ -36,6 +36,11 @@ import StatusFilterBar from '../../components/scheduler/StatusFilterBar';
 import SchedulerToolbar, { type SchedulerViewMode } from '../../components/scheduler/SchedulerToolbar';
 import SchedulerGrid from '../../components/scheduler/SchedulerGrid';
 import SchedulerDetailDrawer from '../../components/scheduler/SchedulerDetailDrawer';
+import QuickAssignPanel, {
+  computeWorkloads,
+  getRecommendedInstaller,
+  type InstallerWorkload,
+} from '../../components/scheduler/QuickAssignPanel';
 import { useAuth } from '../../contexts/AuthContext';
 import type { CalendarSlot, CreateSlotRequest, ScheduleConflict } from '../../types/scheduler';
 import type { ServiceInstaller } from '../../types/serviceInstallers';
@@ -61,10 +66,6 @@ function formatTime(date: Date): string {
   return `${h}:${m}:00`;
 }
 
-/**
- * Installer Scheduler Page – Custom Fresha-style resource scheduler.
- * Horizontal installer columns, vertical time grid, drag-and-drop, availability, detail drawer.
- */
 const InstallerSchedulerPage: React.FC = () => {
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
@@ -88,13 +89,16 @@ const InstallerSchedulerPage: React.FC = () => {
   const [detailSlot, setDetailSlot] = useState<CalendarSlot | null>(null);
   const [detailDrawerOpen, setDetailDrawerOpen] = useState(false);
 
-  const [assignModalOpen, setAssignModalOpen] = useState(false);
-  const [assignOrderId, setAssignOrderId] = useState<string>('');
-  const [assignInstallerId, setAssignInstallerId] = useState<string>('');
-  const [assignDate, setAssignDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [assignTimeFrom, setAssignTimeFrom] = useState<string>('09:00');
-  const [assignTimeTo, setAssignTimeTo] = useState<string>('11:00');
-  const [assignSubmitting, setAssignSubmitting] = useState(false);
+  const [quickAssignOrderId, setQuickAssignOrderId] = useState<string | null>(null);
+  const [quickAssignSubmitting, setQuickAssignSubmitting] = useState(false);
+  const quickAssignRef = useRef<HTMLDivElement>(null);
+
+  const [unassignedSearch, setUnassignedSearch] = useState('');
+
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
+  const [bulkAssignOpen, setBulkAssignOpen] = useState(false);
+  const [bulkAssignSubmitting, setBulkAssignSubmitting] = useState(false);
 
   const departmentScope = user?.departmentId ?? null;
 
@@ -189,15 +193,42 @@ const InstallerSchedulerPage: React.FC = () => {
   }, [serviceInstallers, departmentId, installerFilterId]);
 
   const filteredUnassigned = useMemo(() => {
-    if (!statusFilter) return unassignedOrders;
-    return unassignedOrders.filter((o) => o.status === statusFilter);
-  }, [unassignedOrders, statusFilter]);
+    let list = unassignedOrders;
+    if (statusFilter) list = list.filter((o) => o.status === statusFilter);
+    if (unassignedSearch.trim()) {
+      const q = unassignedSearch.toLowerCase();
+      list = list.filter(
+        (o) =>
+          (o.name || '').toLowerCase().includes(q) ||
+          (o.customerName || '').toLowerCase().includes(q) ||
+          (o.serviceId || '').toLowerCase().includes(q) ||
+          (o.buildingName || '').toLowerCase().includes(q) ||
+          (o.address || '').toLowerCase().includes(q) ||
+          (o.description || '').toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [unassignedOrders, statusFilter, unassignedSearch]);
+
+  const workloads = useMemo(
+    () => computeWorkloads(filteredInstallers, slotsForDay),
+    [filteredInstallers, slotsForDay]
+  );
+
+  const workloadMap = useMemo(() => {
+    const map: Record<string, InstallerWorkload> = {};
+    for (const w of workloads) map[w.installerId] = w;
+    return map;
+  }, [workloads]);
+
+  const recommended = useMemo(
+    () => getRecommendedInstaller(filteredInstallers, workloads),
+    [filteredInstallers, workloads]
+  );
 
   const stats = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todayEnd = new Date(today);
-    todayEnd.setHours(23, 59, 59, 999);
     const todayStr = today.toISOString().split('T')[0];
     const todayJobs = calendarSlots.filter((s) => s.date === todayStr).length;
     return {
@@ -294,6 +325,70 @@ const InstallerSchedulerPage: React.FC = () => {
     [calendarSlots, handleDropSlot, handleDropUnassigned]
   );
 
+  const handleQuickAssign = useCallback(
+    async (installerId: string) => {
+      if (!quickAssignOrderId) return;
+      try {
+        setQuickAssignSubmitting(true);
+        await createSlot({
+          orderId: quickAssignOrderId,
+          serviceInstallerId: installerId,
+          date: dateStr,
+          windowFrom: '09:00:00',
+          windowTo: '11:00:00',
+        });
+        await updateOrder(quickAssignOrderId, { status: 'Assigned', assignedSiId: installerId });
+        showSuccess('Job assigned');
+        setQuickAssignOrderId(null);
+        await loadData();
+      } catch (err: any) {
+        showError(err?.message || 'Failed to assign job');
+      } finally {
+        setQuickAssignSubmitting(false);
+      }
+    },
+    [quickAssignOrderId, dateStr, loadData, showSuccess, showError]
+  );
+
+  const handleBulkAssign = useCallback(
+    async (installerId: string) => {
+      if (selectedOrderIds.size === 0) return;
+      try {
+        setBulkAssignSubmitting(true);
+        const orderIds = Array.from(selectedOrderIds);
+        for (const orderId of orderIds) {
+          await createSlot({
+            orderId,
+            serviceInstallerId: installerId,
+            date: dateStr,
+            windowFrom: '09:00:00',
+            windowTo: '11:00:00',
+          });
+          await updateOrder(orderId, { status: 'Assigned', assignedSiId: installerId });
+        }
+        showSuccess(`${orderIds.length} job(s) assigned`);
+        setSelectedOrderIds(new Set());
+        setBulkMode(false);
+        setBulkAssignOpen(false);
+        await loadData();
+      } catch (err: any) {
+        showError(err?.message || 'Failed to bulk assign');
+      } finally {
+        setBulkAssignSubmitting(false);
+      }
+    },
+    [selectedOrderIds, dateStr, loadData, showSuccess, showError]
+  );
+
+  const toggleOrderSelection = useCallback((orderId: string) => {
+    setSelectedOrderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
+    });
+  }, []);
+
   const handleConfirmSchedule = async (slotId: string) => {
     try {
       setProcessingSlotId(slotId);
@@ -346,40 +441,6 @@ const InstallerSchedulerPage: React.FC = () => {
     }
   };
 
-  const openAssignModal = useCallback((orderId?: string) => {
-    setAssignOrderId(orderId || '');
-    setAssignInstallerId('');
-    setAssignDate(selectedDate.toISOString().split('T')[0]);
-    setAssignTimeFrom('09:00');
-    setAssignTimeTo('11:00');
-    setAssignModalOpen(true);
-  }, [selectedDate]);
-
-  const handleAssignJob = async () => {
-    if (!assignOrderId || !assignInstallerId) {
-      showError('Please select both an order and an installer');
-      return;
-    }
-    try {
-      setAssignSubmitting(true);
-      await createSlot({
-        orderId: assignOrderId,
-        serviceInstallerId: assignInstallerId,
-        date: assignDate,
-        windowFrom: `${assignTimeFrom}:00`,
-        windowTo: `${assignTimeTo}:00`,
-      });
-      await updateOrder(assignOrderId, { status: 'Assigned', assignedSiId: assignInstallerId });
-      showSuccess('Job assigned successfully');
-      setAssignModalOpen(false);
-      await loadData();
-    } catch (err: any) {
-      showError(err?.message || 'Failed to assign job');
-    } finally {
-      setAssignSubmitting(false);
-    }
-  };
-
   const getScheduleStatusVariant = (
     status: string
   ): 'default' | 'success' | 'error' | 'warning' | 'info' | 'secondary' => {
@@ -400,6 +461,17 @@ const InstallerSchedulerPage: React.FC = () => {
         return 'secondary';
     }
   };
+
+  useEffect(() => {
+    if (!quickAssignOrderId) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (quickAssignRef.current && !quickAssignRef.current.contains(e.target as Node)) {
+        setQuickAssignOrderId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [quickAssignOrderId]);
 
   if (loading && calendarSlots.length === 0 && unassignedOrders.length === 0) {
     return (
@@ -440,10 +512,22 @@ const InstallerSchedulerPage: React.FC = () => {
       title="Service Installer Schedule"
       breadcrumbs={[{ label: 'Scheduler', path: '/scheduler' }, { label: 'Timeline' }]}
       actions={
-        <Button size="sm" onClick={() => openAssignModal()}>
-          <Plus className="h-4 w-4 mr-2" />
-          Assign job
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant={bulkMode ? 'default' : 'outline'}
+            onClick={() => {
+              setBulkMode(!bulkMode);
+              if (bulkMode) {
+                setSelectedOrderIds(new Set());
+                setBulkAssignOpen(false);
+              }
+            }}
+          >
+            <CheckSquare className="h-4 w-4 mr-1.5" />
+            {bulkMode ? 'Exit Bulk' : 'Bulk Assign'}
+          </Button>
+        </div>
       }
     >
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -457,7 +541,7 @@ const InstallerSchedulerPage: React.FC = () => {
                 </h3>
                 <ul className="text-sm text-amber-700 dark:text-amber-300 mt-1 space-y-1">
                   {conflicts.map((c, i) => (
-                    <li key={i}>• {c.conflictDescription}</li>
+                    <li key={i}>{c.conflictDescription}</li>
                   ))}
                 </ul>
               </div>
@@ -479,7 +563,6 @@ const InstallerSchedulerPage: React.FC = () => {
             onDateChange={setSelectedDate}
             onToday={() => setSelectedDate(new Date())}
             onRefresh={loadData}
-            onAssignJob={() => openAssignModal()}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
             departments={departments}
@@ -493,27 +576,100 @@ const InstallerSchedulerPage: React.FC = () => {
 
           <div className="grid lg:grid-cols-4 gap-4 flex-1 min-h-0">
             <Card className="lg:col-span-1 flex flex-col overflow-hidden">
-              <div className="p-4 border-b flex items-center gap-2">
-                <Wrench className="h-4 w-4 text-primary" />
-                <h2 className="text-base font-semibold">Unassigned jobs</h2>
-                <Badge variant="secondary" className="ml-auto">
-                  {filteredUnassigned.length}
-                </Badge>
+              <div className="p-3 border-b space-y-2">
+                <div className="flex items-center gap-2">
+                  <Wrench className="h-4 w-4 text-primary" />
+                  <h2 className="text-base font-semibold">Unassigned jobs</h2>
+                  <Badge variant="secondary" className="ml-auto">
+                    {filteredUnassigned.length}
+                  </Badge>
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search jobs..."
+                    value={unassignedSearch}
+                    onChange={(e) => setUnassignedSearch(e.target.value)}
+                    className="w-full pl-8 pr-3 py-1.5 text-sm bg-muted/50 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring transition-colors placeholder:text-muted-foreground"
+                  />
+                  {unassignedSearch && (
+                    <button
+                      onClick={() => setUnassignedSearch('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-muted"
+                    >
+                      <X className="h-3 w-3 text-muted-foreground" />
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {bulkMode && selectedOrderIds.size > 0 && (
+                <div className="px-3 py-2 border-b bg-primary/5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-primary">
+                      {selectedOrderIds.size} selected
+                    </span>
+                    <div className="relative">
+                      <Button
+                        size="sm"
+                        className="text-xs h-7"
+                        onClick={() => setBulkAssignOpen(!bulkAssignOpen)}
+                      >
+                        Assign All
+                      </Button>
+                      {bulkAssignOpen && (
+                        <div className="absolute right-0 top-full mt-1 z-50" ref={quickAssignRef}>
+                          <QuickAssignPanel
+                            installers={filteredInstallers}
+                            workloads={workloads}
+                            recommended={recommended}
+                            onAssign={handleBulkAssign}
+                            onClose={() => setBulkAssignOpen(false)}
+                            isSubmitting={bulkAssignSubmitting}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <ScrollArea className="flex-1">
                 <div className="p-3 space-y-2">
                   {filteredUnassigned.length === 0 ? (
                     <EmptyState
                       title="No unassigned jobs"
-                      description="All jobs are assigned or filtered out."
+                      description={unassignedSearch ? 'No jobs match your search.' : 'All jobs are assigned or filtered out.'}
                     />
                   ) : (
                     filteredUnassigned.map((order) => (
-                      <UnassignedCard
-                        key={order.id}
-                        order={order}
-                        onAssignClick={() => openAssignModal(order.orderId)}
-                      />
+                      <div key={order.id} className="relative">
+                        <UnassignedCard
+                          order={order}
+                          bulkMode={bulkMode}
+                          isSelected={selectedOrderIds.has(order.orderId)}
+                          onToggleSelect={() => toggleOrderSelection(order.orderId)}
+                          onAssignClick={() =>
+                            setQuickAssignOrderId(
+                              quickAssignOrderId === order.orderId ? null : order.orderId
+                            )
+                          }
+                          isAssignActive={quickAssignOrderId === order.orderId}
+                        />
+                        {quickAssignOrderId === order.orderId && (
+                          <div className="absolute left-full top-0 ml-2 z-50" ref={quickAssignRef}>
+                            <QuickAssignPanel
+                              installers={filteredInstallers}
+                              workloads={workloads}
+                              recommended={recommended}
+                              onAssign={handleQuickAssign}
+                              onClose={() => setQuickAssignOrderId(null)}
+                              isSubmitting={quickAssignSubmitting}
+                            />
+                          </div>
+                        )}
+                      </div>
                     ))
                   )}
                 </div>
@@ -531,6 +687,7 @@ const InstallerSchedulerPage: React.FC = () => {
                 onDropSlot={handleDropSlot}
                 onDropUnassigned={handleDropUnassigned}
                 columnWidth={220}
+                workloadMap={workloadMap}
               />
             </div>
           </div>
@@ -579,85 +736,6 @@ const InstallerSchedulerPage: React.FC = () => {
           }}
         />
       </DndContext>
-
-      <Modal isOpen={assignModalOpen} onClose={() => setAssignModalOpen(false)} title="Assign Job" size="md">
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-1 block">Order *</label>
-            <select
-              value={assignOrderId}
-              onChange={(e) => setAssignOrderId(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">Select an order...</option>
-              {unassignedOrders.map((o) => (
-                <option key={o.orderId} value={o.orderId}>
-                  {o.name} - {o.description}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium mb-1 block">Installer *</label>
-            <select
-              value={assignInstallerId}
-              onChange={(e) => setAssignInstallerId(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">Select an installer...</option>
-              {filteredInstallers.map((si) => (
-                <option key={si.id} value={si.id}>
-                  {si.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="text-sm font-medium mb-1 block">Date</label>
-            <input
-              type="date"
-              value={assignDate}
-              onChange={(e) => setAssignDate(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-sm font-medium mb-1 block">From</label>
-              <input
-                type="time"
-                value={assignTimeFrom}
-                onChange={(e) => setAssignTimeFrom(e.target.value)}
-                className="w-full px-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">To</label>
-              <input
-                type="time"
-                value={assignTimeTo}
-                onChange={(e) => setAssignTimeTo(e.target.value)}
-                className="w-full px-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setAssignModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleAssignJob}
-              disabled={assignSubmitting || !assignOrderId || !assignInstallerId}
-            >
-              {assignSubmitting ? 'Assigning...' : 'Assign Job'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </PageShell>
   );
 };
@@ -665,13 +743,22 @@ const InstallerSchedulerPage: React.FC = () => {
 function UnassignedCard({
   order,
   onAssignClick,
+  bulkMode = false,
+  isSelected = false,
+  onToggleSelect,
+  isAssignActive = false,
 }: {
   order: UnassignedOrderItem;
   onAssignClick: () => void;
+  bulkMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
+  isAssignActive?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `unassigned-${order.orderId}`,
     data: { type: 'unassigned-order', orderId: order.orderId, order },
+    disabled: bulkMode,
   });
   const style = transform
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, opacity: isDragging ? 0.6 : 1 }
@@ -681,11 +768,24 @@ function UnassignedCard({
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      className="rounded-lg border bg-card p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow text-left"
+      {...(bulkMode ? {} : { ...attributes, ...listeners })}
+      className={`rounded-xl border bg-card p-3 transition-all duration-150 text-left ${
+        bulkMode ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'
+      } ${isAssignActive ? 'ring-2 ring-primary shadow-lg' : 'hover:shadow-md'} ${
+        isSelected ? 'border-primary bg-primary/5' : ''
+      }`}
+      onClick={bulkMode ? onToggleSelect : undefined}
     >
-      <div className="flex items-start justify-between gap-1">
+      <div className="flex items-start gap-2">
+        {bulkMode && (
+          <div className="shrink-0 mt-0.5">
+            {isSelected ? (
+              <CheckSquare className="h-4 w-4 text-primary" />
+            ) : (
+              <Square className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <div className="font-medium text-sm truncate">{order.name}</div>
           <div className="text-xs text-muted-foreground truncate mt-0.5">{order.description}</div>
@@ -693,15 +793,24 @@ function UnassignedCard({
             <div className="text-xs text-muted-foreground truncate mt-0.5">{order.customerName}</div>
           )}
         </div>
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onAssignClick(); }}
-          onPointerDown={(e) => e.stopPropagation()}
-          className="shrink-0 mt-0.5 p-1 rounded hover:bg-primary/10 text-primary"
-          title="Assign job"
-        >
-          <Plus className="h-3.5 w-3.5" />
-        </button>
+        {!bulkMode && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAssignClick();
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            className={`shrink-0 mt-0.5 p-1.5 rounded-lg transition-colors ${
+              isAssignActive
+                ? 'bg-primary text-primary-foreground'
+                : 'hover:bg-primary/10 text-primary'
+            }`}
+            title="Quick assign"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
     </div>
   );

@@ -74,7 +74,7 @@ const SchedulerAppointmentCard: React.FC<SchedulerAppointmentCardProps> = ({
         onClick?.();
       }}
       className={cn(
-        'rounded border p-2 text-left shadow-sm transition-shadow hover:shadow-md cursor-pointer',
+        'rounded-lg border p-2 text-left shadow-sm transition-all duration-150 hover:shadow-md hover:-translate-y-px cursor-pointer',
         statusClass,
         draggable && 'cursor-grab active:cursor-grabbing',
         className

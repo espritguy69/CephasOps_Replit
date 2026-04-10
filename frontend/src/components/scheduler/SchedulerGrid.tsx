@@ -13,6 +13,7 @@ import type { CalendarSlot } from '../../types/scheduler';
 import type { SIAvailability, LeaveRequest } from '../../types/scheduler';
 import type { ServiceInstaller } from '../../types/serviceInstallers';
 import { cn } from '../../lib/utils';
+import type { InstallerWorkload } from './QuickAssignPanel';
 
 function parseTimeToMinutes(timeStr: string): number {
   const parts = timeStr.split(':').map(Number);
@@ -38,6 +39,7 @@ export interface SchedulerGridProps {
   startHour?: number;
   endHour?: number;
   hourHeight?: number;
+  workloadMap?: Record<string, InstallerWorkload>;
   className?: string;
 }
 
@@ -54,6 +56,7 @@ const SchedulerGrid: React.FC<SchedulerGridProps> = ({
   startHour = SCHEDULER_START_HOUR,
   endHour = SCHEDULER_END_HOUR,
   hourHeight = SCHEDULER_HOUR_HEIGHT,
+  workloadMap,
   className,
 }) => {
   const dayStartMinutes = startHour * 60;
@@ -82,6 +85,7 @@ const SchedulerGrid: React.FC<SchedulerGridProps> = ({
                 installer={inst}
                 jobCount={slotsByInstaller[inst.id]?.length ?? 0}
                 availabilitySummary={undefined}
+                workloadLevel={workloadMap?.[inst.id]?.level}
               />
             </div>
           ))}
@@ -250,8 +254,8 @@ function DroppableCell({ id, installerId, date, windowFrom, windowTo, style, onD
     <div
       ref={setNodeRef}
       className={cn(
-        'absolute left-0 right-0 border-b border-dashed border-transparent',
-        isOver && 'bg-primary/10 border-primary/30'
+        'absolute left-0 right-0 border-b border-dashed border-transparent transition-colors duration-150',
+        isOver && 'bg-primary/15 border-primary/40 shadow-inner'
       )}
       style={style}
       aria-hidden
