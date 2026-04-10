@@ -72,6 +72,36 @@ export default defineConfig({
       dependencies: ['setup'],
       testMatch: /auth\.spec\.ts/,
     },
+    {
+      name: 'auth-flow',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /auth\.login\.spec\.ts/,
+    },
+    {
+      name: 'tenant',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /tenant-isolation\.spec\.ts/,
+    },
+    {
+      name: 'orders',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /order-lifecycle\.spec\.ts|order-inventory\.spec\.ts/,
+    },
+    {
+      name: 'billing',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /billing-flow\.spec\.ts/,
+    },
+    {
+      name: 'protected',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /protected-routes\.spec\.ts/,
+    },
+    {
+      name: 'launch-readiness',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /auth\.login\.spec\.ts|tenant-isolation\.spec\.ts|order-lifecycle\.spec\.ts|order-inventory\.spec\.ts|billing-flow\.spec\.ts|protected-routes\.spec\.ts/,
+    },
   ],
   webServer: {
     command: 'npm run dev',
